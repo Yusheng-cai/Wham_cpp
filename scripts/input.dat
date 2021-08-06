@@ -1,0 +1,4 @@
+timeseries = {
+	path = test.dat
+	columns = [ 2 ] 
+}
