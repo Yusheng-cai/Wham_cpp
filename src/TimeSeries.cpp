@@ -3,7 +3,7 @@
 TimeSeries::TimeSeries(const ParameterPack& pack)
 {
     pack.ReadString("path", ParameterPack::KeyType::Required, path_);
-    pack.ReadNumber("skip", ParameterPack::KeyType::Optional, skip_);
+    pack.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
     pack.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
 
     auto it = std::max_element(columns_.begin(), columns_.end());
@@ -16,7 +16,7 @@ TimeSeries::TimeSeries(const ParameterPack& pack)
     parser.ParseFile(path_, Totaldata_);
 
     // Find out the total size of the data
-    size_ = Totaldata_.size();
+    size_ = Totaldata_.size() - skipFromBeginning_;
 
     // Resize the chosen data accordingly
     chosen_data_.resize(size_,dimension_);
@@ -25,9 +25,11 @@ TimeSeries::TimeSeries(const ParameterPack& pack)
     {
         ASSERT((Totaldata_[i].size() >= larger_col_), "The inputted column is wrong, the total size of the column is " << Totaldata_[i].size() << \
         " while it is trying to access the " << larger_col_ << "th item.");
+
+        int i_inner = i + skipFromBeginning_;
         for (int j=0;j<dimension_;j++)
         {
-            chosen_data_(i,j) = Totaldata_[i][columns_[j] - 1];
+            chosen_data_(i,j) = Totaldata_[i_inner][columns_[j] - 1];
         }
     }
 
@@ -35,16 +37,11 @@ TimeSeries::TimeSeries(const ParameterPack& pack)
     {
         for (int j=0;j<dimension_;j++)
         {
-            std::cout << chosen_data_(i,j) << " ";
+            std::cout << chosen_data_(i,j) << std::endl;
         }
-        std::cout << "\n";
     }
 
-    findMean();
-    for (int i=0;i<dimension_;i++)
-    {
-        std::cout << Mean_[i] << std::endl;
-    }
+    findMean(); 
 }
 
 void TimeSeries::findMean()
@@ -69,5 +66,9 @@ void TimeSeries::findMean()
     {
         Mean_[i] = Mean_[i]/size_;
     }
+}
+
+void TimeSeries::findVar()
+{
 
 }

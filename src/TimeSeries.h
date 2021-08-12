@@ -26,6 +26,9 @@ class TimeSeries
         void findMean();
         void findVar();
 
+        // get the data raw pointer underneath
+        Real* data() {return chosen_data_.data();}
+
     
     private:
         std::string path_;
@@ -35,8 +38,8 @@ class TimeSeries
         Matrix<Real> chosen_data_;
         std::vector<std::vector<Real>> Totaldata_; 
 
-        // Sometimes it is ideal to skip some data
-        int skip_ = 1;
+        // Sometimes it is ideal to skip some data in the beginning because the simulation has not reached eq. yet
+        int skipFromBeginning_ = 0;
 
         // vector of columns
         std::vector<int> columns_;
