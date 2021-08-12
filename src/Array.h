@@ -19,6 +19,8 @@ template<typename T>
 class Matrix
 {
     public:
+        using Iterator = std::vector<T>::iterator;
+
         Matrix(){};
         Matrix(std::size_t NR, std::size_t NC);
         Matrix(std::size_t NR, std::size_t NC, T num);
@@ -64,6 +66,9 @@ class Matrix
         int size() const{return NR_*NC_;}
         int getNR() const{return NR_;}
         int getNC() const{return NC_;}
+
+        iterator begin() {return data_.begin();}
+        iterator end() {return data_.end();}
 
         // returns the underlying pointer to the data (The contiguous data pointer)
         T* data(){return data_.data();}
