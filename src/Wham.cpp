@@ -3,19 +3,29 @@
 Wham::Wham(const ParameterPack& pack)
 {
     // find all the instances of the timeseries block
-    auto TsPacks = pack.findParamPacks("Timeseries", ParameterPack::KeyType::Required);
+    auto TsPacks = pack.findParamPacks("timeseries", ParameterPack::KeyType::Required);
 
     for (int i= 0 ;i < TsPacks.size();i++)
     {
         VectorTimeSeries_.push_back(TimeSeries(*TsPacks[i]));
     }
+}
 
-    // currently let's just assume that we are dealing with one wham pack at a time
-    auto whamPack = pack.findParamPack("wham", ParameterPack::KeyType::Required);
+WhamTools::Real WhamTools::LogSumExp(const std::vector<Real>& vector, const std::vector<Real>& N)
+{
+    ASSERT((vector.size() == N.size()), "The size of the vector is not equal to the size of N.");
 
-    // what information should be contained in the wham pack?
-    
-    // temperature is assumed to be 298.15 if not specified
-    whamPack -> ReadNumber("temperature", ParameterPack::KeyType::Optional, temperature_);
-    beta_ = 1.0/(Constants::R*temperature_);
+    // Find the max of the vector
+    auto it = std::max_element(vector.begin(), vector.end());
+    Real maxVal = *it;
+
+    Real sum = 0.0;
+    for (int i=0;i<vector.size();i++)
+    {
+        sum += N[i] * std::exp(vector[i]-maxVal);
+    }
+
+    sum = std::log(sum) * maxVal;
+
+    return sum;
 }
