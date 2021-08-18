@@ -1,5 +1,36 @@
 timeseries = {
-	path = test.dat
+	path = nstar_-5.0
 	columns = [ 2 ] 
-	skipfrombeginning = 1000
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_0.0
+	columns = [ 2 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_5.0
+	columns = [ 2 ]
+	skipfrombeginning = 500
+}
+
+bias = {
+	xstar = [ -5.0 ] 
+	kappa = [ 0.98 ]
+}
+
+bias = {
+	xstar = [ 0.0 ]
+	kappa = [ 0.98 ]
+}
+
+bias = {
+	xstar = [ 5.0 ]
+	kappa = [ 0.98 ]
+}
+
+wham = {
+	type = Uwham
 }
