@@ -4,12 +4,18 @@ target_sources(src PRIVATE
     "DataFileParser.cpp"
     "TimeSeries.cpp"
     "Wham.cpp"
+    "Uwham.cpp"
+    "Bias.cpp"
+    "SimpleBias.cpp"
 )
 
 set(src_HEADER
     "DataFileParser.h"
     "TimeSeries.h"
     "Wham.h"
+    "Uwham.h"
+    "Bias.h"
+    "SimpleBias.h"
 )
 
 target_include_directories(src
