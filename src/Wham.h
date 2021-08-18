@@ -24,7 +24,7 @@ class Wham
     protected:
         std::vector<TimeSeries> VectorTimeSeries_;
 
-        std::vector<int> N_;
+        std::vector<Real> N_;
 };
 
 namespace WhamRegistry
@@ -44,4 +44,7 @@ namespace WhamTools
 
     // Pass in vector is calculated as Log(\sum(N*exp(vector)))
     Real LogSumExp(const std::vector<Real>& vector, const std::vector<Real>& N);
+
+    // find the norm of a vector
+    Real NormVector(const std::vector<Real>& vector);
 };

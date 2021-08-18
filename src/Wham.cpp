@@ -25,7 +25,19 @@ WhamTools::Real WhamTools::LogSumExp(const std::vector<Real>& vector, const std:
         sum += N[i] * std::exp(vector[i]-maxVal);
     }
 
-    sum = std::log(sum) * maxVal;
+    sum = std::log(sum) + maxVal;
 
     return sum;
+}
+
+WhamTools::Real WhamTools::NormVector(const std::vector<Real>& vector)
+{
+    Real sum_ = 0.0;
+
+    for (int i=0;i<vector.size();i++)
+    {
+        sum_ += vector[i]*vector[i];
+    }
+
+    return sum_;
 }
