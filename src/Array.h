@@ -114,10 +114,7 @@ void Matrix<T>::resize(std::size_t NR, std::size_t NC)
 
     data_.resize(NR*NC);
 
-    for (int i=0;i<NR*NC;i++)
-    {
-        data_[i] = 0;
-    }
+    std::fill(data_.begin(), data_.end(), 0);
     NR_ = NR;
     NC_ = NC;
 }
