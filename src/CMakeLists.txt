@@ -7,6 +7,9 @@ target_sources(src PRIVATE
     "Uwham.cpp"
     "Bias.cpp"
     "SimpleBias.cpp"
+    "UwhamCalculationStrategy.cpp"
+    "UwhamIterativeMethods.cpp"
+    "Driver.cpp"
 )
 
 set(src_HEADER
@@ -16,6 +19,9 @@ set(src_HEADER
     "Uwham.h"
     "Bias.h"
     "SimpleBias.h"
+    "UwhamCalculationStrategy.h"
+    "UwhamIterativeMethods.h"
+    "Driver.h"
 )
 
 target_include_directories(src
