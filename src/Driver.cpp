@@ -14,3 +14,8 @@ void Driver::InitializeWham(const ParameterPack& pack)
 
     whamCalc_ = Whamptr(WhamRegistry::Factory::instance().create(whamType, pack));
 }
+
+void Driver::calculate()
+{
+    whamCalc_ -> calculate();
+}

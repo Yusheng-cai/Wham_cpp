@@ -15,6 +15,7 @@ class Driver
         Driver(const ParameterPack& pack);
 
         void InitializeWham(const ParameterPack& pack);
+        void calculate();
 
     private:
         Whamptr whamCalc_;
