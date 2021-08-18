@@ -3,6 +3,7 @@
 #include "tools/InputParser.h"
 #include "Array.h"
 #include "Bias.h"
+#include "UwhamCalculationStrategy.h"
 
 #include <vector>
 #include <array>
@@ -12,19 +13,22 @@ class Uwham:public Wham
 {
     public:
         using Biasptr = std::unique_ptr<Bias>;
+        using stratptr= std::unique_ptr<UWhamCalculationStrategy>;
 
         Uwham(const ParameterPack& pack);
         virtual ~Uwham(){};
-        Matrix<Real> Hessian(const Matrix<Real>& BUji, const std::vector<Real>& fi, const std::vector<Real>& N);
+        void initializeStrat(const ParameterPack* pack);
 
         virtual void calculate();
 
     private:
-        Matrix<Real> BUji_;
-        std::vector<Real> fi_;
-        std::vector<std::vector<Real>> xji_;
+        Matrix<Real> BUki_;
+        std::vector<Real> fk_;
+        std::vector<std::vector<Real>> xi_;
 
         std::vector<Biasptr> Biases_;
 
         int Ntot_;
+
+        stratptr strat_;
 };
