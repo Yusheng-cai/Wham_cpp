@@ -1,3 +1,4 @@
+#pragma once
 #include "tools/InputParser.h"
 #include "tools/CommonTypes.h"
 #include "DataFileParser.h"
@@ -13,6 +14,8 @@ class TimeSeries
 {
     public:
         using Real = CommonTypes::Real;
+        using Iterator = std::vector<std::vector<Real>>::iterator;
+        using cIterator = std::vector<std::vector<Real>>::const_iterator;
 
         TimeSeries(const ParameterPack& pack);
         ~TimeSeries(){};
@@ -27,7 +30,11 @@ class TimeSeries
         void findVar();
 
         // get the data raw pointer underneath
-        Real* data() {return chosen_data_.data();}
+        std::vector<Real>* data() {return chosen_data_.data();}
+        Iterator begin() {return chosen_data_.begin();}
+        Iterator end() {return chosen_data_.end();}
+        cIterator cbegin() {return chosen_data_.cbegin();}
+        cIterator cend() {return chosen_data_.cend();}
 
     
     private:
@@ -35,7 +42,8 @@ class TimeSeries
         DataFileParser parser;
 
         // entire data
-        Matrix<Real> chosen_data_;
+        //Matrix<Real> chosen_data_;
+        std::vector<std::vector<Real>> chosen_data_;
         std::vector<std::vector<Real>> Totaldata_; 
 
         // Sometimes it is ideal to skip some data in the beginning because the simulation has not reached eq. yet

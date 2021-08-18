@@ -19,26 +19,18 @@ TimeSeries::TimeSeries(const ParameterPack& pack)
     size_ = Totaldata_.size() - skipFromBeginning_;
 
     // Resize the chosen data accordingly
-    chosen_data_.resize(size_,dimension_);
-
-    for (int i=0;i<size_;i++)
+    chosen_data_.resize(size_);
+    int index=0;
+    for (auto it = Totaldata_.begin()+skipFromBeginning_;it != Totaldata_.end();it++)
     {
-        ASSERT((Totaldata_[i].size() >= larger_col_), "The inputted column is wrong, the total size of the column is " << Totaldata_[i].size() << \
-        " while it is trying to access the " << larger_col_ << "th item.");
-
-        int i_inner = i + skipFromBeginning_;
-        for (int j=0;j<dimension_;j++)
+        std::vector<Real> temp;
+        temp.resize(dimension_);
+        for (int i=0;i<dimension_;i++)
         {
-            chosen_data_(i,j) = Totaldata_[i_inner][columns_[j] - 1];
+            temp[i] = (*it)[columns_[i]-1];
         }
-    }
-
-    for (int i=0;i<size_;i++)
-    {
-        for (int j=0;j<dimension_;j++)
-        {
-            std::cout << chosen_data_(i,j) << std::endl;
-        }
+        chosen_data_[index] = temp;
+        index ++;
     }
 
     findMean(); 
@@ -57,7 +49,7 @@ void TimeSeries::findMean()
     {
         for(int j=0;j<dimension_;j++)
         {
-            Mean_[j] += chosen_data_(i,j);
+            Mean_[j] += chosen_data_[i][j];
         }
     }
 
