@@ -19,3 +19,8 @@ void Driver::calculate()
 {
     whamCalc_ -> calculate();
 }
+
+void Driver::printOutput()
+{
+    whamCalc_ -> printOutput();
+}
