@@ -7,6 +7,7 @@
 #include "UwhamCalculationStrategy.h"
 
 #include <vector>
+#include <map>
 #include <array>
 #include <memory>
 #include <iostream>
@@ -17,12 +18,13 @@ class Uwham:public Wham
         using Biasptr = std::unique_ptr<Bias>;
         using stratptr= std::unique_ptr<UWhamCalculationStrategy>;
 
-        Uwham(const ParameterPack& pack);
+        Uwham(const WhamInput& pack);
         virtual ~Uwham(){};
         void initializeStrat(const ParameterPack* pack);
         void initializeBins(const std::vector<const ParameterPack*>& BinPacks);
+        void OpenFile(std::ofstream& ofs, std::string& name);
 
-        virtual void calculate();
+        virtual void calculate() override;
         virtual void printOutput() override;
 
     private:
@@ -38,7 +40,14 @@ class Uwham:public Wham
         std::string NormalizationFileOutput_;
         std::ofstream NormalizationFileofs_;
 
+        std::string pjiFileOutput_;
+        std::ofstream pjiFileofs_;
+
         int dimension_;
 
         std::vector<Bin> Bins_;
+
+        // The lnwji that falls within each of the bins
+        std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
+        std::map<std::vector<int>, Real> MapBinIndexToWji_;
 };

@@ -5,9 +5,10 @@ namespace WhamRegistry
     registry<Uwham> registerUwham("Uwham");
 }
 
-Uwham::Uwham(const ParameterPack& input)
+Uwham::Uwham(const WhamInput& input)
 :Wham(input)
 {
+    ASSERT((VectorTimeSeries_.size() != 0), "No timeseries data was passed in.");
     N_.resize(VectorTimeSeries_.size());
     std::vector<int> dimensions_(VectorTimeSeries_.size());
 
@@ -28,7 +29,7 @@ Uwham::Uwham(const ParameterPack& input)
     // record the dimensions of this Wham calculation
     dimension_ = dimensions_[0];
 
-    auto biases = input.findParamPacks("bias", ParameterPack::KeyType::Required);
+    auto biases = input.pack_.findParamPacks("bias", ParameterPack::KeyType::Required);
     ASSERT((biases.size() == VectorTimeSeries_.size()), "The number of time series does not match the number of biases.");
 
     for (int i=0;i<biases.size();i++)
@@ -52,21 +53,34 @@ Uwham::Uwham(const ParameterPack& input)
     }
 
     // Now read in what type of calculation are you letting Uwham do
-    auto whamPack = input.findParamPack("wham", ParameterPack::KeyType::Required);
+    auto whamPack = input.pack_.findParamPack("wham", ParameterPack::KeyType::Required);
     initializeStrat(whamPack);
 
     bool normRead = whamPack->ReadString("normalizationOutput", ParameterPack::KeyType::Optional, NormalizationFileOutput_);
 
     if (normRead)
     {
-        NormalizationFileofs_.open(NormalizationFileOutput_);
-        ASSERT((NormalizationFileofs_.is_open()), "The file with name " << NormalizationFileOutput_ << " is not opened.");
+        OpenFile(NormalizationFileofs_, NormalizationFileOutput_);
     }
 
     auto binPacks = whamPack -> findParamPacks("bins", ParameterPack::KeyType::Required);
     initializeBins(binPacks);
 
     ASSERT((binPacks.size() == dimension_), "The binning dimension is " << binPacks.size() << " while the dimension of the Wham is " << dimension_);
+
+    bool readpji = whamPack -> ReadString("pjiOutput", ParameterPack::KeyType::Optional, pjiFileOutput_);
+
+    if (readpji)
+    {
+        OpenFile(pjiFileofs_, pjiFileOutput_);
+    }
+}
+
+void Uwham::OpenFile(std::ofstream& ofs, std::string& name)
+{
+    ofs.open(name);
+
+    ASSERT((ofs.is_open()), "The file with name " << name << " is not opened.");
 }
 
 void Uwham::initializeBins(const std::vector<const ParameterPack*>& BinPacks)
@@ -101,6 +115,58 @@ void Uwham::calculate()
     std::cout << "Calculation took " << diff.count() << std::endl;
 
     const auto& lnwji = strat_ -> getlnwji_();
+
+    for (int i=0;i<xi_.size();i++)
+    {
+        auto& x = xi_[i];
+        ASSERT((x.size() == Bins_.size()), "The dimension of the data = " << x.size() << " while the dimension of bins = " << Bins_.size());
+        std::vector<int> BinIndex_;
+        BinIndex_.resize(Bins_.size());
+
+        bool isInRange = true; 
+
+        for (int j=0;j<Bins_.size();j++)
+        {
+            // User input is 1 based
+            int dim = Bins_[j].getDimension() - 1;
+
+            if (! Bins_[j].isInRange(xi_[i][dim]))
+            {
+                isInRange = false;
+                break;
+            }
+
+            int index = Bins_[j].findBin(xi_[i][dim]);
+            BinIndex_[j] = index;
+        }
+
+        if (isInRange)
+        {
+            auto it = MapBinIndexToVectorlnwji_.find(BinIndex_);
+
+            if ( it == MapBinIndexToVectorlnwji_.end())
+            {
+                std::vector<Real> lnwji_vec_;
+                lnwji_vec_.push_back(lnwji[i]);
+                MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex_, lnwji_vec_));
+            }
+            else
+            {
+                it -> second.push_back(lnwji[i]);
+            }
+        }
+    }
+
+    for (auto it = MapBinIndexToVectorlnwji_.begin();it != MapBinIndexToVectorlnwji_.end();it++)
+    {
+        auto& l = it -> second;
+        std::vector<Real> ones(l.size(), 1.0);
+
+        Real wji = WhamTools::LogSumExp(l, ones);
+
+        MapBinIndexToWji_.insert(std::make_pair(it->first, wji));
+    }
+
 }
 
 void Uwham::printOutput()
@@ -117,4 +183,27 @@ void Uwham::printOutput()
         NormalizationFileofs_.close();
     }
 
+    if (pjiFileofs_.is_open())
+    {
+        pjiFileofs_ << "#";
+        for (int i=0;i<Bins_.size();i++)
+        {
+            pjiFileofs_ << Bins_[i].getDimension() << "\t";
+        }
+        pjiFileofs_ << "pji\tF";
+        pjiFileofs_ << "\n";
+
+        for (auto it = MapBinIndexToWji_.begin();it != MapBinIndexToWji_.end();it++)
+        {
+            auto& index = it -> first;
+            for (int i=0;i<Bins_.size();i++)
+            {
+                Real pos = Bins_[i].getLocationOfBin(index[i]);
+                pjiFileofs_ << pos << " ";
+            }
+            pjiFileofs_ << it -> second << " ";
+            pjiFileofs_ << (-1.0)*(it -> second) << "\n"; 
+        }
+        pjiFileofs_.close();
+    }
 }
