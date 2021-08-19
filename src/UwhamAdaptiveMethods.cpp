@@ -32,11 +32,11 @@ void UwhamAdaptiveMethods::calculate()
 
     while ( ! converged)
     {
-        std::vector<Real> grad = Gradient(BUki_, fk_, N_);
+        std::vector<Real> grad = WhamTools::Gradient(BUki_, fk_, N_);
         gradVec = Eigen::Map<Eigen::VectorXd>(grad.data(), Nsim);
 
         // Find the hessian 
-        Matrix<Real> hess = Hessian(BUki_, fk_, N_);
+        Matrix<Real> hess = WhamTools::Hessian(BUki_, fk_, N_);
 
         Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
         Eigen::VectorXd Hinvg = hessMat.bdcSvd(Eigen::ComputeThinU|Eigen::ComputeThinV).solve(gradVec);
@@ -53,10 +53,10 @@ void UwhamAdaptiveMethods::calculate()
         }
 
         // Find the gradient for nr
-        auto NRgradient = Gradient(BUki_,fnr_, N_);
+        auto NRgradient = WhamTools::Gradient(BUki_,fnr_, N_);
         Real normNR = WhamTools::NormVector(NRgradient);
 
-        std::vector<Real> lnwji = calculatelnWi(BUki_, fk_, N_);
+        std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
         for (int i=0;i<Nsim;i++)
         {
             std::vector<Real> column;
@@ -74,7 +74,7 @@ void UwhamAdaptiveMethods::calculate()
             fsc_[i] = fsc_[i] - fsc_[Nsim-1];
         }
 
-        auto SCgradient = Gradient(BUki_, fsc_, N_);  
+        auto SCgradient = WhamTools::Gradient(BUki_, fsc_, N_);  
         Real normSC = WhamTools::NormVector(SCgradient);
 
         if (normSC < normNR)
@@ -94,7 +94,7 @@ void UwhamAdaptiveMethods::calculate()
         }
     }
 
-    lnwji_ = calculatelnWi(BUki_, fk_, N_);
+    lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 }
 
 UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)
@@ -119,139 +119,4 @@ UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vecto
     auto itprev = std::max_element(absprev_.begin(), absprev_.end()-1);
 
     return (*it)/(*itprev);
-}
-
-std::vector<UwhamAdaptiveMethods::Real> UwhamAdaptiveMethods::calculatelnWi(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
-{ 
-    int Nsim = BUki_.getNR();
-    int Ndata = BUki_.getNC();
-
-    std::vector<Real> lnwji;
-    lnwji.resize(Ndata);
-
-    #pragma omp parallel
-    {
-        #pragma omp for
-        for (int i=0;i<Ndata;i++)
-        {
-            std::vector<Real> column;
-            column.resize(Nsim);
-            for (int j=0;j<Nsim;j++)
-            {
-                column[j] = fk[j]-1.0*BUki_(j,i);
-            }
-
-            Real val = WhamTools::LogSumExp(column, N);
-            lnwji[i] = -1.0*val;
-        }
-    }
-
-    return lnwji;
-}
-
-std::vector<UwhamAdaptiveMethods::Real> UwhamAdaptiveMethods::Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
-{
-    int Ntot = 0;
-    for (int i=0;i<N.size();i++)
-    {
-        Ntot += N[i];
-    }
-
-    int Nsim = BUki_.getNR();
-    int Ndata= BUki_.getNC();
-
-    std::vector<Real> ones_(Ndata);
-    std::fill(ones_.begin(), ones_.end(), 1.0);
-
-    std::vector<Real> gradient(Nsim);
-    std::vector<Real> lnwji = calculatelnWi(BUki, fk, N); 
-
-    std::vector<std::vector<Real>> lnpki(Nsim, std::vector<Real>(Ndata));
-
-    #pragma omp parallel for collapse(2)
-    for (int k=0;k<Nsim;k++)
-    {
-        for (int j=0;j<Ndata;j++)
-        {
-            lnpki[k][j] = fk[k] - BUki_(k,j) + lnwji[j];
-        }
-    }
-
-    std::vector<Real> lnpk(Nsim);
-
-    for (int k=0;k<Nsim;k++)
-    {
-        Real val = WhamTools::LogSumExp(lnpki[k], ones_);
-        lnpk[k] = val;
-    }
-
-    for (int k=0;k<Nsim;k++)
-    {
-        gradient[k] = -1.0/Ntot*(N[k] - N[k] * std::exp(lnpk[k]));
-    }
-
-    return gradient;
-}
-
-
-Matrix<UwhamAdaptiveMethods::Real> UwhamAdaptiveMethods::Hessian(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
-{
-    int Ntot = 0;
-    for (int i=0;i<N.size();i++)
-    {
-        Ntot += N[i];
-    }
-    int Nsim = BUki_.getNR();
-    int Ndata = BUki_.getNC();
-
-    Matrix<Real> Hessian(Nsim, Nsim);
-
-    std::vector<Real> lnwji = calculatelnWi(BUki, fk, N); 
-    
-
-    std::vector<std::vector<Real>> pki(Nsim, std::vector<Real>(Ndata));
-
-    #pragma omp parallel for collapse(2)
-    for (int k=0;k<Nsim;k++)
-    {
-        for (int j=0;j<Ndata;j++)
-        {
-            Real lnpki;
-            lnpki = fk[k] - BUki_(k,j) + lnwji[j];
-            pki[k][j] = std::exp(lnpki);
-        }
-    }
-
-    for (int i=0;i<Nsim;i++)
-    {
-        for (int j=0;j<Nsim;j++)
-        {
-            if (i == j)
-            {
-                Real sum = 0.0;
-                Real sum_sq = 0.0;
-                #pragma omp parallel for reduction(+:sum,sum_sq) 
-                for (int k=0;k<Ndata;k++)
-                {
-                    sum += pki[i][k];
-                    sum_sq += pki[i][k] * pki[i][k];
-                }
-
-                Hessian(i,j) = -1.0/Ntot*(-N[i]*sum + N[i]*N[i]*sum_sq);
-            }
-            else
-            {
-                Real sum = 0.0;
-                #pragma omp parallel for reduction(+:sum)
-                for (int k=0;k<Ndata;k++)
-                {
-                    sum += pki[i][k] * pki[j][k];
-                }
-
-                Hessian(i,j) = -1.0/Ntot*(sum*N[i]*N[j]);
-            }
-        }
-    }
-
-    return Hessian;
 }

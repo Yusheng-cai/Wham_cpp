@@ -12,9 +12,7 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
 
         virtual void calculate();
 
-        Matrix<Real> Hessian(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
-        std::vector<Real> Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
-        std::vector<Real> calculatelnWi(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
+        // Calculate the error between 2 iterations
         Real calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev);
 
     private:
