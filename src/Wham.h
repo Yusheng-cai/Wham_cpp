@@ -10,6 +10,7 @@
 #include <vector>
 #include <array>
 #include <string>
+#include <chrono>
 
 class Wham
 {
@@ -20,6 +21,7 @@ class Wham
         virtual ~Wham(){};
 
         virtual void calculate() = 0;
+        virtual void printOutput() {};
     
     protected:
         std::vector<TimeSeries> VectorTimeSeries_;
