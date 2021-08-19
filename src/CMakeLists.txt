@@ -8,8 +8,10 @@ target_sources(src PRIVATE
     "Bias.cpp"
     "SimpleBias.cpp"
     "UwhamCalculationStrategy.cpp"
-    "UwhamIterativeMethods.cpp"
+    "UwhamAdaptiveMethods.cpp"
     "Driver.cpp"
+    "UwhamLBFGS.cpp"
+    "Bin.cpp"
 )
 
 set(src_HEADER
@@ -20,8 +22,10 @@ set(src_HEADER
     "Bias.h"
     "SimpleBias.h"
     "UwhamCalculationStrategy.h"
-    "UwhamIterativeMethods.h"
+    "UwhamAdaptiveMethods.h"
     "Driver.h"
+    "UwhamLBFGS.h"
+    "Bin.h"
 )
 
 target_include_directories(src
