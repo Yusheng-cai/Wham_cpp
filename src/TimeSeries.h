@@ -23,8 +23,7 @@ class TimeSeries
         // getters
         int getDimension() const {return dimension_;}
         int getSize() const {return size_;}
-
-        
+ 
         // find the mean and variance of the TimeSeries
         void findMean();
         void findVar();
