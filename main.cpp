@@ -8,6 +8,7 @@
 #include <iostream>
 #include <string>
 #include <memory>
+#include <chrono>
 
 int main(int argc, char** argv)
 {
@@ -22,8 +23,9 @@ int main(int argc, char** argv)
     ip.ParseFile(fname, pack);
 
     Driver d(pack);
-    d.calculate();
 
+    d.calculate();
+    d.printOutput();
  
     return 0;
 }
