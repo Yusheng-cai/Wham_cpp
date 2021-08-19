@@ -33,6 +33,7 @@ enable_testing()
 add_subdirectory(src)
 add_subdirectory(tools)
 add_subdirectory(parallel)
+add_subdirectory(test)
 
 add_executable(Wham main.cpp)
 
