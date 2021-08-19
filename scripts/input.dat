@@ -89,5 +89,9 @@ bias = {
 
 wham = {
 	type = Uwham
-	strategy = iterative
+	strategy = adaptive
+	bins = {
+		range = [ 0 30 ]
+		numbins = 100
+	}
 }
