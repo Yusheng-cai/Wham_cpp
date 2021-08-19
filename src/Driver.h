@@ -3,6 +3,7 @@
 #include "tools/InputParser.h"
 #include "tools/CommandLineArguments.h"
 #include "tools/CommonTypes.h"
+#include "TimeSeries.h"
 
 #include <memory>
 #include <vector>
@@ -12,7 +13,7 @@ class Driver
     public:
         using Whamptr = std::unique_ptr<Wham>;
 
-        Driver(const ParameterPack& pack);
+        Driver(const ParameterPack& pack, const CommandLineArguments& cmd);
 
         void InitializeWham(const ParameterPack& pack);
         void calculate();
@@ -20,4 +21,6 @@ class Driver
 
     private:
         Whamptr whamCalc_;
+
+        std::vector<TimeSeries> VectorTimeSeries_;
 };
