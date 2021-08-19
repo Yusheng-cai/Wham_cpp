@@ -3,6 +3,7 @@
 #include "tools/InputParser.h"
 #include "src/Driver.h"
 #include "tools/Assert.h"
+#include "tools/CommandLineArguments.h"
 
 #include <vector>
 #include <iostream>
@@ -22,7 +23,9 @@ int main(int argc, char** argv)
     ParameterPack pack;
     ip.ParseFile(fname, pack);
 
-    Driver d(pack);
+    CommandLineArguments cmd(argc, argv);
+
+    Driver d(pack,cmd);
 
     d.calculate();
     d.printOutput();
