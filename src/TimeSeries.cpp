@@ -1,10 +1,25 @@
 #include "TimeSeries.h"
 
-TimeSeries::TimeSeries(const ParameterPack& pack)
+TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
 {
-    pack.ReadString("path", ParameterPack::KeyType::Required, path_);
-    pack.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
-    pack.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
+    input.pack_.ReadString("path", ParameterPack::KeyType::Required, path_);
+    input.pack_.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
+    input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
+
+
+    if (input.abspath_.empty())
+    {
+        path_ = FileSystem::joinPath(FileSystem::getCurrentPath(), path_); 
+    }
+    else
+    {
+        path_ = FileSystem::joinPath(input.abspath_, path_);
+    }
+
+    for (int i=0;i<columns_.size();i++)
+    {
+        ASSERT((columns_[i] > 0), "The column is 1-based counting, it cannot be less than or equal to 0.");
+    }
 
     auto it = std::max_element(columns_.begin(), columns_.end());
     larger_col_ = *it;

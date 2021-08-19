@@ -1,6 +1,7 @@
 #pragma once
 #include "tools/InputParser.h"
 #include "tools/CommonTypes.h"
+#include "tools/FileSystem.h"
 #include "DataFileParser.h"
 #include "Array.h"
 
@@ -9,6 +10,11 @@
 #include <string>
 #include <algorithm>
 
+struct TimeSeriesInputPack
+{
+    ParameterPack& pack_;
+    std::string abspath_;
+};
 
 class TimeSeries
 {
@@ -17,7 +23,7 @@ class TimeSeries
         using Iterator = std::vector<std::vector<Real>>::iterator;
         using cIterator = std::vector<std::vector<Real>>::const_iterator;
 
-        TimeSeries(const ParameterPack& pack);
+        TimeSeries(const TimeSeriesInputPack& input);
         ~TimeSeries(){};
 
         // getters
