@@ -15,6 +15,7 @@ struct UwhamStrategyInput
 
     Matrix<Real>& BUki_;
     std::vector<Real>& N;
+    ParameterPack& pack;
 };
 
 class UWhamCalculationStrategy
@@ -25,12 +26,16 @@ class UWhamCalculationStrategy
         UWhamCalculationStrategy(UwhamStrategyInput& input);
         virtual ~UWhamCalculationStrategy(){};
 
+        const std::vector<Real>& getFk_() const {return fk_;}
+        const std::vector<Real>& getlnwji_() const {return lnwji_;}
+
         virtual void calculate() = 0;
 
     protected:
         Matrix<Real>& BUki_;
         std::vector<Real>& N_;
         std::vector<Real> fk_;
+        std::vector<Real> lnwji_;
 };
 
 namespace UwhamCalculationStrategyRegistry
