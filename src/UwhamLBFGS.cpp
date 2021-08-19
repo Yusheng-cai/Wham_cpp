@@ -31,7 +31,7 @@ void UwhamLBFGS::calculate()
         fk_[i] = fk[i] - fk[BUki_.getNR()-1];
     }
 
-    lnwji_ = NLLeq_ -> calculatelnWi(BUki_, fk_, N_);
+    lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 }
 
 UwhamNLL::UwhamNLL(UwhamNLLInput& input)
@@ -90,80 +90,9 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
 
     secondPart /= Ntot_;
 
-    Gradient(BUki_, fk_, N_, grad);
+    auto gradient = WhamTools::Gradient(BUki_, fk_, N_);
+
+    grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim); 
 
     return -firstPart + secondPart;
 }
-
-std::vector<UwhamNLL::Real> UwhamNLL::calculatelnWi(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
-{ 
-    int Nsim = BUki_.getNR();
-    int Ndata = BUki_.getNC();
-
-    std::vector<Real> lnwji;
-    lnwji.resize(Ndata);
-
-    #pragma omp parallel
-    {
-        #pragma omp for
-        for (int i=0;i<Ndata;i++)
-        {
-            std::vector<Real> column;
-            column.resize(Nsim);
-            for (int j=0;j<Nsim;j++)
-            {
-                column[j] = fk[j]-1.0*BUki_(j,i);
-            }
-
-            Real val = WhamTools::LogSumExp(column, N);
-            lnwji[i] = -1.0*val;
-        }
-    }
-
-    return lnwji;
-}
-
-void UwhamNLL::Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N, Eigen::VectorXd& grad)
-{
-    int Ntot = 0;
-    for (int i=0;i<N.size();i++)
-    {
-        Ntot += N[i];
-    }
-
-    int Nsim = BUki_.getNR();
-    int Ndata= BUki_.getNC();
-
-    std::vector<Real> ones_(Ndata);
-    std::fill(ones_.begin(), ones_.end(), 1.0);
-
-    std::vector<Real> gradient(Nsim);
-    std::vector<Real> lnwji = calculatelnWi(BUki, fk, N); 
-
-    std::vector<std::vector<Real>> lnpki(Nsim, std::vector<Real>(Ndata));
-
-    #pragma omp parallel for collapse(2)
-    for (int k=0;k<Nsim;k++)
-    {
-        for (int j=0;j<Ndata;j++)
-        {
-            lnpki[k][j] = fk[k] - BUki_(k,j) + lnwji[j];
-        }
-    }
-
-    std::vector<Real> lnpk(Nsim);
-
-    for (int k=0;k<Nsim;k++)
-    {
-        Real val = WhamTools::LogSumExp(lnpki[k], ones_);
-        lnpk[k] = val;
-    }
-
-    for (int k=0;k<Nsim;k++)
-    {
-        gradient[k] = -1.0/Ntot*(N[k] - N[k] * std::exp(lnpk[k]));
-    }
-
-    grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim);
-}
-

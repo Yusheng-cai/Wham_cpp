@@ -1,8 +1,8 @@
+#pragma once
 #include "Uwham.h"
+#include "Wham.h"
 #include "tools/CommonTypes.h"
 #include "LBFGS/LBFGS.h"
-#include "Eigen/Dense"
-#include "Eigen/Core"
 
 #include <vector>
 #include <string>
@@ -25,9 +25,6 @@ class UwhamNLL
 
         Real operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad);
 
-        void Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N, Eigen::VectorXd& grad);
-        std::vector<Real> calculatelnWi(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
-    
     private:
         Matrix<Real>& BUki_;
         std::vector<Real>& N_;
