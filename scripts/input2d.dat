@@ -1,0 +1,103 @@
+timeseries = {
+	path = nstar_-5.0
+	columns = [ 2 3 ] 
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_0.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_5.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_10.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_15.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_20.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = nstar_25.0
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+timeseries = {
+	path = unbiased
+	columns = [ 2 3 ]
+	skipfrombeginning = 500
+}
+
+
+bias = {
+	xstar = [ -5.0 0 ] 
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 0.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 5.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 10.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 15.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 20.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 25.0 0 ]
+	kappa = [ 0.98 0 ]
+}
+
+bias = {
+	xstar = [ 0.0 0 ]
+	kappa = [ 0.0 0 ]
+}
+
+wham = {
+	type = Uwham
+	strategy = adaptive
+	bins = {
+		dimension = 1
+		range = [ 0 35 ]
+		numbins = 35
+	}
+	bins = {
+		dimension = 2
+		range = [ 0 35 ]
+		numbins = 35
+	}
+}
