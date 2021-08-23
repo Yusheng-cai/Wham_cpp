@@ -39,6 +39,6 @@ add_executable(Wham main.cpp)
 
 target_include_directories(Wham PUBLIC ${CMAKE_SOURCE_DIR})
 
-target_link_libraries(Wham PUBLIC src tools parallel)
+target_link_libraries(Wham PUBLIC WHAMsrc WHAMtools WHAMparallel)
 
 install(TARGETS Wham DESTINATION bin) 
