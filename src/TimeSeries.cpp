@@ -48,7 +48,6 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
         index ++;
     }
 
-    findMean(); 
 }
 
 void TimeSeries::findMean()

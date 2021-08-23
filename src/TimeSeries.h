@@ -9,6 +9,7 @@
 #include <array>
 #include <string>
 #include <algorithm>
+#include <chrono>
 
 struct TimeSeriesInputPack
 {
