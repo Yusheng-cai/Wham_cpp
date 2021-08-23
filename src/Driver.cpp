@@ -14,7 +14,6 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
         TimeSeriesInputPack input = { const_cast<ParameterPack&>(*TsPacks[i]), abspath};
         VectorTimeSeries_.push_back(TimeSeries(input));
     }
-
     InitializeWham(pack);
 }
 

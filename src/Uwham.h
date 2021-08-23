@@ -11,6 +11,7 @@
 #include <array>
 #include <memory>
 #include <iostream>
+#include <chrono>
 
 class Uwham:public Wham
 {
