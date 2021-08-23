@@ -1,13 +1,13 @@
-add_library(tools SHARED)
+add_library(WHAMtools SHARED)
 
-target_sources(tools PRIVATE
+target_sources(WHAMtools PRIVATE
     "RandomNumber.cpp"
     "InputParser.cpp"
     "CommandLineArguments.cpp"
     "FileSystem.cpp"
 )
 
-set(TOOLS_HEADER
+set(WHAMTOOLS_HEADER
     "Assert.h"
     "CommonTypes.h"
     "GenericFactory.h"
@@ -18,7 +18,7 @@ set(TOOLS_HEADER
     "FileSystem.h"
 )
 
-target_include_directories(tools
+target_include_directories(WHAMtools
                         PUBLIC 
                         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
                         $<INSTALL_INTERFACE:${PROJECT_BINARY_DIR}/include>
@@ -27,7 +27,7 @@ target_include_directories(tools
 
 
 include(InstallLibraryWithStandardSetup)
-InstallLibraryWithStandardSetup(tools 
-    INCLUDE_SUBDIR tools
-    INCLUDES ${TOOLS_HEADER})
+InstallLibraryWithStandardSetup(WHAMtools 
+    INCLUDE_SUBDIR WHAMtools
+    INCLUDES ${WHAMTOOLS_HEADER})
 
