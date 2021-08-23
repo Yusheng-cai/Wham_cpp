@@ -9,6 +9,7 @@ UwhamAdaptiveMethods::UwhamAdaptiveMethods(UwhamStrategyInput& input)
 :UWhamCalculationStrategy(input)
 {
     input.pack.ReadNumber("tolerance",ParameterPack::KeyType::Optional, tolerance_);
+    input.pack.ReadNumber("printevery", ParameterPack::KeyType::Optional,print_every_);
 }
 
 void UwhamAdaptiveMethods::calculate()
@@ -29,6 +30,7 @@ void UwhamAdaptiveMethods::calculate()
     bool converged = false;
 
     Real err = 0.0;
+    int step = 1;
 
     while ( ! converged)
     {
@@ -86,6 +88,13 @@ void UwhamAdaptiveMethods::calculate()
         {
             err = calculateError(fnr_, fk_);
             fk_.assign(fnr_.begin(), fnr_.end());
+        }
+
+        step++;
+
+        if ((print_every_ != -1) && (step % print_every_==0)) 
+        {
+            std::cout << "The error at step " << step << " is " << err << std::endl;
         }
 
         if (err < tolerance_)
