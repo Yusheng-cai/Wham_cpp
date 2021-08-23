@@ -1,6 +1,6 @@
-add_library(src SHARED)
+add_library(WHAMsrc SHARED)
 
-target_sources(src PRIVATE
+target_sources(WHAMsrc PRIVATE
     "DataFileParser.cpp"
     "TimeSeries.cpp"
     "Wham.cpp"
@@ -14,7 +14,7 @@ target_sources(src PRIVATE
     "Bin.cpp"
 )
 
-set(src_HEADER
+set(WHAMsrc_HEADER
     "DataFileParser.h"
     "TimeSeries.h"
     "Wham.h"
@@ -28,15 +28,15 @@ set(src_HEADER
     "Bin.h"
 )
 
-target_include_directories(src
+target_include_directories(WHAMsrc
                         PUBLIC 
                         $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>
                         $<INSTALL_INTERFACE:${PROJECT_BINARY_DIR}/include>
 )
 
-target_link_libraries(src PUBLIC tools parallel)
+target_link_libraries(WHAMsrc PUBLIC WHAMtools WHAMparallel)
 
 include(InstallLibraryWithStandardSetup)
-InstallLibraryWithStandardSetup(src 
-    INCLUDE_SUBDIR src
-    INCLUDES ${src_HEADER})
+InstallLibraryWithStandardSetup(WHAMsrc 
+    INCLUDE_SUBDIR WHAMsrc
+    INCLUDES ${WHAMsrc_HEADER})
