@@ -130,6 +130,7 @@ void Uwham::calculate()
             // User input is 1 based
             int dim = Bins_[j].getDimension() - 1;
 
+            // If this data point is out of range for one of the bins, it is out of range, so we break
             if (! Bins_[j].isInRange(xi_[i][dim]))
             {
                 isInRange = false;
