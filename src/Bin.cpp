@@ -18,7 +18,7 @@ int Bin::findBin(Real x)
 
 bool Bin::isInRange(Real data)
 {
-    if (data >= range_[0] && data <= range_[1])
+    if (data >= range_[0] && data < range_[1])
     {
         return true;
     }
