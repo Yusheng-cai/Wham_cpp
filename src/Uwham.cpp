@@ -189,7 +189,12 @@ void Uwham::printOutput()
         pjiFileofs_ << "#";
         for (int i=0;i<Bins_.size();i++)
         {
-            pjiFileofs_ << Bins_[i].getDimension() << "\t";
+            pjiFileofs_ << "Position" << Bins_[i].getDimension() << "\t";
+        }
+
+        for (int i=0;i<Bins_.size();i++)
+        {
+            pjiFileofs_ << "Index" << Bins_[i].getDimension() << "\t";
         }
         pjiFileofs_ << "pji\tF";
         pjiFileofs_ << "\n";
@@ -201,6 +206,11 @@ void Uwham::printOutput()
             {
                 Real pos = Bins_[i].getLocationOfBin(index[i]);
                 pjiFileofs_ << pos << " ";
+            }
+
+            for (int i=0;i<Bins_.size();i++)
+            {
+                pjiFileofs_ << index[i] << " ";
             }
             pjiFileofs_ << it -> second << " ";
             pjiFileofs_ << (-1.0)*(it -> second) << "\n"; 
