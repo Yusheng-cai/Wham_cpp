@@ -44,6 +44,9 @@ class Uwham:public Wham
         std::string pjiFileOutput_;
         std::ofstream pjiFileofs_;
 
+        std::string lnwjiOutput_;
+        std::ofstream lnwjiFileofs_;
+
         int dimension_;
 
         std::vector<Bin> Bins_;

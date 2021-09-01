@@ -74,6 +74,12 @@ Uwham::Uwham(const WhamInput& input)
     {
         OpenFile(pjiFileofs_, pjiFileOutput_);
     }
+
+    bool readlnwji = whamPack -> ReadString("lnwjiOutput", ParameterPack::KeyType::Optional, lnwjiOutput_);
+    if (readlnwji)
+    {
+        OpenFile(lnwjiFileofs_, lnwjiOutput_);
+    }
 }
 
 void Uwham::OpenFile(std::ofstream& ofs, std::string& name)
@@ -216,5 +222,17 @@ void Uwham::printOutput()
             pjiFileofs_ << (-1.0)*(it -> second) << "\n"; 
         }
         pjiFileofs_.close();
+    }
+
+    if (lnwjiFileofs_.is_open())
+    {
+        const auto& lnwji = strat_ -> getlnwji_();
+
+        for (int i=0;i<lnwji.size();i++)
+        {
+            lnwjiFileofs_ << lnwji[i] << std::endl;
+        }
+
+        lnwjiFileofs_.close();
     }
 }
