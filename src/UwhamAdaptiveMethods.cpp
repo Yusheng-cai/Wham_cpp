@@ -104,6 +104,15 @@ void UwhamAdaptiveMethods::calculate()
     }
 
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
+
+    // need to reweigth lnwji
+    Real f = -1.0*WhamTools::LogSumExp(lnwji_, ones);
+
+    #pragma omp parallel for 
+    for (int i=0;i<lnwji_.size();i++)
+    {
+        lnwji_[i] = f + lnwji_[i];
+    }
 }
 
 UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)
