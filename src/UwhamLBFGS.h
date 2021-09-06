@@ -44,4 +44,8 @@ class UwhamLBFGS : public UWhamCalculationStrategy
     
     private:
         NLLptr NLLeq_;
+
+        Real epsilon_ = 1e-6;
+
+        int max_iterations_ = 100;
 };

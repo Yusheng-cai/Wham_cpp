@@ -8,6 +8,9 @@ namespace UwhamCalculationStrategyRegistry
 UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
 :UWhamCalculationStrategy(input)
 {
+    input.pack.ReadNumber("epsilon", ParameterPack::KeyType::Optional, epsilon_);
+    input.pack.ReadNumber("max_iterations", ParameterPack::KeyType::Optional, max_iterations_);
+
     UwhamNLLInput in = {BUki_, N_};
     NLLeq_ = NLLptr(new UwhamNLL(in));
 }
@@ -15,8 +18,8 @@ UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
 void UwhamLBFGS::calculate()
 {
     LBFGSpp::LBFGSParam<Real> Param;
-    Param.epsilon = 1e-6;
-    Param.max_iterations = 100;
+    Param.epsilon = epsilon_;
+    Param.max_iterations = max_iterations_;
 
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
