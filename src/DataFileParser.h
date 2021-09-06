@@ -16,6 +16,7 @@ class DataFileParser
         void ParseFile(std::string& name, std::vector<std::vector<T>>& input);
     
     private:
+        std::vector<std::string> comment_str = { "#", "@" };
 };
 
 template<typename T>
@@ -33,24 +34,34 @@ void DataFileParser::ParseFile(std::string& name, std::vector<std::vector<T>>& i
 
     while (std::getline(file, sentence))
     {
-        // Find the comment symbol
-        int found = sentence.find_first_of("#");
-
-        if (! sentence.empty() && found == std::string::npos)
+        // see if the line is empty
+        if ( sentence.empty())
         {
-            T num;
-            std::vector<T> vec;
-
-            ss.str(sentence);
-            while (ss >> num)
-            {
-                vec.push_back(num);
-            }
-
-            input.push_back(vec);
-
-            ss.clear();
+            continue;
         }
+
+        // Find the comment symbol
+        for (int i=0;i<comment_str.size();i++)
+        {
+            int found = sentence.find_first_of(comment_str[i]);
+            if (! found == std::string::npos)
+            {
+                continue;
+            }
+        }
+
+        T num;
+        std::vector<T> vec;
+
+        ss.str(sentence);
+        while (ss >> num)
+        {
+            vec.push_back(num);
+        }
+
+        input.push_back(vec);
+
+        ss.clear();
     }
 
     file.close();
