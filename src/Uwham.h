@@ -7,6 +7,7 @@
 #include "UwhamCalculationStrategy.h"
 
 #include <vector>
+#include <iomanip>
 #include <map>
 #include <array>
 #include <memory>
@@ -54,4 +55,7 @@ class Uwham:public Wham
         // The lnwji that falls within each of the bins
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
         std::map<std::vector<int>, Real> MapBinIndexToWji_;
+
+        // precision of the output
+        int precision_=3;
 };

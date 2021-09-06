@@ -80,6 +80,8 @@ Uwham::Uwham(const WhamInput& input)
     {
         OpenFile(lnwjiFileofs_, lnwjiOutput_);
     }
+
+    whamPack -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
 }
 
 void Uwham::OpenFile(std::ofstream& ofs, std::string& name)
@@ -181,6 +183,7 @@ void Uwham::printOutput()
     if (NormalizationFileofs_.is_open())
     {
         int Nsim = BUki_.getNR();
+        NormalizationFileofs_ << std::fixed << std::setprecision(precision_);
         NormalizationFileofs_ << "# normalization constants" << "\n";
         for (int i=0;i<Nsim;i++)
         {
@@ -192,6 +195,7 @@ void Uwham::printOutput()
 
     if (pjiFileofs_.is_open())
     {
+        pjiFileofs_ << std::fixed << std::setprecision(precision_);
         pjiFileofs_ << "#";
         for (int i=0;i<Bins_.size();i++)
         {
