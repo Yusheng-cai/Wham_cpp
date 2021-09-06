@@ -41,13 +41,20 @@ void DataFileParser::ParseFile(std::string& name, std::vector<std::vector<T>>& i
         }
 
         // Find the comment symbol
+        bool comment_ = false;
         for (int i=0;i<comment_str.size();i++)
         {
             int found = sentence.find_first_of(comment_str[i]);
-            if (! found == std::string::npos)
+            if (! (found == std::string::npos))
             {
-                continue;
+                comment_ = true;
+                break;
             }
+        }
+
+        if (comment_)
+        {
+            continue;
         }
 
         T num;

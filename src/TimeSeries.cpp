@@ -29,20 +29,21 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
 
     // Have the parser parse the inputted file
     parser.ParseFile(path_, Totaldata_);
-
+    
     // Find out the total size of the data
     size_ = Totaldata_.size() - skipFromBeginning_;
+    std::cout << "Total data size = " << Totaldata_.size() << std::endl;
 
     // Resize the chosen data accordingly
     chosen_data_.resize(size_);
     int index=0;
-    for (auto it = Totaldata_.begin()+skipFromBeginning_;it != Totaldata_.end();it++)
+    for (int i = skipFromBeginning_;i < Totaldata_.size();i++)
     {
         std::vector<Real> temp;
         temp.resize(dimension_);
-        for (int i=0;i<dimension_;i++)
+        for (int j=0;j<dimension_;j++)
         {
-            temp[i] = (*it)[columns_[i]-1];
+            temp[j] = Totaldata_[i][columns_[j]-1];
         }
         chosen_data_[index] = temp;
         index ++;
