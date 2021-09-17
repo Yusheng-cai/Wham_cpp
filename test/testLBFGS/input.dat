@@ -48,41 +48,49 @@ timeseries = {
 
 
 bias = {
+	dimension = 1
 	xstar = [ -5.0 ] 
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 0.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 5.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 10.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 15.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 20.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 25.0 ]
 	kappa = [ 0.98 ]
 }
 
 bias = {
+	dimension = 1
 	xstar = [ 0.0 ]
 	kappa = [ 0.0 ]
 }
