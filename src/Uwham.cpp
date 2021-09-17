@@ -14,9 +14,9 @@ Uwham::Uwham(const WhamInput& input)
 
     for (int i=0;i<VectorTimeSeries_.size();i++)
     {
-        xi_.insert(xi_.end(),VectorTimeSeries_[i].begin(), VectorTimeSeries_[i].end());
-        N_[i] = VectorTimeSeries_[i].getSize(); 
-        dimensions_[i] = VectorTimeSeries_[i].getDimension();
+        xi_.insert(xi_.end(),VectorTimeSeries_[i]->begin(), VectorTimeSeries_[i]->end());
+        N_[i] = VectorTimeSeries_[i]->getSize(); 
+        dimensions_[i] = VectorTimeSeries_[i]->getDimension();
 
         Ntot_ += N_[i];
     }

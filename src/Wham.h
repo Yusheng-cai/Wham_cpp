@@ -11,16 +11,19 @@
 #include <array>
 #include <string>
 #include <chrono>
+#include <memory>
 
 struct WhamInput
 {
+    using tsptr = std::shared_ptr<TimeSeries>;
     ParameterPack& pack_;
-    std::vector<TimeSeries>& VectorTimeSeries_;
+    std::vector<tsptr>& VectorTimeSeries_;
 };
 
 class Wham
 {
     public:
+        using tsptr= std::shared_ptr<TimeSeries>;
         using Real = CommonTypes::Real;
 
         Wham(const WhamInput& input);
@@ -30,7 +33,7 @@ class Wham
         virtual void printOutput() {};
     
     protected:
-        std::vector<TimeSeries>& VectorTimeSeries_;
+        std::vector<tsptr>& VectorTimeSeries_;
 
         std::vector<Real> N_;
 };
