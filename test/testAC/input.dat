@@ -1,0 +1,6 @@
+timeseries = {
+	path = nstar_25.0
+	columns = [ 3 ] 
+	skipfrombeginning = 500
+	AC_dimension = [ 1 ]
+}
