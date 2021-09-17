@@ -9,9 +9,18 @@ namespace BiasRegistry
 SimpleBias::SimpleBias(const ParameterPack& pack)
 :Bias(pack)
 {
+    // read in dimension
+    pack.ReadNumber("dimension", ParameterPack::KeyType::Required, dimension_);
+    kappa_.resize(dimension_, 0.0);
+    phi_.resize(dimension_,0.0);
+
+    // Read in kappa and phi
     bool kapparead = pack.ReadVectorNumber("kappa", ParameterPack::KeyType::Optional, kappa_);
-    dimension_ = kappa_.size();
+    bool phiread   = pack.ReadVectorNumber("phi", ParameterPack::KeyType::Optional, phi_);
+
     hkappa_.resize(dimension_);
+    ASSERT((kappa_.size() == dimension_), "The size of the input kappa does not match dimension");
+    ASSERT((phi_.size() == dimension_), "The size of the phi input does not match dimension.");
 
     for (int i=0;i<dimension_;i++)
     {
@@ -28,13 +37,14 @@ SimpleBias::SimpleBias(const ParameterPack& pack)
 SimpleBias::Real SimpleBias::calculate(const std::vector<Real>& x)
 {
     int size = x.size();
-    ASSERT((x.size() == dimension_), "The dimension of the bias=" << xstar_.size() << " and does not \
+    ASSERT((size == dimension_), "The dimension of the bias=" << xstar_.size() << " and does not \
     the input data size = " << x.size());
 
     Real energy_ = 0.0;
     for (int i=0;i<size;i++)
     {
         energy_ += hkappa_[i]*std::pow(x[i] - xstar_[i],2.0);
+        energy_ += phi_[i] * x[i];
     }
 
     return energy_;
