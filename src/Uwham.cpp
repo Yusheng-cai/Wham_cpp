@@ -122,7 +122,7 @@ void Uwham::calculate()
     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Calculation took " << diff.count() << std::endl;
 
-    const auto& lnwji = strat_ -> getlnwji_();
+    const auto& lnwji = strat_ -> getlnwji_(); 
 
     for (int i=0;i<xi_.size();i++)
     {
@@ -144,7 +144,7 @@ void Uwham::calculate()
                 isInRange = false;
                 break;
             }
-
+        
             int index = Bins_[j].findBin(xi_[i][dim]);
             BinIndex_[j] = index;
         }
@@ -152,16 +152,23 @@ void Uwham::calculate()
         if (isInRange)
         {
             auto it = MapBinIndexToVectorlnwji_.find(BinIndex_);
+            auto it2= MapBinIndexTolnwjiIndex_.find(BinIndex_);
 
             if ( it == MapBinIndexToVectorlnwji_.end())
             {
                 std::vector<Real> lnwji_vec_;
+                std::vector<int> lnwjiIndex_vec_;
+
                 lnwji_vec_.push_back(lnwji[i]);
+                lnwjiIndex_vec_.push_back(i);
+
                 MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex_, lnwji_vec_));
+                MapBinIndexTolnwjiIndex_.insert(std::make_pair(BinIndex_, lnwjiIndex_vec_));
             }
             else
             {
                 it -> second.push_back(lnwji[i]);
+                it2 -> second.push_back(i);
             }
         }
     }

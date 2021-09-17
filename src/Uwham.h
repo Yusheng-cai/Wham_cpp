@@ -54,6 +54,7 @@ class Uwham:public Wham
 
         // The lnwji that falls within each of the bins
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
+        std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
         std::map<std::vector<int>, Real> MapBinIndexToWji_;
 
         // precision of the output
