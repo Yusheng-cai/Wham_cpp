@@ -4,12 +4,16 @@
 #include "tools/FileSystem.h"
 #include "DataFileParser.h"
 #include "Array.h"
+#include "FFT.h"
 
 #include <vector>
 #include <array>
 #include <string>
 #include <algorithm>
 #include <chrono>
+#include <complex>
+#include <cmath>
+
 
 struct TimeSeriesInputPack
 {
@@ -21,15 +25,20 @@ class TimeSeries
 {
     public:
         using Real = CommonTypes::Real;
+        using ComplexReal = std::complex<Real>;
         using Iterator = std::vector<std::vector<Real>>::iterator;
         using cIterator = std::vector<std::vector<Real>>::const_iterator;
 
         TimeSeries(const TimeSeriesInputPack& input);
         ~TimeSeries(){};
 
+
         // getters
         int getDimension() const {return dimension_;}
         int getSize() const {return size_;}
+
+        void calculate();
+        void calculateAutoCorrelation(const std::vector<Real>& data, std::vector<Real>& AC);
  
         // find the mean and variance of the TimeSeries
         void findMean();
@@ -69,4 +78,7 @@ class TimeSeries
 
         // Find mean for each dimension of the timeseries
         std::vector<Real> Mean_, Variance_;
+
+        // read autocorrelation dimensions
+        std::vector<int> AC_dimensions_;
 };

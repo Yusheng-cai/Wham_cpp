@@ -5,6 +5,7 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     input.pack_.ReadString("path", ParameterPack::KeyType::Required, path_);
     input.pack_.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
     input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
+    input.pack_.ReadVectorNumber("AC_dimension", ParameterPack::KeyType::Optional,AC_dimensions_);
 
 
     if (input.abspath_.empty())
@@ -32,7 +33,7 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     
     // Find out the total size of the data
     size_ = Totaldata_.size() - skipFromBeginning_;
-    std::cout << "Total data size = " << Totaldata_.size() << std::endl;
+    std::cout << "Reading data from file " <<path_ << " data size = " << Totaldata_.size() << std::endl;
 
     // Resize the chosen data accordingly
     chosen_data_.resize(size_);
@@ -79,3 +80,73 @@ void TimeSeries::findVar()
 {
 
 }
+
+void TimeSeries::calculate()
+{
+    if (AC_dimensions_.size() > 0)
+    {
+        for (int i=0;i<AC_dimensions_.size();i++)
+        {
+            int dim = AC_dimensions_[i] - 1;
+
+            // to calculate autocorrelation, we must split the data up
+            std::vector<Real> data_(chosen_data_.size()*2,0.0);
+            int datasize = chosen_data_.size();
+            int hdatasize = datasize/2;
+            int otherhalf = datasize - hdatasize;
+
+            for (int j=0;j<hdatasize;j++)
+            {
+                int indexCS = datasize - hdatasize + j - 1;
+                data_[j] = chosen_data_[indexCS][dim];
+            }
+
+            for (int j=0;j<otherhalf;j++)
+            {
+                int indexd = hdatasize + datasize + j - 1;
+                data_[indexd] = chosen_data_[j][dim]; 
+            }
+
+            std::vector<Real> AC;
+            calculateAutoCorrelation(data_,AC);
+
+            for (int i=0;i<AC.size();i++)
+            {
+                std::cout << AC[i] << std::endl;
+            }
+        }
+    }
+}
+
+void TimeSeries::calculateAutoCorrelation(const std::vector<Real>& data, std::vector<Real>& AC)
+{
+    int datasize = data.size();
+
+    std::vector<ComplexReal> fftComplex_;
+    std::vector<ComplexReal> input_(datasize);
+
+    for (int i=0;i<datasize;i++)
+    {
+        ComplexReal number(data[i],0);
+        input_[i] = number;
+    }
+
+    FFT::fft(input_, input_);
+
+    std::vector<ComplexReal> squared(datasize);
+    std::cout << "Made squared" << std::endl;
+    for (int i=0;i<datasize;i++)
+    {
+        squared[i] = std::pow(fftComplex_[i].real(),2.0) + std::pow(fftComplex_[i].imag(),2.0);
+    }
+    std::cout << "Done squared" << std::endl;
+
+    std::vector<ComplexReal> output_;
+    FFT::fft(squared, output_);
+
+    for (int i=0;i<datasize;i++)
+    {
+        AC[i] = output_[i].real()/datasize;
+    }
+}
+
