@@ -6,6 +6,12 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     input.pack_.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
     input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
     input.pack_.ReadVectorNumber("AC_dimension", ParameterPack::KeyType::Optional,AC_dimensions_);
+    bool output = input.pack_.ReadString("output", ParameterPack::KeyType::Optional, OutputName_);
+
+    if (output)
+    {
+        ofs_.open(OutputName_);
+    }
 
 
     if (input.abspath_.empty())
@@ -50,16 +56,35 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
         index ++;
     }
 
+    // find the mean of the data set
+    findMean();
+
+    // find the variance of the data size
+    findVar();
+
+    // normalize the data 
+    findNormalizedData();
+}
+
+void TimeSeries::findNormalizedData()
+{
+    std::vector<Real> zeros(dimension_,0.0);
+
+    int Numdata = chosen_data_.size();
+    normalized_Data_.resize(Numdata, zeros);
+
+    for (int i=0;i<Numdata;i++)
+    {
+        for (int j=0;j<dimension_;j++)
+        {
+            normalized_Data_[i][j] = (chosen_data_[i][j] - Mean_[j])/std_[j];
+        }
+    }
 }
 
 void TimeSeries::findMean()
 {
-    Mean_.resize(dimension_);
-
-    for (int i=0;i<dimension_;i++)
-    {
-        Mean_[i] = 0.0;
-    }
+    Mean_.resize(dimension_,0.0);
 
     for (int i=0;i<size_;i++)
     {
@@ -78,7 +103,27 @@ void TimeSeries::findMean()
 
 void TimeSeries::findVar()
 {
+    // find the number of data 
+    int NumData = chosen_data_.size();
 
+    // resize variance 
+    Variance_.resize(dimension_,0.0);
+    std_.resize(dimension_,0.0);
+
+    for (int i=0;i<NumData;i++)
+    {
+        for (int j=0;j<dimension_;j++)
+        {
+            Real diff = chosen_data_[i][j] - Mean_[j];
+            Variance_[j] += std::pow(diff,2);
+        }
+    }
+
+    for (int j=0;j<dimension_;j++)
+    {
+        Variance_[j] /= NumData;
+        std_[j] = std::sqrt(Variance_[j]);
+    }
 }
 
 void TimeSeries::calculate()
@@ -94,26 +139,21 @@ void TimeSeries::calculate()
             int datasize = chosen_data_.size();
             int hdatasize = datasize/2;
             int otherhalf = datasize - hdatasize;
+            
+            for (int j=0;j<otherhalf;j++)
+            {
+                int indexCS = hdatasize + j;
+                data_[j] = normalized_Data_[indexCS][dim];
+            }
 
             for (int j=0;j<hdatasize;j++)
             {
-                int indexCS = datasize - hdatasize + j - 1;
-                data_[j] = chosen_data_[indexCS][dim];
+                int indexd = hdatasize + datasize + j + 1;
+                data_[indexd] = normalized_Data_[j][dim]; 
             }
 
-            for (int j=0;j<otherhalf;j++)
-            {
-                int indexd = hdatasize + datasize + j - 1;
-                data_[indexd] = chosen_data_[j][dim]; 
-            }
 
-            std::vector<Real> AC;
-            calculateAutoCorrelation(data_,AC);
-
-            for (int i=0;i<AC.size();i++)
-            {
-                std::cout << AC[i] << std::endl;
-            }
+            calculateAutoCorrelation(data_,AC_);
         }
     }
 }
@@ -121,6 +161,8 @@ void TimeSeries::calculate()
 void TimeSeries::calculateAutoCorrelation(const std::vector<Real>& data, std::vector<Real>& AC)
 {
     int datasize = data.size();
+    AC.clear();
+    AC.resize(datasize,0.0);
 
     std::vector<ComplexReal> fftComplex_;
     std::vector<ComplexReal> input_(datasize);
@@ -131,22 +173,36 @@ void TimeSeries::calculateAutoCorrelation(const std::vector<Real>& data, std::ve
         input_[i] = number;
     }
 
-    FFT::fft(input_, input_);
+    FFT::fft(input_, fftComplex_);
 
     std::vector<ComplexReal> squared(datasize);
-    std::cout << "Made squared" << std::endl;
     for (int i=0;i<datasize;i++)
     {
-        squared[i] = std::pow(fftComplex_[i].real(),2.0) + std::pow(fftComplex_[i].imag(),2.0);
+        Real square = std::pow(fftComplex_[i].real(),2.0) + std::pow(fftComplex_[i].imag(),2.0);
+        ComplexReal number(square,0.0);
+        squared[i] = number;
     }
-    std::cout << "Done squared" << std::endl;
 
     std::vector<ComplexReal> output_;
-    FFT::fft(squared, output_);
+    FFT::ifft(squared, output_);
 
     for (int i=0;i<datasize;i++)
     {
-        AC[i] = output_[i].real()/datasize;
+        AC[i] = 2*output_[i].real()/datasize;
     }
 }
 
+void TimeSeries::printOutput()
+{
+    if (ofs_.is_open())
+    {
+        int datasize = chosen_data_.size();
+
+        for (int i=0;i<datasize;i++)
+        {
+            ofs_ << AC_[i] << "\n";
+        }
+
+        ofs_.close();
+    }
+}

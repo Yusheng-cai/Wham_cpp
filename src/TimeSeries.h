@@ -13,6 +13,7 @@
 #include <chrono>
 #include <complex>
 #include <cmath>
+#include <iostream>
 
 
 struct TimeSeriesInputPack
@@ -43,6 +44,12 @@ class TimeSeries
         // find the mean and variance of the TimeSeries
         void findMean();
         void findVar();
+
+        // find normalized data once mean and variance has been found  
+        void findNormalizedData();
+
+        // print output
+        void printOutput();
 
         // get the data raw pointer underneath
         std::vector<Real>* data() {return chosen_data_.data();}
@@ -77,8 +84,16 @@ class TimeSeries
         int larger_col_;
 
         // Find mean for each dimension of the timeseries
-        std::vector<Real> Mean_, Variance_;
+        std::vector<Real> Mean_, Variance_, std_;
 
         // read autocorrelation dimensions
         std::vector<int> AC_dimensions_;
+
+        // normalized data 
+        std::vector<std::vector<Real>> normalized_Data_;
+
+        std::string OutputName_;
+        std::ofstream ofs_;
+
+        std::vector<Real> AC_;
 };
