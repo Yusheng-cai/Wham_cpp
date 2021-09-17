@@ -12,6 +12,7 @@ class Driver
 {
     public:
         using Whamptr = std::unique_ptr<Wham>;
+        using tsptr   = std::shared_ptr<TimeSeries>;
 
         Driver(const ParameterPack& pack, const CommandLineArguments& cmd);
 
@@ -21,5 +22,5 @@ class Driver
 
     private:
         std::vector<Whamptr> VectorWhamCalc_;
-        std::vector<TimeSeries> VectorTimeSeries_;
+        std::vector<tsptr> VectorTimeSeries_;
 };

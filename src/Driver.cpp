@@ -12,7 +12,7 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
     for (int i= 0 ;i < TsPacks.size();i++)
     {
         TimeSeriesInputPack input = { const_cast<ParameterPack&>(*TsPacks[i]), abspath};
-        VectorTimeSeries_.push_back(TimeSeries(input));
+        VectorTimeSeries_.push_back(tsptr(new TimeSeries(input)));
     }
     InitializeWham(pack);
 }
@@ -43,7 +43,7 @@ void Driver::calculate()
 
     for (int i=0;i<VectorTimeSeries_.size();i++)
     {
-        VectorTimeSeries_[i].calculate();
+        VectorTimeSeries_[i] -> calculate();
     }
 }
 
@@ -52,5 +52,10 @@ void Driver::printOutput()
     for (int i=0;i<VectorWhamCalc_.size();i++)
     {
         VectorWhamCalc_[i] -> printOutput();
+    }
+
+    for (int i=0;i<VectorTimeSeries_.size();i++)
+    {
+        VectorTimeSeries_[i] -> printOutput();
     }
 }
