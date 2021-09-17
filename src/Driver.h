@@ -20,7 +20,6 @@ class Driver
         void printOutput();
 
     private:
-        Whamptr whamCalc_;
-
+        std::vector<Whamptr> VectorWhamCalc_;
         std::vector<TimeSeries> VectorTimeSeries_;
 };
