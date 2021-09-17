@@ -19,21 +19,38 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
 
 void Driver::InitializeWham(const ParameterPack& pack)
 {
-    auto whamPack = pack.findParamPack("wham", ParameterPack::KeyType::Required);
+    auto whamPack = pack.findParamPacks("wham", ParameterPack::KeyType::Optional);
 
-    std::string whamType;
-    whamPack->ReadString("type", ParameterPack::KeyType::Required,whamType);
+    if (whamPack.size() != 0)
+    {
+        for (int i=0;i<whamPack.size();i++)
+        {
+            std::string whamType;
+            whamPack[i]->ReadString("type", ParameterPack::KeyType::Required,whamType);
 
-    WhamInput input = {const_cast<ParameterPack&>(pack), VectorTimeSeries_};
-    whamCalc_ = Whamptr(WhamRegistry::Factory::instance().create(whamType, input));
+            WhamInput input = {const_cast<ParameterPack&>(pack), VectorTimeSeries_};
+            VectorWhamCalc_.push_back(Whamptr(WhamRegistry::Factory::instance().create(whamType, input)));
+        }
+    }
 }
-
+    
 void Driver::calculate()
 {
-    whamCalc_ -> calculate();
+    for (int i=0;i<VectorWhamCalc_.size();i++)
+    {
+        VectorWhamCalc_[i] -> calculate();
+    }
+
+    for (int i=0;i<VectorTimeSeries_.size();i++)
+    {
+        VectorTimeSeries_[i].calculate();
+    }
 }
 
 void Driver::printOutput()
 {
-    whamCalc_ -> printOutput();
+    for (int i=0;i<VectorWhamCalc_.size();i++)
+    {
+        VectorWhamCalc_[i] -> printOutput();
+    }
 }
