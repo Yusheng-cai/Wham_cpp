@@ -22,6 +22,12 @@ if (OPENMP_FOUND)
     set (CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 endif()
 
+# Requires FFTW3
+find_package(FFTW3)
+if (FFTW3_FOUND)
+  message(STATUS "FFTW3 library: ${FFTW3_LIBRARIES}")
+endif()
+
 # install the libraries as well as the executables in lib & bin folder in build/
 # This has to be after project is defined
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
