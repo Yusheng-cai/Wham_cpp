@@ -12,6 +12,7 @@ target_sources(WHAMsrc PRIVATE
     "Driver.cpp"
     "UwhamLBFGS.cpp"
     "Bin.cpp"
+    "FFT.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -26,6 +27,7 @@ set(WHAMsrc_HEADER
     "Driver.h"
     "UwhamLBFGS.h"
     "Bin.h"
+    "FFT.h"
 )
 
 target_include_directories(WHAMsrc
@@ -34,7 +36,9 @@ target_include_directories(WHAMsrc
                         $<INSTALL_INTERFACE:${PROJECT_BINARY_DIR}/include>
 )
 
-target_link_libraries(WHAMsrc PUBLIC WHAMtools WHAMparallel)
+target_include_directories(WHAMsrc PUBLIC "${FFTW3_INCLUDE_DIRS}")
+message("In src, ${FFTW3_LIBRARIES}")
+target_link_libraries(WHAMsrc PUBLIC WHAMtools WHAMparallel ${FFTW3_LIBRARIES})
 
 include(InstallLibraryWithStandardSetup)
 InstallLibraryWithStandardSetup(WHAMsrc 
