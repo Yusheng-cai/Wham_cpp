@@ -28,6 +28,7 @@ int main(int argc, char** argv)
     Driver d(pack,cmd);
 
     d.calculate();
+    d.finishCalculate();
     d.printOutput();
  
     return 0;
