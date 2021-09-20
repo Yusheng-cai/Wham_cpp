@@ -32,7 +32,7 @@ foreach(THREADS IN LISTS OMP_THREADS)
         set(TEST_SCRIPT "${TEST_NAME}/input.dat")
         set(TEST_DIR "${CMAKE_CURRENT_LIST_DIR}/${TEST_NAME}")
         set(TEST_CMD ${BASH} ${TEST_RUN_SCRIPT} -p ${PROGRAM_PATH} -d ${TEST_DIR} 
-        -o ${CMAKE_CURRENT_BINARY_DIR}/pji.out -o ${CMAKE_CURRENT_BINARY_DIR}/norm.out -r pjiref.out -r normref.out
+        -o ${CMAKE_CURRENT_BINARY_DIR}/pji.out -o ${CMAKE_CURRENT_BINARY_DIR}/norm.out -o ${CMAKE_CURRENT_BINARY_DIR}/h.out -r pjiref.out -r normref.out -r href.out 
              -i ${CMAKE_CURRENT_LIST_DIR}/${TEST_SCRIPT} -n ${THREADS} -a ${TESTDATA})
 
         # set working directory to be the directory processed currently
