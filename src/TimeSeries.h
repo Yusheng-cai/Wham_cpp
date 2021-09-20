@@ -8,12 +8,14 @@
 
 #include <vector>
 #include <array>
+#include <map>
 #include <string>
 #include <algorithm>
 #include <chrono>
 #include <complex>
 #include <cmath>
 #include <iostream>
+#include <functional>
 
 
 struct TimeSeriesInputPack
@@ -29,6 +31,8 @@ class TimeSeries
         using ComplexReal = std::complex<Real>;
         using Iterator = std::vector<std::vector<Real>>::iterator;
         using cIterator = std::vector<std::vector<Real>>::const_iterator;
+        using valueFunction = std::function<void(std::string)>;
+        using calcFunction = std::function<void()>;
 
         TimeSeries(const TimeSeriesInputPack& input);
         ~TimeSeries(){};
@@ -36,10 +40,12 @@ class TimeSeries
 
         // getters
         int getDimension() const {return dimension_;}
+
+        // size of the data (number of data)
         int getSize() const {return size_;}
 
         void calculate();
-        void calculateAutoCorrelation(const std::vector<Real>& data, std::vector<Real>& AC);
+        void calculateAutoCorrelation();
  
         // find the mean and variance of the TimeSeries
         void findMean();
@@ -51,12 +57,29 @@ class TimeSeries
         // print output
         void printOutput();
 
+        // register outputs to print
+        void registerOutputFunctions(std::string name, valueFunction printFunction);
+
+        // register calculation to print
+        void registerCalculateFunctions(std::string name, calcFunction calFunc);
+
+        // check if output is Valid
+        void checkOutputValidity();
+
+        // read the chosen data based on user input from the total data 
+        void readChosenData();
+
+        void printAC(std::string name);
+        valueFunction& printOutputFromName(std::string outputName);
+        calcFunction& calculateFromName(std::string calcName);
+
         // get the data raw pointer underneath
         std::vector<Real>* data() {return chosen_data_.data();}
         Iterator begin() {return chosen_data_.begin();}
         Iterator end() {return chosen_data_.end();}
         cIterator cbegin() {return chosen_data_.cbegin();}
         cIterator cend() {return chosen_data_.cend();}
+        std::vector<Real>& operator[](int i) { return chosen_data_[i];}
 
     
     private:
@@ -86,14 +109,19 @@ class TimeSeries
         // Find mean for each dimension of the timeseries
         std::vector<Real> Mean_, Variance_, std_;
 
-        // read autocorrelation dimensions
-        std::vector<int> AC_dimensions_;
+
+        // vector of autocorrelations
+        std::vector<std::vector<Real>> AC_vector_;
 
         // normalized data 
         std::vector<std::vector<Real>> normalized_Data_;
 
-        std::string OutputName_;
-        std::ofstream ofs_;
+        std::vector<std::string> outputNames_;
+        std::vector<std::string> outputFileNames_;
 
-        std::vector<Real> AC_;
+        // Map from name to function
+        std::map<std::string, valueFunction> MapNameToOutput_;
+
+        // Map from name to calculate function
+        std::map<std::string, calcFunction> MapNameToCalculate_;
 };

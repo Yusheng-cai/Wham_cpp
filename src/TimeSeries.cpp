@@ -2,17 +2,18 @@
 
 TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
 {
+    // register output functions
+    registerOutputFunctions("autocorrelation", [this](std::string name) -> void {printAC(name);});
+
+    // register calculate functions
+    registerCalculateFunctions("autocorrelation", [this]() -> void {calculateAutoCorrelation();});
+
     input.pack_.ReadString("path", ParameterPack::KeyType::Required, path_);
     input.pack_.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
     input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
-    input.pack_.ReadVectorNumber("AC_dimension", ParameterPack::KeyType::Optional,AC_dimensions_);
-    bool output = input.pack_.ReadString("output", ParameterPack::KeyType::Optional, OutputName_);
-
-    if (output)
-    {
-        ofs_.open(OutputName_);
-    }
-
+    input.pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional,outputNames_);
+    checkOutputValidity();
+    input.pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, outputFileNames_);
 
     if (input.abspath_.empty())
     {
@@ -34,6 +35,20 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     // find out the dimension of the time series
     dimension_ = columns_.size();
 
+    readChosenData();
+
+    // find the mean of the data set
+    findMean();
+
+    // find the variance of the data size
+    findVar();
+
+    // normalize the data 
+    findNormalizedData();
+}
+
+void TimeSeries::readChosenData()
+{
     // Have the parser parse the inputted file
     parser.ParseFile(path_, Totaldata_);
     
@@ -55,15 +70,6 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
         chosen_data_[index] = temp;
         index ++;
     }
-
-    // find the mean of the data set
-    findMean();
-
-    // find the variance of the data size
-    findVar();
-
-    // normalize the data 
-    findNormalizedData();
 }
 
 void TimeSeries::findNormalizedData()
@@ -128,81 +134,153 @@ void TimeSeries::findVar()
 
 void TimeSeries::calculate()
 {
-    if (AC_dimensions_.size() > 0)
+    for (int i=0;i<outputNames_.size();i++)
     {
-        for (int i=0;i<AC_dimensions_.size();i++)
+        calculateFromName(outputNames_[i])();
+    }
+}
+
+void TimeSeries::calculateAutoCorrelation()
+{
+    // we have an autocorrelation for each dimension
+    AC_vector_.resize(dimension_);
+
+    int N = chosen_data_.size();
+    int N2 = N*2;
+
+    for (int i=0;i<dimension_;i++)
+    {
+        // to calculate autocorrelation, we must split the data up
+        std::vector<Real> data(N2,0.0);
+
+        int hdatasize = N/2;
+        int otherhalf = N - hdatasize;
+
+        // resize the ith dimension AC to be data size large
+        AC_vector_[i].resize(N);
+        
+        for (int j=0;j<otherhalf;j++)
         {
-            int dim = AC_dimensions_[i] - 1;
+            int indexCS = hdatasize + j;
+            data[j] = normalized_Data_[indexCS][i];
+        }
 
-            // to calculate autocorrelation, we must split the data up
-            std::vector<Real> data_(chosen_data_.size()*2,0.0);
-            int datasize = chosen_data_.size();
-            int hdatasize = datasize/2;
-            int otherhalf = datasize - hdatasize;
-            
-            for (int j=0;j<otherhalf;j++)
-            {
-                int indexCS = hdatasize + j;
-                data_[j] = normalized_Data_[indexCS][dim];
-            }
+        for (int j=0;j<hdatasize;j++)
+        {
+            int indexd = hdatasize + N + j + 1;
+            data[indexd] = normalized_Data_[j][i]; 
+        }
 
-            for (int j=0;j<hdatasize;j++)
-            {
-                int indexd = hdatasize + datasize + j + 1;
-                data_[indexd] = normalized_Data_[j][dim]; 
-            }
+        std::vector<ComplexReal> fft;
+        std::vector<ComplexReal> input(N2);
 
+        for (int j=0;j<N2;j++)
+        {
+            ComplexReal number(data[j],0);
+            input[j] = number;
+        }
 
-            calculateAutoCorrelation(data_,AC_);
+        FFT::fft(input, fft);
+
+        std::vector<ComplexReal> squared(N2);
+        for (int j=0;j<N2;j++)
+        {
+            Real square = std::pow(fft[j].real(),2.0) + std::pow(fft[j].imag(),2.0);
+            ComplexReal number(square,0.0);
+            squared[j] = number;
+        }
+
+        std::vector<ComplexReal> ifft;
+        FFT::ifft(squared, ifft);
+
+        for (int j=0;j<N;j++)
+        {
+            AC_vector_[i][j] = ifft[j].real()/N;
         }
     }
 }
 
-void TimeSeries::calculateAutoCorrelation(const std::vector<Real>& data, std::vector<Real>& AC)
+void TimeSeries::checkOutputValidity()
 {
-    int datasize = data.size();
-    AC.clear();
-    AC.resize(datasize,0.0);
-
-    std::vector<ComplexReal> fftComplex_;
-    std::vector<ComplexReal> input_(datasize);
-
-    for (int i=0;i<datasize;i++)
+    if (outputNames_.size() != 0)
     {
-        ComplexReal number(data[i],0);
-        input_[i] = number;
-    }
+        for (int i=0;i<outputNames_.size();i++)
+        {
+            std::string name = outputNames_[i];
+            auto it = MapNameToOutput_.find(name);
 
-    FFT::fft(input_, fftComplex_);
-
-    std::vector<ComplexReal> squared(datasize);
-    for (int i=0;i<datasize;i++)
-    {
-        Real square = std::pow(fftComplex_[i].real(),2.0) + std::pow(fftComplex_[i].imag(),2.0);
-        ComplexReal number(square,0.0);
-        squared[i] = number;
-    }
-
-    std::vector<ComplexReal> output_;
-    FFT::ifft(squared, output_);
-
-    for (int i=0;i<datasize;i++)
-    {
-        AC[i] = 2*output_[i].real()/datasize;
+            ASSERT((it != MapNameToOutput_.end()), "The output with name " << name << " is not found within context of timeseries.");
+        }
     }
 }
 
 void TimeSeries::printOutput()
 {
-    if (ofs_.is_open())
+    for (int i=0;i<outputNames_.size();i++)
     {
-        int datasize = chosen_data_.size();
+        std::string name = outputNames_[i];
 
-        for (int i=0;i<datasize;i++)
-        {
-            ofs_ << AC_[i] << "\n";
-        }
-
-        ofs_.close();
+        printOutputFromName(name)(outputFileNames_[i]);
     }
+}
+
+void TimeSeries::registerOutputFunctions(std::string name, valueFunction function)
+{
+    auto it = MapNameToOutput_.find(name);
+
+    ASSERT((it == MapNameToOutput_.end()), "The output " << name << " already in within Timeseries output.");
+
+    MapNameToOutput_.insert(std::make_pair(name, function));
+}
+
+void TimeSeries::registerCalculateFunctions(std::string name, calcFunction calfunc)
+{
+    auto it = MapNameToCalculate_.find(name);
+    ASSERT((it == MapNameToCalculate_.end()), "The calculation " << name << " already exist within Timeseries.");
+
+    MapNameToCalculate_.insert(std::make_pair(name, calfunc));
+}
+
+TimeSeries::valueFunction& TimeSeries::printOutputFromName(std::string outputName)
+{
+    auto it = MapNameToOutput_.find(outputName);
+
+    ASSERT((it != MapNameToOutput_.end()), "The output " << outputName << " is not registered.");
+
+    return it -> second;
+}
+
+TimeSeries::calcFunction& TimeSeries::calculateFromName(std::string calcName)
+{
+    auto it = MapNameToCalculate_.find(calcName);
+
+    ASSERT((it != MapNameToCalculate_.end()), "The calculation " << calcName << " is not registered.");
+
+    return it -> second;
+}
+
+void TimeSeries::printAC(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+
+    int numData = chosen_data_.size();
+    ofs << "#";
+    for (int i=0;i<dimension_;i++)
+    {
+        ofs <<  i+1 << " ";
+    }
+    ofs << "\n";
+
+    for (int i=0;i<numData;i++)
+    {
+        for (int j=0;j<dimension_;j++)
+        {
+            ofs << AC_vector_[j][i] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
