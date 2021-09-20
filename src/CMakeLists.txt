@@ -13,6 +13,7 @@ target_sources(WHAMsrc PRIVATE
     "UwhamLBFGS.cpp"
     "Bin.cpp"
     "FFT.cpp"
+    "UwhamReweight.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -28,6 +29,7 @@ set(WHAMsrc_HEADER
     "UwhamLBFGS.h"
     "Bin.h"
     "FFT.h"
+    "UwhamReweight.h"
 )
 
 target_include_directories(WHAMsrc
