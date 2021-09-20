@@ -12,6 +12,7 @@ SimpleBias::SimpleBias(const ParameterPack& pack)
     // read in dimension
     pack.ReadNumber("dimension", ParameterPack::KeyType::Required, dimension_);
     kappa_.resize(dimension_, 0.0);
+    xstar_.resize(dimension_,0.0);
     phi_.resize(dimension_,0.0);
 
     // Read in kappa and phi
