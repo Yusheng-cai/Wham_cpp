@@ -32,7 +32,6 @@ class UwhamReweight
         // inputs are the lnwji weights and the xi points
         void calculate();
 
-        void printlnpji(std::string name);
         void printAverages(std::string name);
         void printFE(std::string name);
 
@@ -49,17 +48,8 @@ class UwhamReweight
         Uwham& wham_;
         ParameterPack& pack_;
 
-        // BUji of the bias applied
-        std::vector<std::vector<Real>> BUji_;
-
         // The ones vector used for calculating each of the normalizing factors 
         std::vector<Real> ones_;
-
-        // reweighted pji 
-        std::vector<std::vector<Real>> lnpji_;
-
-        // normalizationg constant 
-        std::vector<Real> Vectorfk_;
 
         // Free energy 
         std::vector<std::vector<Real>> FE_;
