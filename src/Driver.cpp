@@ -47,6 +47,14 @@ void Driver::calculate()
     }
 }
 
+void Driver::finishCalculate()
+{
+    for (int i=0;i<VectorWhamCalc_.size();i++)
+    {
+        VectorWhamCalc_[i] -> finishCalculate();
+    }
+}
+
 void Driver::printOutput()
 {
     for (int i=0;i<VectorWhamCalc_.size();i++)
