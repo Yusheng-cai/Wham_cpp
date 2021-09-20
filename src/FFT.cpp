@@ -13,16 +13,9 @@ void FFT::fft(const std::vector<ComplexReal>& data, std::vector<ComplexReal>& ou
     in = (fftw_complex*) data.data();
     out = (fftw_complex*) output.data();
 
-    std::cout << "FFT data = " << std::endl;
-    for (int i=0;i<datasize;i++)
-    {
-        std::cout << in[i][0] << " " << in[i][1] << std::endl;
-    }
 
     plan = fftw_plan_dft_1d(datasize,in,out, FFTW_FORWARD, FFTW_ESTIMATE);
     fftw_execute(plan);
-
-    
 
     fftw_destroy_plan(plan);
 
