@@ -3,8 +3,28 @@
 #include "Wham.h"
 
 Wham::Wham(const WhamInput& input)
-:VectorTimeSeries_(input.VectorTimeSeries_)
-{}
+:VectorTimeSeries_(input.VectorTimeSeries_), pack_(input.pack_)
+{
+    ASSERT((VectorTimeSeries_.size() != 0), "No timeseries data was passed in.");
+}
+
+void Wham::registerOutput(std::string name, valueFunction func)
+{
+    auto it  = MapNameToFunction_.find(name);
+
+    ASSERT((it == MapNameToFunction_.end()), "The output with name " << name << " is already registered.");
+
+    MapNameToFunction_.insert(std::make_pair(name, func));
+}
+
+Wham::valueFunction& Wham::printOutputFromName(std::string name)
+{
+    auto it = MapNameToFunction_.find(name);
+
+    ASSERT(( it != MapNameToFunction_.end()), "The output with name " << name << " is not registered.");
+
+    return it -> second;
+}
 
 WhamTools::Real WhamTools::LogSumExp(const std::vector<Real>& vector, const std::vector<Real>& N)
 {

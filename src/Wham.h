@@ -12,6 +12,8 @@
 #include <string>
 #include <chrono>
 #include <memory>
+#include <functional>
+#include <map>
 
 struct WhamInput
 {
@@ -25,17 +27,30 @@ class Wham
     public:
         using tsptr= std::shared_ptr<TimeSeries>;
         using Real = CommonTypes::Real;
+        using valueFunction = std::function<void(std::string)>;
 
         Wham(const WhamInput& input);
         virtual ~Wham(){};
 
+        void registerOutput(std::string name, valueFunction func);
+        valueFunction& printOutputFromName(std::string name);
+
         virtual void calculate() = 0;
         virtual void printOutput() {};
+        virtual void finishCalculate() {};
     
     protected:
         std::vector<tsptr>& VectorTimeSeries_;
 
         std::vector<Real> N_;
+
+        std::map<std::string, valueFunction> MapNameToFunction_;
+
+        // output names as well as output file names
+        std::vector<std::string> VectorOutputNames_;
+        std::vector<std::string> VectorOutputFileNames_;
+
+        ParameterPack& pack_;
 };
 
 namespace WhamRegistry
