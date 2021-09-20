@@ -1,4 +1,4 @@
-#include "Uwham.h"
+#pragma once
 #include "tools/Assert.h"
 #include "tools/CommonTypes.h"
 #include "tools/InputParser.h"
@@ -9,27 +9,69 @@
 #include <memory>
 #include <iostream>
 #include <map>
+#include <functional>
+
+class Uwham;
+
+struct UwhamReweightInputPack
+{
+    Uwham& uwham;
+    ParameterPack& pack;
+};
 
 class UwhamReweight
 {
     public:
         using Real = CommonTypes::Real;
         using Biasptr = std::unique_ptr<Bias>;
+        using outputfunc = std::function<void(std::string)>;
 
         // inputted pack in the whamPack
-        UwhamReweight(ParameterPack& pack);
+        UwhamReweight(UwhamReweightInputPack& pack);
 
         // inputs are the lnwji weights and the xi points
-        void calculate(const std::vector<Real>& lnwji, const std::vector<std::vector<Real>>& xi, const std::map<std::vector<int>, std::vector<int>>& Map);
+        void calculate();
+
+        void printlnpji(std::string name);
+        void printAverages(std::string name);
+        void printFE(std::string name);
 
         void printOutput();
 
+        void registerOutputFunc(std::string name, outputfunc func);
+        outputfunc& getOutputByName(std::string name);
+
     private:
-        // type of the bias, default to simple bias
-        std::string type_ = "simplebias";
+        std::vector<Biasptr> Vectorbias_;
+        int numBias_;
 
-        Biasptr bias_;
+        // input parameters
+        Uwham& wham_;
+        ParameterPack& pack_;
 
-        std::string outputName_;
-        std::ofstream ofs_;
+        // BUji of the bias applied
+        std::vector<std::vector<Real>> BUji_;
+
+        // The ones vector used for calculating each of the normalizing factors 
+        std::vector<Real> ones_;
+
+        // reweighted pji 
+        std::vector<std::vector<Real>> lnpji_;
+
+        // normalizationg constant 
+        std::vector<Real> Vectorfk_;
+
+        // Free energy 
+        std::vector<std::vector<Real>> FE_;
+
+        // The output files
+        std::map<std::string, outputfunc> MapNameToOutput_;
+        std::vector<std::string> VectorOutputs_;
+        std::vector<std::string> VectorOutputFiles_;
+
+        // The averages of each set of data under new potential
+        std::vector<std::vector<Real>> averages_;
+
+        // dimension of data 
+        int dimension_;
 };
