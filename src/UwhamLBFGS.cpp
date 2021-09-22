@@ -38,7 +38,7 @@ void UwhamLBFGS::calculate()
 
     // need to reweigth lnwji
     std::vector<Real> ones(lnwji_.size(),1);
-    Real f = -1.0*WhamTools::LogSumExp(lnwji_, ones);
+    Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
 
     #pragma omp parallel for 
     for (int i=0;i<lnwji_.size();i++)
