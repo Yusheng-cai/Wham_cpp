@@ -45,6 +45,26 @@ WhamTools::Real WhamTools::LogSumExp(const std::vector<Real>& vector, const std:
     return sum;
 }
 
+WhamTools::Real WhamTools::LogSumExpOMP(const std::vector<Real>& vector, const std::vector<Real>& N)
+{
+    ASSERT((vector.size() == N.size()), "The size of the vector is not equal to the size of N.");
+
+    // Find the max of the vector
+    auto it = std::max_element(vector.begin(), vector.end());
+    Real maxVal = *it;
+
+    Real sum = 0.0;
+    #pragma omp parallel for reduction(+:sum)
+    for (int i=0;i<vector.size();i++)
+    {
+        sum += N[i] * std::exp(vector[i]-maxVal);
+    }
+
+    sum = std::log(sum) + maxVal;
+
+    return sum;
+}
+
 WhamTools::Real WhamTools::NormVector(const std::vector<Real>& vector)
 {
     Real sum_ = 0.0;

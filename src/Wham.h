@@ -71,6 +71,9 @@ namespace WhamTools
     // Pass in vector is calculated as Log(\sum(N*exp(vector)))
     Real LogSumExp(const std::vector<Real>& vector, const std::vector<Real>& N);
 
+    // Calculate log sum exp but with omp
+    Real LogSumExpOMP(const std::vector<Real>& vector, const std::vector<Real>& N);
+
     // find the norm of a vector
     Real NormVector(const std::vector<Real>& vector);
 
