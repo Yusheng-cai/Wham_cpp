@@ -41,7 +41,9 @@ void UwhamReweight::calculate()
     // find the BUji 
     for (int i=0;i<numBias_;i++)
     {
+        std::cout << "Done with bias " << i << std::endl;
         std::vector<Real> lnpji_vec(xi.size(),0.0);
+
         #pragma omp parallel for 
         for (int j=0;j<xi.size();j++)
         {
@@ -49,7 +51,7 @@ void UwhamReweight::calculate()
             lnpji_vec[j] = lnwji[j] - value;
         }
 
-        Real fk = -1.0 * WhamTools::LogSumExp(lnpji_vec, ones_);
+        Real fk = -1.0 * WhamTools::LogSumExpOMP(lnpji_vec, ones_);
 
         #pragma omp parallel
         {
@@ -76,6 +78,7 @@ void UwhamReweight::calculate()
             }
         }
 
+        // calculate free energy
         FE_[i].resize(MapBinToIndex.size());
         int index = 0;
         for(auto it = MapBinToIndex.begin();it != MapBinToIndex.end();it++)
