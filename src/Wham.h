@@ -6,6 +6,7 @@
 #include "TimeSeries.h"
 #include "tools/Constants.h"
 #include "tools/GenericFactory.h"
+#include "Bias.h"
 
 #include <vector>
 #include <array>
@@ -25,6 +26,7 @@ struct WhamInput
 class Wham
 {
     public:
+        using Biasptr = std::unique_ptr<Bias>;
         using tsptr= std::shared_ptr<TimeSeries>;
         using Real = CommonTypes::Real;
         using valueFunction = std::function<void(std::string)>;
@@ -36,7 +38,10 @@ class Wham
         valueFunction& printOutputFromName(std::string name);
 
         virtual void calculate() = 0;
-        virtual void printOutput() {};
+        virtual void initializeBias();
+        virtual void initializeTimeSeries();
+
+        virtual void printOutput();
         virtual void finishCalculate() {};
     
     protected:
@@ -44,13 +49,29 @@ class Wham
 
         std::vector<Real> N_;
 
+        // total data
+        std::vector<std::vector<Real>> xi_;
+
         std::map<std::string, valueFunction> MapNameToFunction_;
 
         // output names as well as output file names
         std::vector<std::string> VectorOutputNames_;
         std::vector<std::string> VectorOutputFileNames_;
 
+        // the parameter pack
         ParameterPack& pack_;
+
+        // the vector of all the bias        
+        std::vector<Biasptr> Biases_;
+
+        // The dimension of the timeseries
+        std::vector<int> dimensions_;
+        int dimension_;
+
+        // Total number of data
+        int Ntot_ = 0;
+
+        int precision_=3;
 };
 
 namespace WhamRegistry
@@ -83,6 +104,14 @@ namespace WhamTools
     // find the gradient vector of the UWham NLL equation
     std::vector<Real> Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
 
+    // find the gradient vector of the Bwham NLL equation
+    std::vector<Real> BGradient(const Matrix<Real>& BWil, const std::vector<Real>& Ml, const std::vector<Real>& N, \
+    const std::vector<Real>& fk);
+
     // find the lnWi in UWham
     std::vector<Real> calculatelnWi(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N);
+
+    // find the lnpl in Bwham
+    std::vector<Real> calculatelnpl(const Matrix<Real>& BWil, const std::vector<Real>& Ml, const std::vector<Real>& N, \
+    const std::vector<Real>& fk);
 };
