@@ -24,7 +24,6 @@ class Uwham:public Wham
 
         Uwham(const WhamInput& pack);
         virtual ~Uwham(){};
-        void initializeBias();
         void initializeStrat();
         void initializeBins();
         void initializeBUki();
@@ -40,9 +39,6 @@ class Uwham:public Wham
         void printlnwji(std::string name);
         void printTimeSeriesBins(std::string name);
 
-        // initialize timeseries 
-        void initializeTimeSeries();
-
         // bin the timeseries 
         void binTimeSeries();
 
@@ -54,16 +50,11 @@ class Uwham:public Wham
         const std::vector<std::vector<Real>>& getxi() const {return xi_;}
 
     private:
+        // Beta Uki energy matrix
         Matrix<Real> BUki_;
-        std::vector<std::vector<Real>> xi_;
 
-        std::vector<Biasptr> Biases_;
-
-        int Ntot_;
-
+        // strategy for solving the Uwham
         stratptr strat_;
-
-        int dimension_;
 
         std::vector<Bin> Bins_;
 
@@ -77,8 +68,6 @@ class Uwham:public Wham
 
         // histogram for each dimension of data
         std::vector<std::vector<std::vector<Real>>> histogram_;
-
-        std::vector<int> dimensions_;
 
         // declare a vector of reweight objects 
         std::vector<reweightptr> reweight_;

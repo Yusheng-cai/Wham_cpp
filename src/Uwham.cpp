@@ -8,7 +8,6 @@ namespace WhamRegistry
 Uwham::Uwham(const WhamInput& input)
 :Wham(input)
 {
-    N_.resize(VectorTimeSeries_.size());
     registerOutput("normalization", [this](std::string name)-> void {this->printNormalization(name);});
     registerOutput("pji", [this](std::string name)->void{this->printPji(name);});
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
@@ -32,13 +31,6 @@ Uwham::Uwham(const WhamInput& input)
 
     // initialize the Post Processing of Wham
     initializePostProcessing();
-
-    auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
-    whamPack -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
-    whamPack -> ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputNames_);
-    whamPack -> ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
-
-    ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "The output and the output files size is different.");
 }
 
 void Uwham::initializePostProcessing()
@@ -66,43 +58,6 @@ void Uwham::initializeBUki()
     }
 }
 
-void Uwham::initializeTimeSeries()
-{
-    dimensions_.resize(VectorTimeSeries_.size());
-    for (int i=0;i<VectorTimeSeries_.size();i++)
-    {
-        xi_.insert(xi_.end(),VectorTimeSeries_[i]->begin(), VectorTimeSeries_[i]->end());
-        N_[i] = VectorTimeSeries_[i]->getSize(); 
-        std::cout << "Length of data for " << i << " is " << N_[i] << std::endl;
-        dimensions_[i] = VectorTimeSeries_[i]->getDimension();
-
-        Ntot_ += N_[i];
-    }
-
-    for (int i=0;i<dimensions_.size()-1;i++)
-    {
-        ASSERT((dimensions_[i] == dimensions_[i+1]), "The dimension in the " << i << "th timeseries does not match with the " << i+1 << "th time series");
-    }
-
-    // record the dimensions of this Wham calculation
-    dimension_ = dimensions_[0];
-}
-
-void Uwham::initializeBias()
-{
-    auto biases = pack_.findParamPacks("bias", ParameterPack::KeyType::Required);
-
-    ASSERT((biases.size() == VectorTimeSeries_.size()), "The number of time series does not match the number of biases.");
-
-    for (int i=0;i<biases.size();i++)
-    {
-        std::string biastype = "simplebias";
-        biases[i] -> ReadString("type", ParameterPack::KeyType::Optional, biastype);
-        Biasptr b = Biasptr(BiasRegistry::Factory::instance().create(biastype, *biases[i]));
-
-        Biases_.push_back(std::move(b));
-    }
-}
 
 void Uwham::printTimeSeriesBins(std::string name)
 {
