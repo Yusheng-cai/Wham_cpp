@@ -32,17 +32,10 @@ void BwhamLBFGS::calculate()
     for (int i=0;i<fk.size();i++)
     {
         fk_[i] = fk[i] - fk[BWil_.getNR()-1];
-        std::cout << "fk " << i << " = " << fk_[i] << std::endl;
     }
 
     // obtain the lnpl
     lnpl_ = WhamTools::calculatelnpl(BWil_, Ml_, N_, fk_);
-
-    // lnwji_ = WhamTools::calculatelnWi(BWil_, fk_, N_);
-
-    // need to reweigth lnwji
-    //std::vector<Real> ones(lnwji_.size(),1);
-    //Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
 
     // #pragma omp parallel for 
     // for (int i=0;i<lnwji_.size();i++)
@@ -102,8 +95,6 @@ BwhamNLL::Real BwhamNLL::operator()(Eigen::VectorXd& x, Eigen::VectorXd& grad)
 
         secondPart += -Ml_[i] * std::log(Ml_[i]) + Ml_[i] * WhamTools::LogSumExp(temp,N_);
     }
-
-    std::cout << "Total = " << firstPart + secondPart << std::endl;
 
     auto gradient = WhamTools::BGradient(BWil_, Ml_, N_, fk_);
 
