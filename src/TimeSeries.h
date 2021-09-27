@@ -112,6 +112,7 @@ class TimeSeries
 
         // vector of autocorrelations
         std::vector<std::vector<Real>> AC_vector_;
+        std::vector<Real> lag_time_;
 
         // normalized data 
         std::vector<std::vector<Real>> normalized_Data_;

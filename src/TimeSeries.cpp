@@ -198,6 +198,29 @@ void TimeSeries::calculateAutoCorrelation()
             AC_vector_[i][j] = ifft[j].real()/N;
         }
     }
+
+    lag_time_.resize(dimension_,0.0);
+    for (int i=0;i<dimension_;i++)
+    {
+        for (int j=0;j<AC_vector_[i].size();j++)
+        {
+            if (AC_vector_[i][j] < 0.0)
+            {
+                break;
+            }
+            else
+            {
+                lag_time_[i] += AC_vector_[i][j];
+            }
+        }
+    }
+
+    for (int i=0;i<dimension_;i++)
+    {
+        lag_time_[i] = 1 + 2 * lag_time_[i];
+    }
+
+    std::cout << "lag time = " << lag_time_[0] << std::endl;
 }
 
 void TimeSeries::checkOutputValidity()
