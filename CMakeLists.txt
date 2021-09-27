@@ -11,8 +11,13 @@ project(Wham)
 # Require C++11
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS_DEBUG_INIT "-O0 -Wall -g")
-set(CMAKE_CXX_FLAGS_RELEASE_INIT "-O3 -Wall")
+# reference : https://stackoverflow.com/questions/8591762/ifdef-debug-with-cmake-independent-from-platform
+message("build type = ${CMAKE_BUILD_TYPE}")
+set(CMAKE_CXX_FLAGS_DEBUG "-O0 -Wall -g -DMY_DEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -ffast-math -march=native")
+
+# define my own debug defintion 
+# set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMY_DEBUG")
 
 # Requires OpenMP
 find_package(OpenMP REQUIRED)
