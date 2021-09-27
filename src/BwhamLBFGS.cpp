@@ -107,6 +107,17 @@ BwhamNLL::Real BwhamNLL::operator()(Eigen::VectorXd& x, Eigen::VectorXd& grad)
         sum_grad_ -= grad[i];
     }
 
+    #ifdef MY_DEBUG
+    std::cout << "New gradient for Bwham LBFGS" << std::endl;
+    for (int i=0;i<grad.size();i++)
+    {
+        std::cout << grad[i] << "\t";
+    }
+    std::cout << "\n";
+    std::cout << "Printing the value of the Bwham LBFGS function : " << firstPart + secondPart << std::endl;
+    #endif
+
+
     grad[Nsim-1] +=  sum_grad_;
 
     return firstPart + secondPart;
