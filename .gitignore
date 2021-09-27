@@ -35,3 +35,4 @@ build.sh
 program/
 RELEASE/
 DEBUG/
+.DS_Store
