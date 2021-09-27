@@ -36,15 +36,17 @@ void Driver::InitializeWham(const ParameterPack& pack)
     
 void Driver::calculate()
 {
+    // calculate timeseries first 
+    for (int i=0;i<VectorTimeSeries_.size();i++)
+    {
+        VectorTimeSeries_[i] -> calculate();
+    }
+
     for (int i=0;i<VectorWhamCalc_.size();i++)
     {
         VectorWhamCalc_[i] -> calculate();
     }
 
-    for (int i=0;i<VectorTimeSeries_.size();i++)
-    {
-        VectorTimeSeries_[i] -> calculate();
-    }
 }
 
 void Driver::finishCalculate()
