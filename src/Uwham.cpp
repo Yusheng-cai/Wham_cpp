@@ -46,6 +46,8 @@ void Uwham::initializePostProcessing()
 
 void Uwham::initializeBUki()
 {
+    std::cout << "The total data in BUki is " << Biases_.size() * xi_.size() << std::endl;
+    std::cout << "The space it takes is around " << Biases_.size() * xi_.size() * sizeof(Real) / 1e6 << " Mb" << std::endl;
     BUki_.resize(Biases_.size(), xi_.size());
     #pragma omp parallel for
     for (int i=0;i<xi_.size();i++)
