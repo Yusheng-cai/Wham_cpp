@@ -191,9 +191,18 @@ void Bwham::bindata()
         }
     }
 
-    // std::cout << "Printing out Ml" << std::endl;
-    // for (int i=0;i<Ml_.size();i++)
-    // {
-    //     std::cout << Ml_[i] << std::endl;
-    // }
+    // check if there is any Ml that are zero
+
+    for (int i=0;i<Ml_.size();i++)
+    {
+        ASSERT((Ml_[i] >= 0), "The number of data at bin " << i << " is 0.");
+    }
+
+    #ifdef MY_DEBUG
+    std::cout << "Printing out Ml" << std::endl;
+    for (int i=0;i<Ml_.size();i++)
+    {
+        std::cout << Ml_[i] << std::endl;
+    }
+    #endif
 }
