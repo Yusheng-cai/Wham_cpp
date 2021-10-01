@@ -6,6 +6,8 @@ Bin::Bin(const ParameterPack& pack)
     pack.ReadNumber("numbins", ParameterPack::KeyType::Required,numbins_);
     pack.ReadNumber("dimension", ParameterPack::KeyType::Optional, dimension_);
 
+    ASSERT((dimension_ > 0), "The dimension is 1-based while you have inputted which will generate erroneous result" << dimension_);
+
     step_ = (range_[1] - range_[0])/numbins_;
 }
 
