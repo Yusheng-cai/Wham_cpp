@@ -191,6 +191,7 @@ void Uwham::calculate()
             // If this data point is out of range for one of the bins, it is out of range, so we break
             if (! Bins_[j].isInRange(xi_[i][dim]))
             {
+                // break from the for loop
                 isInRange = false;
                 break;
             }
