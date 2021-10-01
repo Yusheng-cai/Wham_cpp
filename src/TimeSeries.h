@@ -106,6 +106,9 @@ class TimeSeries
         // the larger column of the inputs, e.g [ 1, 2, 3 ] -> 3
         int larger_col_;
 
+        // the number of data to skip 
+        int skipevery_=0;
+
         // Find mean for each dimension of the timeseries
         std::vector<Real> Mean_, Variance_, std_;
 

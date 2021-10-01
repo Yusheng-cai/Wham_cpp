@@ -12,6 +12,8 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     input.pack_.ReadNumber("skipfrombeginning", ParameterPack::KeyType::Optional, skipFromBeginning_);
     input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
     input.pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional,outputNames_);
+    input.pack_.ReadNumber("skip", ParameterPack::KeyType::Optional, skipevery_);
+    skipevery_++;
     checkOutputValidity();
     input.pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, outputFileNames_);
 
@@ -53,23 +55,25 @@ void TimeSeries::readChosenData()
     parser.ParseFile(path_, Totaldata_);
     
     // Find out the total size of the data
-    size_ = Totaldata_.size() - skipFromBeginning_;
     std::cout << "Reading data from file " <<path_ << " data size = " << Totaldata_.size() << std::endl;
 
     // Resize the chosen data accordingly
-    chosen_data_.resize(size_);
     int index=0;
-    for (int i = skipFromBeginning_;i < Totaldata_.size();i++)
+    int originalIndex = skipFromBeginning_;
+    while (originalIndex < Totaldata_.size())
     {
         std::vector<Real> temp;
         temp.resize(dimension_);
         for (int j=0;j<dimension_;j++)
         {
-            temp[j] = Totaldata_[i][columns_[j]-1];
+            temp[j] = Totaldata_[originalIndex][columns_[j]-1];
         }
-        chosen_data_[index] = temp;
+        chosen_data_.push_back(temp);
         index ++;
+        originalIndex += skipevery_;
     }
+
+    size_ = chosen_data_.size();
 }
 
 void TimeSeries::findNormalizedData()
