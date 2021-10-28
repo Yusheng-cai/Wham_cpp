@@ -20,6 +20,7 @@ class Bias
         virtual ~Bias(){};
 
         virtual Real calculate(const std::vector<Real>& x) = 0;
+        virtual std::vector<Real> calculateForce(const std::vector<Real>& x)=0;
         Real getBeta() const {return beta_;}
 
     protected:    
