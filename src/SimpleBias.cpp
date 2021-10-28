@@ -50,3 +50,20 @@ SimpleBias::Real SimpleBias::calculate(const std::vector<Real>& x)
 
     return energy_;
 }
+
+std::vector<SimpleBias::Real> SimpleBias::calculateForce(const std::vector<Real>& x)
+{
+    int size = x.size();
+    ASSERT((size == dimension_), "The dimension of the bias=" << xstar_.size() << " and does not \
+    the input data size = " << x.size());
+
+    std::vector<Real> force;
+    force.resize(x.size(),0.0);
+
+    for (int i=0;i<size;i++)
+    {
+        force[i] = -2.0 * hkappa_[i] * (x[i] - xstar_[i]) - phi_[i]; 
+    }
+
+    return force;
+}

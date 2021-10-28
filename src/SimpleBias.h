@@ -16,6 +16,7 @@ class SimpleBias: public Bias
         SimpleBias(const ParameterPack& pack);
 
         virtual Real calculate(const std::vector<Real>& x) override;
+        virtual std::vector<Real> calculateForce(const std::vector<Real>& x) override;
 
     private:
         std::vector<Real> kappa_;
