@@ -81,6 +81,10 @@ class TimeSeries
         cIterator cend() {return chosen_data_.cend();}
         std::vector<Real>& operator[](int i) { return chosen_data_[i];}
 
+        // get the mean of the timeseries 
+        const std::vector<Real>& getMean() const {return Mean_;}
+        const std::vector<Real>& getstd() const {return std_;}
+
     
     private:
         std::string path_;
