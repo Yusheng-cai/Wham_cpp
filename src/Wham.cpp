@@ -1,7 +1,5 @@
 #include "Wham.h"
 
-#include "Wham.h"
-
 Wham::Wham(const WhamInput& input)
 :VectorTimeSeries_(input.VectorTimeSeries_), pack_(input.pack_)
 {

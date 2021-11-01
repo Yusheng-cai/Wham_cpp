@@ -17,6 +17,7 @@ target_sources(WHAMsrc PRIVATE
     "Bin.cpp"
     "FFT.cpp"
     "UwhamReweight.cpp"
+    "SparseSampling.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -36,6 +37,7 @@ set(WHAMsrc_HEADER
     "Bin.h"
     "FFT.h"
     "UwhamReweight.h"
+    "SparseSampling.h"
 )
 
 target_include_directories(WHAMsrc

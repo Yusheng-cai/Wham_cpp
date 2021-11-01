@@ -23,9 +23,12 @@ class Bias
         virtual std::vector<Real> calculateForce(const std::vector<Real>& x)=0;
         Real getBeta() const {return beta_;}
 
+        const std::vector<Real>& getXstar() const {return xstar_;}
+
     protected:    
         Real temperature_ = 298.15;
         Real beta_;
+        std::vector<Real> xstar_;
 };
 
 namespace BiasRegistry

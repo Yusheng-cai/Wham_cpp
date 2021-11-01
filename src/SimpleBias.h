@@ -22,6 +22,5 @@ class SimpleBias: public Bias
         std::vector<Real> kappa_;
         std::vector<Real> hkappa_;
         std::vector<Real> phi_;
-        std::vector<Real> xstar_;
         int dimension_;
 };
