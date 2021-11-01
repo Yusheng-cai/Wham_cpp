@@ -63,6 +63,8 @@ class Uwham:public Wham
         std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
         std::map<std::vector<int>, Real> MapBinIndexToWji_;
 
+        // Total histogram 
+
         // precision of the output
         int precision_=3;
 
