@@ -31,7 +31,6 @@
 *.app
 
 build/
-build.sh
 program/
 RELEASE/
 DEBUG/
