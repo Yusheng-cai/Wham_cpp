@@ -5,6 +5,7 @@ target_sources(WHAMtools PRIVATE
     "InputParser.cpp"
     "CommandLineArguments.cpp"
     "FileSystem.cpp"
+    "OutputFunction.cpp"
 )
 
 set(WHAMTOOLS_HEADER
@@ -16,6 +17,7 @@ set(WHAMTOOLS_HEADER
     "CommandLineArguments.h"
     "Registry.h"
     "FileSystem.h"
+    "OutputFunction.h"
 )
 
 target_include_directories(WHAMtools
