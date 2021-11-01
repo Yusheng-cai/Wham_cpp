@@ -165,7 +165,12 @@ void Uwham::initializeStrat()
 void Uwham::calculate()
 {
     // echo number of threads we are using 
-    int numthreads = OpenMP::get_num_threads();
+    int numthreads = 0;
+    #pragma omp parallel
+    {
+        #pragma omp critical
+        numthreads += 1;
+    }
     std::cout << "We are using " << numthreads << " OpenMP threads for this operation." << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
