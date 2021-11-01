@@ -1,5 +1,5 @@
 #pragma once
-#include "Bwham.h"
+#include "BWham.h"
 #include "BwhamCalculationStrategy.h"
 #include "tools/CommonTypes.h"
 #include "LBFGS/LBFGS.h"
