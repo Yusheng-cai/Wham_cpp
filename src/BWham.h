@@ -1,3 +1,4 @@
+#pragma once
 #include "Wham.h"
 #include "tools/Assert.h"
 #include "tools/CommonTypes.h"
