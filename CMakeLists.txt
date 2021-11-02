@@ -9,7 +9,7 @@ LIST( APPEND CMAKE_MODULE_PATH
 project(Wham)
 
 # Require C++11
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # reference : https://stackoverflow.com/questions/8591762/ifdef-debug-with-cmake-independent-from-platform
 message("build type = ${CMAKE_BUILD_TYPE}")
