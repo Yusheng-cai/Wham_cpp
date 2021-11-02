@@ -18,6 +18,8 @@ target_sources(WHAMsrc PRIVATE
     "FFT.cpp"
     "UwhamReweight.cpp"
     "SparseSampling.cpp"
+    "TSoperation.cpp"
+    "HistogramOP.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -38,6 +40,8 @@ set(WHAMsrc_HEADER
     "FFT.h"
     "UwhamReweight.h"
     "SparseSampling.h"
+    "HistogramOP.h"
+    "TSoperation.h"
 )
 
 target_include_directories(WHAMsrc
