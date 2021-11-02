@@ -16,6 +16,7 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
     }
 
     InitializeWham(pack);
+    InitializeTSoperation(pack);
 }
 
 void Driver::InitializeTSoperation(const ParameterPack& pack)
@@ -24,7 +25,15 @@ void Driver::InitializeTSoperation(const ParameterPack& pack)
 
     if (TSPack.size() != 0)
     {
+        for (int i=0;i<TSPack.size();i++)
+        {
+            std::string type_;
+            TSPack[i] -> ReadString("type", ParameterPack::KeyType::Required,type_);
 
+            TSInput input = {const_cast<ParameterPack&>(*TSPack[i]), VectorTimeSeries_};
+
+            VectorTimeSeriesOP_.push_back(TSopptr(timeseriesOP::Factory::instance().create(type_, input)));
+        }
     }
 }
 
@@ -58,6 +67,11 @@ void Driver::calculate()
         VectorWhamCalc_[i] -> calculate();
     }
 
+    for (int i=0;i<VectorTimeSeriesOP_.size();i++)
+    {
+        VectorTimeSeriesOP_[i] -> calculate();
+    }
+
 }
 
 void Driver::finishCalculate()
@@ -78,5 +92,10 @@ void Driver::printOutput()
     for (int i=0;i<VectorTimeSeries_.size();i++)
     {
         VectorTimeSeries_[i] -> printOutput();
+    }
+
+    for (int i=0;i<VectorTimeSeriesOP_.size();i++)
+    {
+        VectorTimeSeriesOP_[i] -> print();
     }
 }
