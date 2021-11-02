@@ -12,14 +12,12 @@ TSoperation::TSoperation(const TSInput& input)
     {
         std::cout << VectorOutputNames_[i] << std::endl;
     }
-    
 }
 
 void TSoperation::print()
 {
     for (int i=0;i<VectorOutputNames_.size();i++)
     {
-        std::cout << "name = " << VectorOutputNames_[i] << std::endl;
         outputs_ -> getOutputFuncByName(VectorOutputNames_[i])(VectorOutputFileNames_[i]);
     }
 }

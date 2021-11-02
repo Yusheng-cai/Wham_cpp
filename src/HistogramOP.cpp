@@ -15,9 +15,7 @@ HistogramOP::HistogramOP(const TSInput& input)
         Bins_.push_back(Binptr(new Bin(*binPacks[i])));
     }
     binDimension_ = Bins_.size();
-    std::cout << "name = " << VectorOutputNames_[0] << std::endl;
     outputs_->registerOutputFunc("histogram", [this](std::string name) -> void {this -> printHistogram(name);});
-    std::cout << "name = " << VectorOutputNames_[0] << std::endl;
 }
 
 void HistogramOP::calculate()
@@ -54,7 +52,7 @@ void HistogramOP::calculate()
         {
             auto it = histogramMap_.find(binNum_);
 
-            if (it != histogramMap_.end())
+            if (it == histogramMap_.end())
             {
                 histogramMap_.insert(std::make_pair(binNum_, 1));
             }
