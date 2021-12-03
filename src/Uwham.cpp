@@ -182,13 +182,14 @@ void Uwham::calculate()
     std::cout << "Calculation took " << diff.count() << std::endl;
 
     const auto& lnwji = strat_ -> getlnwji_(); 
+    binneddata_.resize(xi_.size());
 
     for (int i=0;i<xi_.size();i++)
     {
         auto& x = xi_[i];
         ASSERT((x.size() == Bins_.size()), "The dimension of the data = " << x.size() << " while the dimension of bins = " << Bins_.size());
-        std::vector<int> BinIndex_;
-        BinIndex_.resize(Bins_.size());
+        std::vector<int> BinIndex;
+        BinIndex.resize(Bins_.size());
 
         bool isInRange = true; 
 
@@ -206,13 +207,15 @@ void Uwham::calculate()
             }
         
             int index = Bins_[j].findBin(xi_[i][dim]);
-            BinIndex_[j] = index;
+            BinIndex[j] = index;
         }
 
         if (isInRange)
         {
-            auto it = MapBinIndexToVectorlnwji_.find(BinIndex_);
-            auto it2= MapBinIndexTolnwjiIndex_.find(BinIndex_);
+            // add the indices to the binned data vector
+            binneddata_[i] = BinIndex;
+            auto it = MapBinIndexToVectorlnwji_.find(BinIndex);
+            auto it2= MapBinIndexTolnwjiIndex_.find(BinIndex);
 
             if ( it == MapBinIndexToVectorlnwji_.end())
             {
@@ -222,8 +225,8 @@ void Uwham::calculate()
                 lnwji_vec_.push_back(lnwji[i]);
                 lnwjiIndex_vec_.push_back(i);
 
-                MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex_, lnwji_vec_));
-                MapBinIndexTolnwjiIndex_.insert(std::make_pair(BinIndex_, lnwjiIndex_vec_));
+                MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex, lnwji_vec_));
+                MapBinIndexTolnwjiIndex_.insert(std::make_pair(BinIndex, lnwjiIndex_vec_));
             }
             else
             {
@@ -258,6 +261,13 @@ void Uwham::printNormalization(std::string name)
         ofs << strat_ -> getFk_()[i] << "\n";
     }
     ofs.close();
+}
+
+int Uwham::getNumBinsPerDimension(int num)
+{
+    ASSERT((num < Bins_.size()), "The dimension provided is larger than the total number of dimensions which is " << Bins_.size());
+
+    return Bins_[num].getNumbins();
 }
 
 void Uwham::printlnwji(std::string name)

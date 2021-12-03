@@ -43,6 +43,12 @@ class Wham
 
         virtual void printOutput();
         virtual void finishCalculate() {};
+
+        virtual std::string type() = 0;
+
+        std::string getName() {return name_;}
+        int getDimension() const {return dimension_;}
+
     
     protected:
         std::vector<tsptr>& VectorTimeSeries_;
@@ -72,6 +78,9 @@ class Wham
         int Ntot_ = 0;
 
         int precision_=3;
+
+        // name of the wham  --> defaulted to "w"
+        std::string name_ = "w";
 };
 
 namespace WhamRegistry

@@ -15,6 +15,7 @@ class SparseSampling : public Wham
 
         // make the assumption that input bias and timeseries has the same order
         virtual void calculate() override;
+        virtual std::string type() override {return "sparsesampling";}
 
         void printFE(std::string name);
         void printstd(std::string name);

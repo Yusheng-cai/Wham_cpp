@@ -9,6 +9,7 @@ Wham::Wham(const WhamInput& input)
     whamPack -> ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputNames_);
     whamPack -> ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
     whamPack -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
+    whamPack -> ReadString("name" , ParameterPack::KeyType::Optional, name_);
 
     ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "The output and the output files size is different.");
 }
