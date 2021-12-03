@@ -43,6 +43,7 @@ class UwhamReweight
     private:
         std::vector<Biasptr> Vectorbias_;
         int numBias_;
+        int numBins_;
 
         // input parameters
         Uwham& wham_;
@@ -64,4 +65,7 @@ class UwhamReweight
 
         // dimension of data 
         int dimension_;
+
+        // axis of which we want to take conditional probabilities
+        int axis_=0;
 };

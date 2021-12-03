@@ -5,6 +5,7 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
 {
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputs_);
     pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, VectorOutputFiles_);
+    pack_.ReadNumber("axis", ParameterPack::KeyType::Optional, axis_);
 
     registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
     registerOutputFunc("FE", [this](std::string name) -> void{this -> printFE(name);});
@@ -24,7 +25,18 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
     const auto& xi = wham_.getxi();
     const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
 
-    dimension_ = xi[0].size();
+    // get number of bins along the dimension we want to perform conditional probabilities for 
+    if (dimension_ > 1)
+    {
+        numBins_ = wham_.getNumBinsPerDimension(axis_);
+    }
+    else
+    {
+        numBins_ = 1;
+    }
+
+    // obtain the dimension of the wham calculation
+    dimension_ = wham_.getDimension();
 
     FE_.resize(numBias_, std::vector<Real>(MapBinToIndex.size(),0.0));
     averages_.resize(numBias_, std::vector<Real>(dimension_,0.0));
