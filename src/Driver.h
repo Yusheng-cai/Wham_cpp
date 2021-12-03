@@ -18,8 +18,8 @@ class Driver
 
         Driver(const ParameterPack& pack, const CommandLineArguments& cmd);
 
-        void InitializeWham(const ParameterPack& pack);
-        void InitializeTSoperation(const ParameterPack& pack);
+        void InitializeWham();
+        void InitializeTSoperation();
         void calculate();
         void finishCalculate();
         void printOutput();
@@ -28,4 +28,5 @@ class Driver
         std::vector<Whamptr> VectorWhamCalc_;
         std::vector<tsptr> VectorTimeSeries_;
         std::vector<TSopptr> VectorTimeSeriesOP_;
+        ParameterPack& pack_;
 };
