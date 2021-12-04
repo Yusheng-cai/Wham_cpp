@@ -24,7 +24,8 @@ class Bwham : public Wham
         void initializeStrategy();
         void bindata();
 
-        void calculate() override;
+        virtual void calculate() override;
+        virtual std::string type() override {return "Bwham";}
 
         void printlnpl(std::string name);
     

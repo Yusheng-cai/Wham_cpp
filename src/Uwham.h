@@ -32,6 +32,7 @@ class Uwham:public Wham
         virtual void calculate() override;
         virtual void printOutput() override;
         virtual void finishCalculate() override;
+        virtual std::string type() override {return "Uwham";}
 
         // output statements
         void printNormalization(std::string name);
@@ -49,6 +50,8 @@ class Uwham:public Wham
         const std::map<std::vector<int>, std::vector<Real>>& getMapBinIndexToVectorlnwji_() const {return MapBinIndexToVectorlnwji_;}
         const std::map<std::vector<int>, std::vector<int>>& getMapBinIndexTolnwjiIndex() const {return MapBinIndexTolnwjiIndex_;}
         const std::vector<std::vector<Real>>& getxi() const {return xi_;}
+        const std::vector<std::vector<int>>& getBinnedData() const {return binneddata_;}
+        int getNumBinsPerDimension(int num);
 
     private:
         // Beta Uki energy matrix
@@ -63,6 +66,9 @@ class Uwham:public Wham
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
         std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
         std::map<std::vector<int>, Real> MapBinIndexToWji_;
+
+        // specify which bin each of the data falls into 
+        std::vector<std::vector<int>> binneddata_;
 
         // Total histogram 
 

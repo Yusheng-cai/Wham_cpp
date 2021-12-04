@@ -5,6 +5,7 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
 {
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputs_);
     pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, VectorOutputFiles_);
+    pack_.ReadNumber("axis", ParameterPack::KeyType::Optional, axis_);
 
     registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
     registerOutputFunc("FE", [this](std::string name) -> void{this -> printFE(name);});
@@ -24,10 +25,21 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
     const auto& xi = wham_.getxi();
     const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
 
-    dimension_ = xi[0].size();
+    // get number of bins along the dimension we want to perform conditional probabilities for --> this is the x for P(a|x) 
+    if (dimension_ > 1)
+    {
+        numBins_ = wham_.getNumBinsPerDimension(axis_);
+    }
+    else
+    {
+        numBins_ = 1;
+    }
+
+    // obtain the dimension of the wham calculation
+    dimension_ = wham_.getDimension();
 
     FE_.resize(numBias_, std::vector<Real>(MapBinToIndex.size(),0.0));
-    averages_.resize(numBias_, std::vector<Real>(dimension_,0.0));
+    averages_.resize(numBias_, std::vector<Real>(numBins_, 0.0));
 
     ones_.resize(xi.size(), 1.0);
 }
@@ -37,6 +49,9 @@ void UwhamReweight::calculate()
     const auto& xi = wham_.getxi();
     const auto& lnwji = wham_.getlnwji();
     const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
+    const auto& bindata = wham_.getBinnedData();
+
+    ASSERT((bindata.size() == xi.size()), "The size of the bindata mismatches the xi data.");
 
     // find the BUji 
     for (int i=0;i<numBias_;i++)
@@ -61,18 +76,16 @@ void UwhamReweight::calculate()
                 lnpji_vec[j] = lnpji_vec[j] + fk;
             }
 
-            std::vector<Real> alocal(dimension_,0.0);
+            std::vector<Real> alocal(numBins_,0.0);
             #pragma omp for
             for (int j=0;j<xi.size();j++)
             {
-                for (int k=0;k<dimension_;k++)
-                {
-                    alocal[k] += std::exp(lnpji_vec[j]) * xi[j][k];
-                }
+                int k = bindata[i][axis_];
+                alocal[k] += std::exp(lnpji_vec[j]) * xi[j][axis_];
             }
 
             #pragma omp critical
-            for (int k=0;k<dimension_;k++)
+            for (int k=0;k<numBins_;k++)
             {
                 averages_[i][k] += alocal[k];
             }
