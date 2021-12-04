@@ -12,6 +12,10 @@ Uwham::Uwham(const WhamInput& input)
     registerOutput("pji", [this](std::string name)->void{this->printPji(name);});
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
     registerOutput("histogram", [this](std::string name) -> void{this -> printTimeSeriesBins(name);});
+    registerOutput("derivative", [this](std::string name) -> void{this -> printderivative(name);});
+
+    // check if the outputs are registered
+    isRegistered();
 
     // Read in timeseries
     initializeTimeSeries();
@@ -31,6 +35,58 @@ Uwham::Uwham(const WhamInput& input)
 
     // initialize the Post Processing of Wham
     initializePostProcessing();
+}
+
+void Uwham::printderivative(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    // we have to calculate the derivative
+    const auto& lnwji = strat_ -> getlnwji_();
+    const auto& fk    = strat_ -> getFk_();
+    int dim = Bins_.size();
+
+    std::vector<std::vector<Real>> dFdN(Biases_.size(), std::vector<Real>(dim,0.0));
+    std::vector<std::vector<Real>> avgs(Biases_.size(), std::vector<Real>(dim,0.0));
+
+    // each bias has a point
+    for (int i=0;i<Biases_.size();i++)
+    {
+        std::vector<Real> avg(dim,0.0);
+        for (int j=0;j<xi_.size();j++)
+        {
+            Real factor = fk[i] - BUki_(i,j) + lnwji[j];
+            factor = std::exp(factor);
+
+            for (int k=0;k<dim;k++)
+            {
+                avg[k] += factor * xi_[j][k];
+            }
+        }
+
+        avgs[i] = avg;
+        std::vector<Real> dF = Biases_[i] -> calculateForce(avg);
+        ASSERT((dF.size() == dim), "The dimensions don't match.");
+
+        dFdN[i] = dF;
+    }
+
+    for (int i=0;i<Biases_.size();i++)
+    {
+        for (int j=0;j<dim;j++)
+        {
+            ofs << avgs[i][j] << " ";
+        }
+
+        for(int j=0;j<dim;j++)
+        {
+            ofs << dFdN[i][j] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
 
 void Uwham::initializePostProcessing()

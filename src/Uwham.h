@@ -38,6 +38,7 @@ class Uwham:public Wham
         void printPji(std::string name);
         void printlnwji(std::string name);
         void printTimeSeriesBins(std::string name);
+        void printderivative(std::string name);
 
         // bin the timeseries 
         void binTimeSeries();
