@@ -31,7 +31,8 @@ void UwhamLBFGS::calculate()
 
     for (int i=0;i<fk.size();i++)
     {
-        fk_[i] = fk[i] - fk[BUki_.getNR()-1];
+        //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
+        fk_[i] = fk[i];
     }
 
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
@@ -39,6 +40,12 @@ void UwhamLBFGS::calculate()
     // need to reweigth lnwji
     std::vector<Real> ones(lnwji_.size(),1);
     Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
+
+    for (int i=0;i<fk.size();i++)
+    {
+        //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
+        fk_[i] = fk_[i] - f;
+    }
 
     #pragma omp parallel for 
     for (int i=0;i<lnwji_.size();i++)
