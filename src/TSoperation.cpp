@@ -7,11 +7,6 @@ TSoperation::TSoperation(const TSInput& input)
     pack_.ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
 
     outputs_ = OutputFuncPtr(new Output());
-
-    for (int i=0;i<VectorOutputNames_.size();i++)
-    {
-        std::cout << VectorOutputNames_[i] << std::endl;
-    }
 }
 
 void TSoperation::print()
