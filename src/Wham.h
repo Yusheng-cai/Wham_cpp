@@ -41,6 +41,9 @@ class Wham
         virtual void initializeBias();
         virtual void initializeTimeSeries();
 
+        // check if all the outputs are registered
+        void isRegistered();
+
         virtual void printOutput();
         virtual void finishCalculate() {};
     

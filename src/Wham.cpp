@@ -22,6 +22,17 @@ void Wham::registerOutput(std::string name, valueFunction func)
     MapNameToFunction_.insert(std::make_pair(name, func));
 }
 
+void Wham::isRegistered()
+{
+    for (int i=0;i<VectorOutputNames_.size();i++)
+    {
+        // check if vector output names is registered
+        auto it = MapNameToFunction_.find(VectorOutputNames_[i]);
+
+        ASSERT((it != MapNameToFunction_.end()), "The output with name " << VectorOutputNames_[i] << " is not registered.");
+    }
+}
+
 void Wham::initializeTimeSeries()
 {
     dimensions_.resize(VectorTimeSeries_.size());
