@@ -17,6 +17,7 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
     }
 
     InitializeWham();
+    InitializeReweight();
     InitializeTSoperation();
 }
 
@@ -51,7 +52,34 @@ void Driver::InitializeWham()
 
             WhamInput input = {const_cast<ParameterPack&>(pack_), VectorTimeSeries_};
             VectorWhamCalc_.push_back(Whamptr(WhamRegistry::Factory::instance().create(whamType, input)));
+
+            std::string whamName = VectorWhamCalc_[i] -> getName();
+            auto it = MapNameOfWhamToLoc_.find(whamName);
+
+            ASSERT((it == MapNameOfWhamToLoc_.end()), "The name of wham " << whamName << " is registered twice.");
+            MapNameOfWhamToLoc_.insert(std::make_pair(whamName, i));
         }
+    }
+}
+
+void Driver::InitializeReweight()
+{
+    auto reweightPack = pack_.findParamPacks("Reweight", ParameterPack::KeyType::Optional);
+
+    for (int i=0;i<reweightPack.size();i++)
+    {
+        std::string whamName;
+        std::string reweighttype;
+
+        reweightPack[i] -> ReadString("wham", ParameterPack::KeyType::Required, whamName);
+        reweightPack[i] -> ReadString("type", ParameterPack::KeyType::Required, reweighttype);
+
+        auto it = MapNameOfWhamToLoc_.find(whamName);
+        ASSERT((it != MapNameOfWhamToLoc_.end()), "The name of wham " << whamName << " is not registered.");
+        int index = it -> second;
+
+        ReweightInput input = {VectorWhamCalc_[index].get(), const_cast<ParameterPack&>(*reweightPack[i])};
+        ReweightPtr_.push_back(reweightptr(ReweightRegistry::Factory::instance().create(reweighttype, input)));
     }
 }
     
@@ -66,6 +94,11 @@ void Driver::calculate()
     for (int i=0;i<VectorWhamCalc_.size();i++)
     {
         VectorWhamCalc_[i] -> calculate();
+    }
+
+    for (int i=0;i<ReweightPtr_.size();i++)
+    {
+        ReweightPtr_[i] -> calculate();
     }
 
     for (int i=0;i<VectorTimeSeriesOP_.size();i++)
@@ -88,6 +121,11 @@ void Driver::printOutput()
     for (int i=0;i<VectorWhamCalc_.size();i++)
     {
         VectorWhamCalc_[i] -> printOutput();
+    }
+
+    for (int i=0;i<ReweightPtr_.size();i++)
+    {
+        ReweightPtr_[i] -> printOutput();
     }
 
     for (int i=0;i<VectorTimeSeries_.size();i++)
