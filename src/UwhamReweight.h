@@ -3,6 +3,7 @@
 #include "tools/CommonTypes.h"
 #include "tools/InputParser.h"
 #include "Bias.h"
+#include "Reweight.h"
 
 #include <vector>
 #include <string>
@@ -65,7 +66,4 @@ class UwhamReweight
 
         // dimension of data 
         int dimension_;
-
-        // axis of which we want to take conditional probabilities
-        int axis_=0;
 };

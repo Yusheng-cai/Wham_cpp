@@ -5,7 +5,6 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
 {
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputs_);
     pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, VectorOutputFiles_);
-    pack_.ReadNumber("axis", ParameterPack::KeyType::Optional, axis_);
 
     registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
     registerOutputFunc("FE", [this](std::string name) -> void{this -> printFE(name);});
@@ -25,21 +24,11 @@ UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
     const auto& xi = wham_.getxi();
     const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
 
-    // get number of bins along the dimension we want to perform conditional probabilities for --> this is the x for P(a|x) 
-    if (dimension_ > 1)
-    {
-        numBins_ = wham_.getNumBinsPerDimension(axis_);
-    }
-    else
-    {
-        numBins_ = 1;
-    }
-
     // obtain the dimension of the wham calculation
     dimension_ = wham_.getDimension();
 
     FE_.resize(numBias_, std::vector<Real>(MapBinToIndex.size(),0.0));
-    averages_.resize(numBias_, std::vector<Real>(numBins_, 0.0));
+    averages_.resize(numBias_, std::vector<Real>(dimension_, 0.0));
 
     ones_.resize(xi.size(), 1.0);
 }
@@ -56,7 +45,7 @@ void UwhamReweight::calculate()
     // find the BUji 
     for (int i=0;i<numBias_;i++)
     {
-        std::cout << "Done with bias " << i << std::endl;
+        std::cout << "Hello." << std::endl;
         std::vector<Real> lnpji_vec(xi.size(),0.0);
 
         #pragma omp parallel for 
@@ -76,16 +65,18 @@ void UwhamReweight::calculate()
                 lnpji_vec[j] = lnpji_vec[j] + fk;
             }
 
-            std::vector<Real> alocal(numBins_,0.0);
+            std::vector<Real> alocal(dimension_,0.0);
             #pragma omp for
             for (int j=0;j<xi.size();j++)
             {
-                int k = bindata[i][axis_];
-                alocal[k] += std::exp(lnpji_vec[j]) * xi[j][axis_];
+                for (int k=0;k<dimension_;k++)
+                {
+                    alocal[k] += std::exp(lnpji_vec[j]) * xi[j][k];
+                }
             }
 
             #pragma omp critical
-            for (int k=0;k<numBins_;k++)
+            for (int k=0;k<dimension_;k++)
             {
                 averages_[i][k] += alocal[k];
             }
@@ -109,6 +100,7 @@ void UwhamReweight::calculate()
             FE_[i][index] = -1.0*f;
             index ++;
         }
+        std::cout << "Done with bias " << i << std::endl;
     }
 }
 
