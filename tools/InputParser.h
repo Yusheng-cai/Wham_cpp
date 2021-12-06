@@ -169,7 +169,7 @@ bool ParameterPack::ReadNumber(const std::string& key, const ParameterPack::KeyT
     {
         bool fail = StringTools::StringToType<T>(*str,val);
 
-        ASSERT((fail == false), "The read operation failed.");
+        ASSERT((fail == false), "The read operation failed with key = " << key);
 
         return true;
     }
@@ -189,7 +189,7 @@ bool ParameterPack::ReadVectorNumber(const std::string& key, const ParameterPack
         {
             T val;
             bool fail = StringTools::StringToType<T>(vecstr->at(i), val);
-            ASSERT((fail == false), "The read operation failed.");
+            ASSERT((fail == false), "The read operation failed with key = " << key);
             vecval.push_back(val);
         }
 
