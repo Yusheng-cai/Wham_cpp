@@ -38,11 +38,11 @@ SimpleBias::SimpleBias(const ParameterPack& pack)
 SimpleBias::Real SimpleBias::calculate(const std::vector<Real>& x)
 {
     int size = x.size();
-    ASSERT((size == dimension_), "The dimension of the bias=" << xstar_.size() << " and does not \
+    ASSERT((size >= dimension_), "The dimension of the bias=" << xstar_.size() << " must be smaller than \
     the input data size = " << x.size());
 
     Real energy_ = 0.0;
-    for (int i=0;i<size;i++)
+    for (int i=0;i<dimension_;i++)
     {
         energy_ += hkappa_[i]*std::pow(x[i] - xstar_[i],2.0);
         energy_ += phi_[i] * x[i];
@@ -54,13 +54,13 @@ SimpleBias::Real SimpleBias::calculate(const std::vector<Real>& x)
 std::vector<SimpleBias::Real> SimpleBias::calculateForce(const std::vector<Real>& x)
 {
     int size = x.size();
-    ASSERT((size == dimension_), "The dimension of the bias=" << xstar_.size() << " and does not \
+    ASSERT((size >= dimension_), "The dimension of the bias=" << xstar_.size() << " must be smaller not \
     the input data size = " << x.size());
 
     std::vector<Real> force;
     force.resize(x.size(),0.0);
 
-    for (int i=0;i<size;i++)
+    for (int i=0;i<dimension_;i++)
     {
         force[i] = -2.0 * hkappa_[i] * (x[i] - xstar_[i]) - phi_[i]; 
     }
