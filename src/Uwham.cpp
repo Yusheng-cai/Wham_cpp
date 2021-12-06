@@ -33,9 +33,6 @@ Uwham::Uwham(const WhamInput& input)
  
     // Now read in what type of calculation are you letting Uwham do
     initializeStrat();
-
-    // initialize the Post Processing of Wham
-    initializePostProcessing();
 }
 
 void Uwham::printderivative(std::string name)
@@ -88,17 +85,6 @@ void Uwham::printderivative(std::string name)
     }
 
     ofs.close();
-}
-
-void Uwham::initializePostProcessing()
-{
-    auto reweightPack = pack_.findParamPacks("UReweight", ParameterPack::KeyType::Optional);
-
-    for (int i=0;i<reweightPack.size();i++)
-    {
-        UwhamReweightInputPack input = {*this,const_cast<ParameterPack&>(*reweightPack[i])};
-        reweight_.push_back(reweightptr(new UwhamReweight(input)));
-    }
 }
 
 void Uwham::initializeBUki()
@@ -390,17 +376,8 @@ void Uwham::printOutput()
 
         printOutputFromName(name)(VectorOutputFileNames_[i]);
     }
-
-    for (int i =0;i<reweight_.size();i++)
-    {
-        reweight_[i] -> printOutput();
-    }
 }
 
 void Uwham::finishCalculate()
 {
-    for (int i=0;i<reweight_.size();i++)
-    {
-        reweight_[i] -> calculate();
-    }
 }

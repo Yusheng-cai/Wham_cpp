@@ -5,7 +5,6 @@
 #include "Bias.h"
 #include "Bin.h"
 #include "UwhamCalculationStrategy.h"
-#include "UwhamReweight.h"
 
 #include <vector>
 #include <iomanip>
@@ -20,14 +19,12 @@ class Uwham:public Wham
     public:
         using Biasptr = std::unique_ptr<Bias>;
         using stratptr= std::unique_ptr<UWhamCalculationStrategy>;
-        using reweightptr = std::unique_ptr<UwhamReweight>;
 
         Uwham(const WhamInput& pack);
         virtual ~Uwham(){};
         void initializeStrat();
         void initializeBins();
         void initializeBUki();
-        void initializePostProcessing();
 
         virtual void calculate() override;
         virtual void printOutput() override;
@@ -77,7 +74,4 @@ class Uwham:public Wham
 
         // histogram for each dimension of data
         std::vector<std::vector<std::vector<Real>>> histogram_;
-
-        // declare a vector of reweight objects 
-        std::vector<reweightptr> reweight_;
 };
