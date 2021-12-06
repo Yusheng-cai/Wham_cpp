@@ -7,6 +7,10 @@ TSoperation::TSoperation(const TSInput& input)
     pack_.ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
 
     outputs_ = OutputFuncPtr(new Output());
+
+    combineData();
+
+    outputs_ -> registerOutputFunc("totaldata", [this](std::string name) -> void {printTotalData(name);});
 }
 
 void TSoperation::print()
@@ -15,4 +19,31 @@ void TSoperation::print()
     {
         outputs_ -> getOutputFuncByName(VectorOutputNames_[i])(VectorOutputFileNames_[i]);
     }
+}
+
+void TSoperation::combineData()
+{
+    for (int i=0;i<VectorTS_.size();i++)
+    {
+        xi_.insert(xi_.end(),VectorTS_[i]->begin(), VectorTS_[i]->end());
+    }
+}
+
+void TSoperation::printTotalData(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    std::cout << "Xi size = " << xi_.size() << std::endl;
+
+    for (int i=0;i<xi_.size();i++)
+    {
+        for (int j=0;j<xi_[i].size();j++)
+        {
+            ofs << xi_[i][j] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }

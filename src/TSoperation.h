@@ -21,13 +21,17 @@ struct TSInput
 class TSoperation
 {
     public:
+        using Real  = CommonTypes::Real;
         using tsptr = std::shared_ptr<TimeSeries>;
         using OutputFuncPtr = std::unique_ptr<Output>;
 
         TSoperation(const TSInput& input);
 
+        void combineData();
+
         virtual void calculate() = 0;
         virtual void print();
+        void printTotalData(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTS_;
@@ -38,6 +42,8 @@ class TSoperation
 
         std::vector<std::string> VectorOutputNames_;
         std::vector<std::string> VectorOutputFileNames_;
+
+        std::vector<std::vector<Real>> xi_;
 };
 
 namespace timeseriesOP
