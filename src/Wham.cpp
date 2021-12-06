@@ -36,33 +36,65 @@ void Wham::isRegistered()
 
 void Wham::initializeTimeSeries()
 {
-    dimensions_.resize(VectorTimeSeries_.size());
-    N_.resize(VectorTimeSeries_.size());
+    ASSERT((VectorTimeSeries_.size() == 1 || VectorTimeSeries_.size() == Biases_.size()), "You can either provided a time series with \
+    all the data combined or time series that are equal to size of biases while there are " << Biases_.size() << " biases but just \
+    " << VectorTimeSeries_.size() << " time series.");
 
+    // combine the time series into xi
     for (int i=0;i<VectorTimeSeries_.size();i++)
     {
         xi_.insert(xi_.end(),VectorTimeSeries_[i]->begin(), VectorTimeSeries_[i]->end());
-        N_[i] = VectorTimeSeries_[i]->getSize(); 
-        std::cout << "Length of data for " << i << " is " << N_[i] << std::endl;
-        dimensions_[i] = VectorTimeSeries_[i]->getDimension();
-
-        Ntot_ += N_[i];
+        std::cout << "Length of data for " << i << " is " << VectorTimeSeries_[i]->getSize() << std::endl;
     }
 
-    for (int i=0;i<dimensions_.size()-1;i++)
+    // if vector time series is not passed in as 1
+    if (VectorTimeSeries_.size() > 1)
     {
-        ASSERT((dimensions_[i] == dimensions_[i+1]), "The dimension in the " << i << "th timeseries does not match with the " << i+1 << "th time series");
-    }
+        std::cout << "Performing uncombined data input." << std::endl;
+        dimensions_.resize(VectorTimeSeries_.size());
+        N_.resize(VectorTimeSeries_.size());
 
-    // record the dimensions of this Wham calculation
-    dimension_ = dimensions_[0];
+        for (int i=0;i<VectorTimeSeries_.size();i++)
+        {
+            N_[i] = VectorTimeSeries_[i] -> getSize();
+            Ntot_ += N_[i];
+            dimensions_[i] = VectorTimeSeries_[i] -> getDimension();
+        }
+        
+        for (int i=0;i<dimensions_.size()-1;i++)
+        {
+            ASSERT((dimensions_[i] == dimensions_[i+1]), "The dimension in the " << i << "th timeseries does not match with the " << i+1 << "th time series");
+        }
+
+        // record the dimensions of this Wham calculation
+        dimension_ = dimensions_[0];
+    }
+    else
+    {
+        std::cout << "Performing combined data input." << std::endl;
+        const auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
+
+        int N;
+        whamPack->ReadNumber("N", ParameterPack::KeyType::Required, N);
+
+        dimensions_.resize(Biases_.size());
+        N_.resize(Biases_.size());
+
+        dimension_ = VectorTimeSeries_[0] -> getDimension();
+
+        std::fill(dimensions_.begin(), dimensions_.end(), dimension_);
+        std::fill(N_.begin(), N_.end(), N);
+
+        Ntot_ = N*N_.size();
+    }
 }
 
 void Wham::initializeBias()
 {
     auto biases = pack_.findParamPacks("bias", ParameterPack::KeyType::Required);
 
-    ASSERT((biases.size() == VectorTimeSeries_.size()), "The number of time series does not match the number of biases.");
+    // no longer needed 
+    // ASSERT((biases.size() == VectorTimeSeries_.size()), "The number of time series does not match the number of biases.");
 
     for (int i=0;i<biases.size();i++)
     {
