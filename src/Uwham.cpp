@@ -17,17 +17,18 @@ Uwham::Uwham(const WhamInput& input)
     // check if the outputs are registered
     isRegistered();
 
+    // initialize bias
+    initializeBias();
+
     // Read in timeseries
     initializeTimeSeries();
 
-    // read in the binning information
+   // read in the binning information
     initializeBins();
 
     // bin Timeseries
     binTimeSeries();
 
-    // initialize bias and calculate BUki
-    initializeBias();
     initializeBUki();
  
     // Now read in what type of calculation are you letting Uwham do
@@ -91,7 +92,7 @@ void Uwham::printderivative(std::string name)
 
 void Uwham::initializePostProcessing()
 {
-    auto reweightPack = pack_.findParamPacks("Reweight", ParameterPack::KeyType::Optional);
+    auto reweightPack = pack_.findParamPacks("UReweight", ParameterPack::KeyType::Optional);
 
     for (int i=0;i<reweightPack.size();i++)
     {
