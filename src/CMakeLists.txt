@@ -20,6 +20,9 @@ target_sources(WHAMsrc PRIVATE
     "SparseSampling.cpp"
     "TSoperation.cpp"
     "HistogramOP.cpp"
+    "CombineData.cpp"
+    "Reweight.cpp"
+    "UwhamConditionReweight.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -42,6 +45,9 @@ set(WHAMsrc_HEADER
     "SparseSampling.h"
     "HistogramOP.h"
     "TSoperation.h"
+    "CombineData.h"
+    "Reweight.h"
+    "UwhamConditionReweight.h"
 )
 
 target_include_directories(WHAMsrc
