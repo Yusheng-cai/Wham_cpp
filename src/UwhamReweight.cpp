@@ -1,44 +1,28 @@
-#include "Uwham.h"
+#include "UwhamReweight.h"
 
-UwhamReweight::UwhamReweight(UwhamReweightInputPack& pack)
-:wham_(pack.uwham), pack_(pack.pack)
+namespace ReweightRegistry
 {
-    pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputs_);
-    pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, VectorOutputFiles_);
+    registry<UwhamReweight> registerUwhamReweight("UwhamReweight");
+}
 
-    registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
-    registerOutputFunc("FE", [this](std::string name) -> void{this -> printFE(name);});
+UwhamReweight::UwhamReweight(const ReweightInput& input)
+:Reweight(input)
+{
+    output_->registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
+    output_->registerOutputFunc("FE", [this](std::string name) -> void{this -> printFE(name);});
 
-    // find the bias packs
-    auto biasPacks = pack_.findParamPacks("bias",ParameterPack::KeyType::Required);
-    numBias_ = biasPacks.size();
+    Uwham_ = dynamic_cast<Uwham*>(wham_);
 
-    // This param pack contains everything that is needed by the bias
-    for (int i=0;i<biasPacks.size();i++)
-    {
-        std::string type = "simplebias";
-        biasPacks[i] -> ReadString("type", ParameterPack::KeyType::Optional,type);
-        Vectorbias_.push_back(Biasptr(BiasRegistry::Factory::instance().create(type, *biasPacks[i])));
-    }
-
-    const auto& xi = wham_.getxi();
-    const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
-
-    // obtain the dimension of the wham calculation
-    dimension_ = wham_.getDimension();
-
-    FE_.resize(numBias_, std::vector<Real>(MapBinToIndex.size(),0.0));
-    averages_.resize(numBias_, std::vector<Real>(dimension_, 0.0));
-
-    ones_.resize(xi.size(), 1.0);
+    ASSERT((Uwham_ != nullptr), "The wham inputted with type " << wham_ -> type() << \
+    " cannot be applied to this reweight strategy.");
 }
 
 void UwhamReweight::calculate()
 {
-    const auto& xi = wham_.getxi();
-    const auto& lnwji = wham_.getlnwji();
-    const auto& MapBinToIndex = wham_.getMapBinIndexTolnwjiIndex();
-    const auto& bindata = wham_.getBinnedData();
+    const auto& xi = Uwham_->getxi();
+    const auto& lnwji = Uwham_->getlnwji();
+    const auto& MapBinToIndex = Uwham_->getMapBinIndexTolnwjiIndex();
+    const auto& bindata = Uwham_->getBinnedData();
 
     ASSERT((bindata.size() == xi.size()), "The size of the bindata mismatches the xi data.");
 
@@ -100,32 +84,6 @@ void UwhamReweight::calculate()
             index ++;
         }
         std::cout << "Done with bias " << i << std::endl;
-    }
-}
-
-void UwhamReweight::registerOutputFunc(std::string name, outputfunc func)
-{
-    auto it = MapNameToOutput_.find(name);
-
-    ASSERT((it == MapNameToOutput_.end()), "The output with name " << name << " is already registered.");
-
-    MapNameToOutput_.insert(std::make_pair(name, func));
-}
-
-UwhamReweight::outputfunc& UwhamReweight::getOutputByName(std::string name)
-{
-    auto it = MapNameToOutput_.find(name);
-
-    ASSERT((it != MapNameToOutput_.end()), "The output with name " << name << " is not registered.");
-
-    return it -> second;
-}
-
-void UwhamReweight::printOutput()
-{
-    for (int i=0;i<VectorOutputs_.size();i++)
-    {
-        getOutputByName(VectorOutputs_[i])(VectorOutputFiles_[i]);
     }
 }
 
