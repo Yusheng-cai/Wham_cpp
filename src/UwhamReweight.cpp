@@ -45,7 +45,6 @@ void UwhamReweight::calculate()
     // find the BUji 
     for (int i=0;i<numBias_;i++)
     {
-        std::cout << "Hello." << std::endl;
         std::vector<Real> lnpji_vec(xi.size(),0.0);
 
         #pragma omp parallel for 
