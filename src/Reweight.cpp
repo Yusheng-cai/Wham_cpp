@@ -6,6 +6,8 @@ Reweight::Reweight(const ReweightInput& input)
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Required, outputNames_);
     pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Required, outputfileNames_);
 
+    ASSERT((outputNames_.size() == outputfileNames_.size()), "input size does not match with output.");
+
     // find the bias packs
     auto biasPacks = pack_.findParamPacks("bias",ParameterPack::KeyType::Required);
     numBias_ = biasPacks.size();
@@ -19,6 +21,18 @@ Reweight::Reweight(const ReweightInput& input)
     }
 
     output_ = outputptr(new Output());
+
+    checkOutputValidity();
+}
+
+void Reweight::checkOutputValidity()
+{
+    for (int i=0;i<outputNames_.size();i++)
+    {
+        bool isregistered = output_->isregistered(outputNames_[i]);
+
+        ASSERT((isregistered), "The name " << outputNames_[i] << " is not registered.");
+    }
 }
 
 void Reweight::printOutput()

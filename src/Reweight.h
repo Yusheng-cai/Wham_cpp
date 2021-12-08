@@ -28,6 +28,7 @@ class Reweight
         Reweight(const ReweightInput& input);
 
         void printOutput();
+        void checkOutputValidity();
 
         virtual void calculate() = 0;
     protected:

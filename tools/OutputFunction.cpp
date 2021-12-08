@@ -17,3 +17,10 @@ Output::outputFunc& Output::getOutputFuncByName(std::string name)
 
     return it -> second;
 }
+
+bool Output::isregistered(std::string name)
+{
+    auto it = MapNameToOutputFunc_.find(name);
+
+    return it != MapNameToOutputFunc_.end();
+}

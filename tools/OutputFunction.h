@@ -17,6 +17,8 @@ class Output
         void registerOutputFunc(std::string name, outputFunc func);
         outputFunc& getOutputFuncByName(std::string name);
 
+        bool isregistered(std::string name);
+
     private:
         std::map<std::string, outputFunc> MapNameToOutputFunc_;
 };
