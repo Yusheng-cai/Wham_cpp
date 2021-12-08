@@ -32,6 +32,7 @@ class TSoperation
         virtual void calculate() = 0;
         virtual void print();
         void printTotalData(std::string name);
+        void printTotalDataLength(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTS_;
@@ -44,6 +45,8 @@ class TSoperation
         std::vector<std::string> VectorOutputFileNames_;
 
         std::vector<std::vector<Real>> xi_;
+
+        std::vector<int> TotalDataLength_;
 };
 
 namespace timeseriesOP

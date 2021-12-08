@@ -11,6 +11,7 @@ TSoperation::TSoperation(const TSInput& input)
     combineData();
 
     outputs_ -> registerOutputFunc("totaldata", [this](std::string name) -> void {printTotalData(name);});
+    outputs_ -> registerOutputFunc("totaldatalength", [this](std::string name) -> void {printTotalDataLength(name);});
 }
 
 void TSoperation::print()
@@ -21,11 +22,25 @@ void TSoperation::print()
     }
 }
 
+void TSoperation::printTotalDataLength(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (int i=0;i<TotalDataLength_.size();i++)
+    {
+        ofs << TotalDataLength_[i] << " ";
+    }
+
+    ofs.close();
+}
+
 void TSoperation::combineData()
 {
     for (int i=0;i<VectorTS_.size();i++)
     {
         xi_.insert(xi_.end(),VectorTS_[i]->begin(), VectorTS_[i]->end());
+        TotalDataLength_.push_back(VectorTS_[i]->getSize());
     }
 }
 
