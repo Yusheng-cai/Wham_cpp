@@ -14,7 +14,9 @@
 #include <chrono>
 #include <memory>
 #include <functional>
+#include <algorithm>
 #include <map>
+#include <numeric>
 
 struct WhamInput
 {

@@ -75,7 +75,7 @@ void Wham::initializeTimeSeries()
         const auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
         int N;
-        whamPack->ReadNumber("N", ParameterPack::KeyType::Required, N);
+        bool readN = whamPack->ReadNumber("N", ParameterPack::KeyType::Optional, N);
 
         dimensions_.resize(Biases_.size());
         N_.resize(Biases_.size());
@@ -85,7 +85,12 @@ void Wham::initializeTimeSeries()
         std::fill(dimensions_.begin(), dimensions_.end(), dimension_);
         std::fill(N_.begin(), N_.end(), N);
 
-        Ntot_ = N*N_.size();
+        bool readNvec = whamPack->ReadVectorNumber("Nvec", ParameterPack::KeyType::Optional, N_);
+
+        ASSERT((N_.size() == Biases_.size()), "The inputted N size is different from bias size.");
+        ASSERT((readN || readNvec), "Must provide a N in combined data input.");
+
+        Ntot_ = std::accumulate(N_.begin(), N_.end(), Ntot_);
     }
 }
 
