@@ -26,6 +26,12 @@ class Uwham:public Wham
         void initializeBins();
         void initializeBUki();
 
+        // This needs to be called after calculation of BUki --> calculates the initial guess using BAR method
+        void BARInitialGuess();
+
+        // Make indices as to which group each data point belongs to
+        void MakeGroupPointMap();
+
         virtual void calculate() override;
         virtual void printOutput() override;
         virtual void finishCalculate() override;
@@ -74,4 +80,12 @@ class Uwham:public Wham
 
         // histogram for each dimension of data
         std::vector<std::vector<std::vector<Real>>> histogram_;
+
+        // the initial guess for f_k
+        std::vector<Real> fk_;
+        std::vector<std::vector<int>> GroupIndex_;
+        std::vector<Real> cumulativeSumN_;
+
+        // whether or not we are doing BAR initialization
+        bool BAR_=false;
 };

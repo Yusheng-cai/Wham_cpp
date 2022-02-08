@@ -8,6 +8,7 @@ namespace WhamRegistry
 Uwham::Uwham(const WhamInput& input)
 :Wham(input)
 {
+    bool real = whamPack_->Readbool("BAR", ParameterPack::KeyType::Optional, BAR_);
     registerOutput("normalization", [this](std::string name)-> void {this->printNormalization(name);});
     registerOutput("pji", [this](std::string name)->void{this->printPji(name);});
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
@@ -30,6 +31,9 @@ Uwham::Uwham(const WhamInput& input)
     binTimeSeries();
 
     initializeBUki();
+
+    // make BAR initial guess
+    BARInitialGuess();
  
     // Now read in what type of calculation are you letting Uwham do
     initializeStrat();
@@ -100,6 +104,61 @@ void Uwham::initializeBUki()
             Real val = Biases_[j]->calculate(xi_[i]); 
             BUki_(j,i) = Biases_[j]->getBeta()*val;
         }
+    }
+}
+
+void Uwham::BARInitialGuess()
+{
+    if (BAR_)
+    {
+        std::cout << "Doing bar initial guess." << "\n";
+        // map from group index to point index in xi
+        MakeGroupPointMap();
+
+        for (int i=0;i<GroupIndex_.size()-1;i++)
+        {
+            int forwardSize = GroupIndex_[i].size();
+            int backwardSize= GroupIndex_[i+1].size();
+
+            // forward work
+            std::vector<Real> w_F(forwardSize);
+            std::vector<Real> w_B(backwardSize);
+
+            int k = i;
+            int l = i+1;
+
+            for (int j=0;j<forwardSize;j++)
+            {
+                w_F[j] = BUki_(l,GroupIndex_[k][j]) - BUki_(k, GroupIndex_[k][j]);
+            }
+
+            for (int j=0;j<backwardSize;j++)
+            {
+                w_B[j] = BUki_(k, GroupIndex_[l][j]) - BUki_(l, GroupIndex_[l][j]);
+            }
+
+            WhamTools::CalculateDeltaFBar(w_F, w_B);
+        }
+    }
+    else
+    {
+        std::cout << "initializing fk to zeros." << "\n";
+        fk_ = std::vector<Real>(N_.size(),0.0);
+    }
+}
+
+void Uwham::MakeGroupPointMap()
+{
+    GroupIndex_.clear();
+    GroupIndex_.resize(N_.size());
+
+    int initial=0;
+    for (int i=0;i<N_.size();i++)
+    {
+        std::vector<int> temp(N_[i],0);
+        std::iota(temp.begin(), temp.end(), initial);
+        GroupIndex_[i] = temp;
+        initial = initial + N_[i];
     }
 }
 
@@ -190,7 +249,6 @@ void Uwham::initializeBins()
         {
             Bins_.push_back(Bin(*BinPacks[i])); 
         }
-
     }
 }
 
@@ -201,7 +259,7 @@ void Uwham::initializeStrat()
     std::string strat;
     whampack->ReadString("strategy", ParameterPack::KeyType::Required, strat);
 
-    UwhamStrategyInput input = {BUki_, N_, const_cast<ParameterPack&>(*whampack)};
+    UwhamStrategyInput input = {BUki_, N_, const_cast<ParameterPack&>(*whampack), fk_};
     strat_ = stratptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strat, input));
 }
 
