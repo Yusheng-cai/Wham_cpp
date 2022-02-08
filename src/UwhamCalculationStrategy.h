@@ -16,6 +16,7 @@ struct UwhamStrategyInput
     Matrix<Real>& BUki_;
     std::vector<Real>& N;
     ParameterPack& pack;
+    std::vector<Real> fk;
 };
 
 class UWhamCalculationStrategy
