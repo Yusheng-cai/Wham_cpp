@@ -19,6 +19,8 @@ UwhamConditionReweight::UwhamConditionReweight(const ReweightInput& input)
     axisavg_--;
 
     output_->registerOutputFunc("average", [this](std::string name) -> void {this -> printAverage(name);});
+
+    checkOutputValidity();
 }
 
 void UwhamConditionReweight::calculate()

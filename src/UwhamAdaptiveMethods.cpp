@@ -90,10 +90,9 @@ void UwhamAdaptiveMethods::calculate()
             fk_.assign(fnr_.begin(), fnr_.end());
         }
 
-        step++;
-
         if ((print_every_ != -1) && (step % print_every_==0)) 
         {
+            std::cout << "self consistent norm is " << normSC << " NR norm is " << normNR << "\n";
             std::cout << "The error at step " << step << " is " << err << std::endl;
         }
 
@@ -101,6 +100,8 @@ void UwhamAdaptiveMethods::calculate()
         {
             converged = true;
         }
+
+        step++;
     }
 
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
