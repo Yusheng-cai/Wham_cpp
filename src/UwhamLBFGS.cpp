@@ -10,6 +10,7 @@ UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
 {
     input.pack.ReadNumber("epsilon", ParameterPack::KeyType::Optional, epsilon_);
     input.pack.ReadNumber("max_iterations", ParameterPack::KeyType::Optional, max_iterations_);
+    input.pack.ReadNumber("epsilon_rel", ParameterPack::KeyType::Optional, epsilon_rel_);
 
     UwhamNLLInput in = {BUki_, N_};
     NLLeq_ = NLLptr(new UwhamNLL(in));
@@ -20,20 +21,34 @@ void UwhamLBFGS::calculate()
     LBFGSpp::LBFGSParam<Real> Param;
     Param.epsilon = epsilon_;
     Param.max_iterations = max_iterations_;
+    Param.epsilon_rel = epsilon_rel_;
 
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
+    // copy the data -> fk
     Eigen::VectorXd fk = Eigen::VectorXd::Zero(BUki_.getNR());
+    for (int i=0;i<BUki_.getNR();i++)
+    {
+        fk[i] = fk_[i];
+    }
     
     Real fx;
 
-    solver.minimize(*NLLeq_,fk, fx);
+    int numiterations = solver.minimize(*NLLeq_,fk, fx);
+    std::cout << "It took " << numiterations << " iterations to converge." << "\n";
 
     for (int i=0;i<fk.size();i++)
     {
         //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
         fk_[i] = fk[i];
     }
+    Real min = *(std::min_element(fk_.begin(), fk_.end()));
+    for (int i=0;i<fk_.size();i++)
+    {
+        fk_[i] = fk_[i] - min;
+    }
+
+    std::cout << "Function value = " << fx << "\n";
 
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
@@ -82,7 +97,7 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
 
     for (int i=0;i<x.size();i++)
     {
-        fk_[i] = x[i];
+        fk_[i] = x[i] - x[0];
     }
 
     Real firstPart = 0.0;

@@ -47,5 +47,7 @@ class UwhamLBFGS : public UWhamCalculationStrategy
 
         Real epsilon_ = 1e-6;
 
+        Real epsilon_rel_ = 1e-6;
+
         int max_iterations_ = 100;
 };
