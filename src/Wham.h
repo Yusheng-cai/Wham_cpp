@@ -71,6 +71,7 @@ class Wham
 
         // the parameter pack
         ParameterPack& pack_;
+        ParameterPack* whamPack_;
 
         // the vector of all the bias        
         std::vector<Biasptr> Biases_;
@@ -128,4 +129,13 @@ namespace WhamTools
     // find the lnpl in Bwham
     std::vector<Real> calculatelnpl(const Matrix<Real>& BWil, const std::vector<Real>& Ml, const std::vector<Real>& N, \
     const std::vector<Real>& fk);
+
+    // Calculate the BAR value
+    Real CalculateBAR(const std::vector<Real>& w_F, const std::vector<Real>& w_B, Real DeltaF);
+
+    // Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP)
+    Real EXP(const std::vector<Real>& w_F);
+
+    // Estimate free energy difference using BAR
+    Real CalculateDeltaFBar(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int maxiterations=500);
 };

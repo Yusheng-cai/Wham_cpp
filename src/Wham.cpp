@@ -5,11 +5,11 @@ Wham::Wham(const WhamInput& input)
 {
     ASSERT((VectorTimeSeries_.size() != 0), "No timeseries data was passed in.");
 
-    auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
-    whamPack -> ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputNames_);
-    whamPack -> ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
-    whamPack -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
-    whamPack -> ReadString("name" , ParameterPack::KeyType::Optional, name_);
+    whamPack_ =  const_cast<ParameterPack*>(pack_.findParamPack("wham", ParameterPack::KeyType::Required));
+    whamPack_ -> ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputNames_);
+    whamPack_ -> ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
+    whamPack_ -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
+    whamPack_ -> ReadString("name" , ParameterPack::KeyType::Optional, name_);
 
     ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "The output and the output files size is different.");
 }
@@ -72,10 +72,8 @@ void Wham::initializeTimeSeries()
     else
     {
         std::cout << "Performing combined data input." << std::endl;
-        const auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
-
         int N;
-        bool readN = whamPack->ReadNumber("N", ParameterPack::KeyType::Optional, N);
+        bool readN = whamPack_->ReadNumber("N", ParameterPack::KeyType::Optional, N);
 
         dimensions_.resize(Biases_.size());
         N_.resize(Biases_.size());
@@ -85,7 +83,7 @@ void Wham::initializeTimeSeries()
         std::fill(dimensions_.begin(), dimensions_.end(), dimension_);
         std::fill(N_.begin(), N_.end(), N);
 
-        bool readNvec = whamPack->ReadVectorNumber("Nvec", ParameterPack::KeyType::Optional, N_);
+        bool readNvec = whamPack_->ReadVectorNumber("Nvec", ParameterPack::KeyType::Optional, N_);
 
         ASSERT((N_.size() == Biases_.size()), "The inputted N size is different from bias size.");
         ASSERT((readN || readNvec), "Must provide a N in combined data input.");
@@ -372,4 +370,72 @@ Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::
     }
 
     return Hessian;
+}
+
+WhamTools::Real WhamTools::CalculateBAR(const std::vector<Real>& w_F, const std::vector<Real>& w_B, Real DeltaF)
+{
+    Real sizeWF = w_F.size();
+    Real sizeWB = w_B.size();
+
+    Real M = std::log(sizeWF/sizeWB);
+
+    //log f(W) = - log [1 + exp((M + W - DeltaF))]
+    //          = - log ( exp[+maxarg] [exp[-maxarg] + exp[(M + W - DeltaF) - maxarg]] )
+    //          = - maxarg - log(exp[-maxarg] + exp[(M + W - DeltaF) - maxarg])
+    //where maxarg = max((M + W - DeltaF), 0) 
+    std::vector<Real> logf_F(sizeWF, 0.0);
+    std::vector<Real> onesF(sizeWF,1.0);
+    #pragma omp parallel for
+    for (int i=0;i<(int)sizeWF;i++)
+    {
+        Real val = M + w_F[i] - DeltaF;
+        Real maxarg = std::max(val, 0.0);
+
+        logf_F[i] = -maxarg - std::log(std::exp(-maxarg) + std::exp(val - maxarg));
+    }
+    Real log_numer = LogSumExpOMP(logf_F, onesF);
+
+    std::vector<Real> logf_B(sizeWB, 0.0);
+    std::vector<Real> onesB(sizeWB,1.0);
+    #pragma omp parallel for
+    for (int i=0;i<(int)sizeWB;i++)
+    {
+        Real val = - M - w_B[i] + DeltaF;
+        Real maxarg = std::max(val, 0.0);
+
+        logf_B[i] = -maxarg - std::log(std::exp(-maxarg) + std::exp(val - maxarg));
+    }
+    Real log_denom = LogSumExpOMP(logf_B, onesB);
+
+    return log_numer - log_denom;
+}
+
+WhamTools::Real WhamTools::EXP(const std::vector<Real>& w_F)
+{
+    Real size = w_F.size();
+
+    std::vector<Real> ones(size,-1.0);
+    std::vector<Real> negw_F(size,0.0);
+
+    for (int i=0;i<size;i++)
+    {
+        negw_F[i] = - w_F[i];
+    }
+
+    Real val = LogSumExpOMP(negw_F, ones);
+    Real denom = std::log(size);
+
+    return - ( val - denom);
+}
+
+WhamTools::Real WhamTools::CalculateDeltaFBar(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations)
+{
+    // give an initial guess 
+    Real upperB = EXP(w_F);
+    Real LowerB = -EXP(w_B);
+
+    Real FUpperB= CalculateBAR(w_F, w_B, upperB);
+    Real FLowerB = CalculateBAR(w_F, w_B, LowerB);
+
+    ASSERT((FUpperB*FLowerB<0), "The initial guesses must be opposite sign");
 }
