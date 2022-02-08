@@ -21,8 +21,6 @@ Reweight::Reweight(const ReweightInput& input)
     }
 
     output_ = outputptr(new Output());
-
-    checkOutputValidity();
 }
 
 void Reweight::checkOutputValidity()
