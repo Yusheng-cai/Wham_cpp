@@ -35,13 +35,13 @@ void UwhamLBFGS::calculate()
     Real fx;
 
     int numiterations = solver.minimize(*NLLeq_,fk, fx);
-    std::cout << "It took " << numiterations << " iterations to converge." << "\n";
 
     for (int i=0;i<fk.size();i++)
     {
-        //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
         fk_[i] = fk[i];
     }
+
+    // subtract the minimum fk 
     Real min = *(std::min_element(fk_.begin(), fk_.end()));
     for (int i=0;i<fk_.size();i++)
     {
@@ -49,18 +49,17 @@ void UwhamLBFGS::calculate()
     }
 
     std::cout << "Function value = " << fx << "\n";
-
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
     // need to reweigth lnwji
     std::vector<Real> ones(lnwji_.size(),1);
     Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
 
-    for (int i=0;i<fk.size();i++)
-    {
-        //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
-        fk_[i] = fk_[i] - f;
-    }
+    // for (int i=0;i<fk.size();i++)
+    // {
+    //     //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
+    //     fk_[i] = fk_[i] - f;
+    // }
 
     #pragma omp parallel for 
     for (int i=0;i<lnwji_.size();i++)

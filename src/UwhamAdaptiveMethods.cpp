@@ -26,7 +26,6 @@ void UwhamAdaptiveMethods::calculate()
 
     Eigen::VectorXd gradVec;
 
-
     bool converged = false;
 
     Real err = 0.0;
@@ -106,7 +105,7 @@ void UwhamAdaptiveMethods::calculate()
 
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
-    // need to reweigth lnwji
+    // need to reweight lnwji
     Real f = -1.0*WhamTools::LogSumExp(lnwji_, ones);
 
     #pragma omp parallel for 
@@ -114,6 +113,11 @@ void UwhamAdaptiveMethods::calculate()
     {
         lnwji_[i] = f + lnwji_[i];
     }
+
+    // calculates the NLL equation
+    Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
+
+    std::cout << "NLL value = " << NLL_val << "\n";
 }
 
 UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)
