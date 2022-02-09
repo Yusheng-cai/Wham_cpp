@@ -6,6 +6,8 @@
 #include "TimeSeries.h"
 #include "tools/Constants.h"
 #include "tools/GenericFactory.h"
+#include "Array.h"
+#include "VectorOperations.h"
 #include "Bias.h"
 
 #include <vector>
@@ -136,6 +138,12 @@ namespace WhamTools
     // Estimate free energy difference using one-sided (unidirectional) exponential averaging (EXP)
     Real EXP(const std::vector<Real>& w_F);
 
-    // Estimate free energy difference using BAR
-    Real CalculateDeltaFBar(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int maxiterations=500);
+    // Estimate free energy difference using BAR --> using iterative method
+    Real CalculateDeltaFBarIterative(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int maxiterations=500, Real tolerance=1e-7);
+
+    // Estimate free energy difference using BAR --> bisection method
+    Real CalculateDeltaFBarBisection(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int maxiterations=500);
+
+    // Calculates the Uwham NLL equation
+    Real Uwham_NLL_equation(const std::vector<Real>& f_k, const Matrix<Real>& BUji, const std::vector<Real>& N);
 };

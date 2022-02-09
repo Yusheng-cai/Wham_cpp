@@ -400,7 +400,7 @@ WhamTools::Real WhamTools::CalculateBAR(const std::vector<Real>& w_F, const std:
     #pragma omp parallel for
     for (int i=0;i<(int)sizeWB;i++)
     {
-        Real val = - M - w_B[i] + DeltaF;
+        Real val = - M + w_B[i] + DeltaF;
         Real maxarg = std::max(val, 0.0);
 
         logf_B[i] = -maxarg - std::log(std::exp(-maxarg) + std::exp(val - maxarg));
@@ -414,7 +414,7 @@ WhamTools::Real WhamTools::EXP(const std::vector<Real>& w_F)
 {
     Real size = w_F.size();
 
-    std::vector<Real> ones(size,-1.0);
+    std::vector<Real> ones(size,1.0);
     std::vector<Real> negw_F(size,0.0);
 
     for (int i=0;i<size;i++)
@@ -428,8 +428,28 @@ WhamTools::Real WhamTools::EXP(const std::vector<Real>& w_F)
     return - ( val - denom);
 }
 
-WhamTools::Real WhamTools::CalculateDeltaFBar(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations)
+WhamTools::Real WhamTools::CalculateDeltaFBarIterative(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations, Real tol)
 {
+    Real DeltaFold = 0.0;
+    Real DeltaF = 0.0;
+    for (int i=0;i<max_iterations;i++)
+    {
+        DeltaF = - CalculateBAR(w_F, w_B, DeltaF) + DeltaFold;
+        DeltaFold = DeltaF;
+
+        Real relativeChange = std::abs(DeltaFold - DeltaF)/DeltaFold;
+
+        if (relativeChange < tol)
+        {
+            break;
+        }
+    }
+
+    return DeltaF;
+}
+
+WhamTools::Real WhamTools::CalculateDeltaFBarBisection(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations)
+{   
     // give an initial guess 
     Real upperB = EXP(w_F);
     Real LowerB = -EXP(w_B);
@@ -437,5 +457,62 @@ WhamTools::Real WhamTools::CalculateDeltaFBar(const std::vector<Real>& w_F, cons
     Real FUpperB= CalculateBAR(w_F, w_B, upperB);
     Real FLowerB = CalculateBAR(w_F, w_B, LowerB);
 
-    ASSERT((FUpperB*FLowerB<0), "The initial guesses must be opposite sign");
+    while ((FUpperB * FLowerB) > 0)
+    {
+        Real average = 0.5 * (upperB + LowerB);
+    }
+    Real multiple= FUpperB * FLowerB;
+
+    std::cout << "FupperB = " << FUpperB << "\n";
+    std::cout << "FlowerB = " << FLowerB << "\n";
+    std::cout << "Multiple = " << multiple << "\n";
+
+
+    ASSERT((multiple<0.0), "The initial guesses must be opposite sign");
+
+    return 1;
+}
+
+WhamTools::Real WhamTools::Uwham_NLL_equation(const std::vector<Real>& f_k, const Matrix<Real>& BUki, const std::vector<Real>& N)
+{
+    int Nsim = BUki.getNR();
+    int Ndata= BUki.getNC();
+
+    // Get the total N 
+    Real Ntot = VectorOP::VectorSum(N);
+
+    // get the fraction of N/Ntot
+    std::vector<Real> N_fraction(Nsim,0);
+    for (int i=0;i<Nsim;i++)
+    {
+        N_fraction[i] = N[i] / Ntot;
+    }
+
+    ASSERT((f_k.size() == Nsim), "The dimension of fk does not match that of the number of simulation.");
+
+    // Calculates the first part of the equation
+    Real firstPart = 0.0;
+    for (int i=0;i<Nsim;i++)
+    {
+        firstPart += N[i] * f_k[i];
+    }
+    firstPart /= Ntot;
+
+    // Calculates the second part of the equation
+    Real secondPart = 0.0;
+    #pragma omp parallel for reduction(+:secondPart)
+    for (int i=0;i<Ndata;i++)
+    {
+        std::vector<Real> temp(Nsim);
+        for (int j=0;j<Nsim;j++)
+        {
+            temp[j] = f_k[j] - BUki(j,i);
+        }
+
+        secondPart += WhamTools::LogSumExp(temp,N_fraction);
+    }
+
+    secondPart /= Ntot;
+
+    return -firstPart + secondPart;
 }
