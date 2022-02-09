@@ -111,9 +111,10 @@ void Uwham::BARInitialGuess()
 {
     if (BAR_)
     {
-        std::cout << "Doing bar initial guess." << "\n";
         // map from group index to point index in xi
         MakeGroupPointMap();
+
+        fk_ = std::vector<Real>(N_.size(),0.0);
 
         for (int i=0;i<GroupIndex_.size()-1;i++)
         {
@@ -137,7 +138,10 @@ void Uwham::BARInitialGuess()
                 w_B[j] = BUki_(k, GroupIndex_[l][j]) - BUki_(l, GroupIndex_[l][j]);
             }
 
-            WhamTools::CalculateDeltaFBar(w_F, w_B);
+            Real DeltaF = WhamTools::CalculateDeltaFBarIterative(w_F, w_B);
+
+            fk_[l] = fk_[k] + DeltaF;
+            std::cout << "fk " << l << " = " << fk_[l] << "\n";
         }
     }
     else
