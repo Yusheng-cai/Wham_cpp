@@ -14,6 +14,7 @@ Uwham::Uwham(const WhamInput& input)
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
     registerOutput("histogram", [this](std::string name) -> void{this -> printTimeSeriesBins(name);});
     registerOutput("derivative", [this](std::string name) -> void{this -> printderivative(name);});
+    registerOutput("derivativeNormTS", [this](std::string name) -> void {this -> printderivativeNormTS(name);});
 
     // check if the outputs are registered
     isRegistered();
@@ -37,6 +38,21 @@ Uwham::Uwham(const WhamInput& input)
  
     // Now read in what type of calculation are you letting Uwham do
     initializeStrat();
+}
+
+void Uwham::printderivativeNormTS(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    const auto& derivativeNorm = strat_->getNorm();
+
+    ofs << " Iteration \t DerivativeNorm \n";
+    for (int i=0;i<derivativeNorm.size();i++)
+    {
+        ofs << i+1 << "\t" << derivativeNorm[i] << "\n";
+    }
+    ofs.close();
 }
 
 void Uwham::printderivative(std::string name)
