@@ -82,16 +82,27 @@ void UwhamAdaptiveMethods::calculate()
         {
             err = calculateError(fsc_, fk_);
             fk_.assign(fsc_.begin(), fsc_.end());
+            norms_.push_back(std::sqrt(normSC));
         }
         else
         {
             err = calculateError(fnr_, fk_);
             fk_.assign(fnr_.begin(), fnr_.end());
+            norms_.push_back(std::sqrt(normNR));
         }
 
         if ((print_every_ != -1) && (step % print_every_==0)) 
         {
             std::cout << "self consistent norm is " << normSC << " NR norm is " << normNR << "\n";
+
+            if (normSC < normNR)
+            {
+                std::cout << "Self consistent iteration is chosen because of lower norm." << "\n";
+            }
+            else
+            {
+                std::cout << "Newton Raphson is chosen because of lower norm." << "\n";
+            }
             std::cout << "The error at step " << step << " is " << err << std::endl;
         }
 
