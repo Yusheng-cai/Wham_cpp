@@ -25,10 +25,17 @@ class UwhamNLL
 
         Real operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad);
 
+        const std::vector<Eigen::VectorXd>& getDerivatives() const { return derives_;}
+        const std::vector<Real>& getNorms() const {return norms_;}
+
     private:
         Matrix<Real>& BUki_;
         std::vector<Real>& N_;
         std::vector<Real> N_fraction_;
+
+        // a vector that stores the derivativses
+        std::vector<Eigen::VectorXd> derives_;
+        std::vector<Real> norms_;
         Real Ntot_ = 0.0;
         std::vector<Real> fk_;
 };

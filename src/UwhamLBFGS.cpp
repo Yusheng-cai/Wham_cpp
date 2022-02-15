@@ -35,6 +35,7 @@ void UwhamLBFGS::calculate()
     Real fx;
 
     int numiterations = solver.minimize(*NLLeq_,fk, fx);
+    norms_ = NLLeq_->getNorms();
 
     for (int i=0;i<fk.size();i++)
     {
@@ -51,7 +52,7 @@ void UwhamLBFGS::calculate()
     std::cout << "Function value = " << fx << "\n";
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
-    // need to reweigth lnwji
+    // need to reweight lnwji
     std::vector<Real> ones(lnwji_.size(),1);
     Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
 
@@ -72,6 +73,7 @@ UwhamNLL::UwhamNLL(UwhamNLLInput& input)
 :N_(input.N_), BUki_(input.BUki)
 {
     fk_.resize(BUki_.getNR());
+
     N_fraction_.resize(BUki_.getNR());
     Ntot_ = 0;
 
@@ -96,7 +98,7 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
 
     for (int i=0;i<x.size();i++)
     {
-        fk_[i] = x[i] - x[0];
+        fk_[i] = x[i];
     }
 
     Real firstPart = 0.0;
@@ -127,6 +129,9 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
     auto gradient = WhamTools::Gradient(BUki_, fk_, N_);
 
     grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim); 
+
+    derives_.push_back(grad);
+    norms_.push_back(grad.norm());
 
     return -firstPart + secondPart;
 }

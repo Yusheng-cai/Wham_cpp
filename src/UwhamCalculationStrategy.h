@@ -29,6 +29,7 @@ class UWhamCalculationStrategy
 
         const std::vector<Real>& getFk_() const {return fk_;}
         const std::vector<Real>& getlnwji_() const {return lnwji_;}
+        const std::vector<Real>& getNorm() const {return norms_;}
 
         virtual void calculate() = 0;
 
@@ -37,6 +38,7 @@ class UWhamCalculationStrategy
         std::vector<Real>& N_;
         std::vector<Real> fk_;
         std::vector<Real> lnwji_;
+        std::vector<Real> norms_;
 };
 
 namespace UwhamCalculationStrategyRegistry
