@@ -40,7 +40,7 @@ void UwhamAdaptiveMethods::calculate()
         Matrix<Real> hess = WhamTools::Hessian(BUki_, fk_, N_);
 
         Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
-        Eigen::VectorXd Hinvg = hessMat.bdcSvd(Eigen::ComputeThinU|Eigen::ComputeThinV).solve(gradVec);
+        Eigen::VectorXd Hinvg = (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
 
         for (int i=0;i<Nsim;i++)
         {
@@ -48,9 +48,10 @@ void UwhamAdaptiveMethods::calculate()
         }
 
         // Normalized by the last one
+        Real Nr_normalized=fnr_[0];
         for (int i=0;i<Nsim;i++)
         {
-            fnr_[i] = fnr_[i] - fnr_[Nsim-1];
+            fnr_[i] = fnr_[i] - Nr_normalized;
         }
 
         // Find the gradient for nr
@@ -58,6 +59,7 @@ void UwhamAdaptiveMethods::calculate()
         Real normNR = WhamTools::NormVector(NRgradient);
 
         std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
+
         for (int i=0;i<Nsim;i++)
         {
             std::vector<Real> column;
@@ -67,12 +69,14 @@ void UwhamAdaptiveMethods::calculate()
             {
                 column[j] = lnwji[j] - BUki_(i,j);
             }
-            fsc_[i] = -1.0*WhamTools::LogSumExp(column, ones);
+            fsc_[i] = -1.0*WhamTools::LogSumExpOMP(column, ones);
         }
 
+        Real SC_normalized = fsc_[0];
         for (int i=0;i<Nsim;i++)
         {
-            fsc_[i] = fsc_[i] - fsc_[Nsim-1];
+            fsc_[i] = fsc_[i] - SC_normalized;
+            std::cout << fsc_[i] << " ";
         }
 
         auto SCgradient = WhamTools::Gradient(BUki_, fsc_, N_);  
