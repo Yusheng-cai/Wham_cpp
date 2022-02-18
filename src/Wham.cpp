@@ -303,7 +303,8 @@ std::vector<WhamTools::Real> WhamTools::Gradient(const Matrix<Real>& BUki, const
 
     for (int k=0;k<Nsim;k++)
     {
-        gradient[k] = -1.0/Ntot*(N[k] - N[k] * std::exp(lnpk[k]));
+        //gradient[k] = -1.0/Ntot*(N[k] - N[k] * std::exp(lnpk[k]));
+        gradient[k] = -(N[k] - N[k] * std::exp(lnpk[k]));
     }
 
     return gradient;
@@ -353,7 +354,8 @@ Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::
                     sum_sq += pki[i][k] * pki[i][k];
                 }
 
-                Hessian(i,j) = -1.0/Ntot*(-N[i]*sum + N[i]*N[i]*sum_sq);
+                //Hessian(i,j) = -1.0/Ntot*(-N[i]*sum + N[i]*N[i]*sum_sq);
+                Hessian(i,j) = -1.0*(-N[i]*sum + N[i]*N[i]*sum_sq);
             }
             else
             {
@@ -364,7 +366,8 @@ Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::
                     sum += pki[i][k] * pki[j][k];
                 }
 
-                Hessian(i,j) = -1.0/Ntot*(sum*N[i]*N[j]);
+                //Hessian(i,j) = -1.0/Ntot*(sum*N[i]*N[j]);
+                Hessian(i,j) = -1.0*(sum*N[i]*N[j]);
             }
         }
     }
