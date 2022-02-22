@@ -12,18 +12,79 @@ UwhamAdaptiveMethods::UwhamAdaptiveMethods(UwhamStrategyInput& input)
     input.pack.ReadNumber("printevery", ParameterPack::KeyType::Optional,print_every_);
 }
 
+void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector<Real>& gradientNR)
+{
+    int Nsim = BUki_.getNR();
+
+    std::vector<Real> grad = WhamTools::Gradient(BUki_, fk_, N_);
+    Eigen::VectorXd gradVec = Eigen::Map<Eigen::VectorXd>(grad.data(), Nsim);
+
+    fnr.clear();
+    fnr.resize(Nsim,0.0);
+
+    // Find the hessian 
+    Matrix<Real> hess = WhamTools::Hessian(BUki_, fk_, N_);
+    Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
+    Eigen::VectorXd Hinvg = (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
+
+    for (int i=0;i<Nsim;i++)
+    {
+        fnr[i] = fk_[i] - Hinvg[i];
+    }
+
+    // normalize by the first value
+    Real normalizedNR = fnr[0];
+    for (int i=0;i<Nsim;i++)
+    {
+        fnr[i] = fnr[i] - normalizedNR;
+    }
+
+    gradientNR = WhamTools::Gradient(BUki_,fnr, N_);
+}
+
+void UwhamAdaptiveMethods::SelfConsistentStep(std::vector<Real>& fsc, std::vector<Real>& gradientSC)
+{
+    int Nsim  = BUki_.getNR();
+    int Ndata = BUki_.getNC();
+    std::vector<Real> ones(Ndata , 1.0);
+
+    fsc.clear();
+    fsc.resize(Nsim, 0.0);
+
+    std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
+    for (int i=0;i<Nsim;i++)
+    {
+        std::vector<Real> column;
+        column.resize(Ndata);
+        #pragma omp parallel for
+        for (int j=0;j<Ndata;j++)
+        {
+            column[j] = lnwji[j] - BUki_(i,j);
+        }
+        fsc[i] = -1.0*WhamTools::LogSumExpOMP(column, ones);
+    }
+
+    Real SC_normalized = fsc[0];
+    for (int i=0;i<Nsim;i++)
+    {
+        fsc[i] = fsc[i] - SC_normalized;
+    }
+
+    gradientSC = WhamTools::Gradient(BUki_, fsc, N_);  
+}
+
 void UwhamAdaptiveMethods::calculate()
 {
     int Nsim = BUki_.getNR();
     int Ndata= BUki_.getNC();
 
-    fnr_.resize(Nsim);
-    fsc_.resize(Nsim);
-    std::vector<Real> ones(Ndata);
-    std::fill(ones.begin(), ones.end(), 1.0);
-    std::fill(fnr_.begin(), fnr_.end(), 0.0);
-    std::fill(fsc_.begin(), fsc_.end(), 0.0);
+    std::vector<Real> NRgradient(Nsim, 0.0);
+    std::vector<Real> SCgradient(Nsim, 0.0);
 
+    fnr_.resize(Nsim,0.0);
+    fsc_.resize(Nsim,0.0);
+    std::vector<Real> ones(Ndata, 1.0);
+ 
     Eigen::VectorXd gradVec;
 
     bool converged = false;
@@ -33,53 +94,12 @@ void UwhamAdaptiveMethods::calculate()
 
     while ( ! converged)
     {
-        std::vector<Real> grad = WhamTools::Gradient(BUki_, fk_, N_);
-        gradVec = Eigen::Map<Eigen::VectorXd>(grad.data(), Nsim);
-
-        // Find the hessian 
-        Matrix<Real> hess = WhamTools::Hessian(BUki_, fk_, N_);
-
-        Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
-        Eigen::VectorXd Hinvg = (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
-
-        for (int i=0;i<Nsim;i++)
-        {
-            fnr_[i] = fk_[i] - Hinvg[i];
-        }
-
-        // Normalized by the last one
-        Real Nr_normalized=fnr_[0];
-        for (int i=0;i<Nsim;i++)
-        {
-            fnr_[i] = fnr_[i] - Nr_normalized;
-        }
-
-        // Find the gradient for nr
-        auto NRgradient = WhamTools::Gradient(BUki_,fnr_, N_);
+        // update Newton Raphson using current guess of fk
+        NewtonRaphsonStep(fnr_, NRgradient);
         Real normNR = WhamTools::NormVector(NRgradient);
 
-        std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
-
-        for (int i=0;i<Nsim;i++)
-        {
-            std::vector<Real> column;
-            column.resize(Ndata);
-            #pragma omp parallel for
-            for (int j=0;j<Ndata;j++)
-            {
-                column[j] = lnwji[j] - BUki_(i,j);
-            }
-            fsc_[i] = -1.0*WhamTools::LogSumExpOMP(column, ones);
-        }
-
-        Real SC_normalized = fsc_[0];
-        for (int i=0;i<Nsim;i++)
-        {
-            fsc_[i] = fsc_[i] - SC_normalized;
-            std::cout << fsc_[i] << " ";
-        }
-
-        auto SCgradient = WhamTools::Gradient(BUki_, fsc_, N_);  
+        // update self consistent using current guess of fk 
+        SelfConsistentStep(fsc_, SCgradient); 
         Real normSC = WhamTools::NormVector(SCgradient);
 
         if (normSC < normNR)

@@ -15,6 +15,13 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
         // Calculate the error between 2 iterations
         Real calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev);
 
+        // Calculate the Newton Raphson step
+        void NewtonRaphsonStep(std::vector<Real>& fnr, std::vector<Real>& gradientNR);
+
+        // calculate the self-consistent step
+        void SelfConsistentStep(std::vector<Real>& fsc, std::vector<Real>& gradientSC);
+
+
     private:
         std::vector<Real> fnr_;
         std::vector<Real> fsc_;
