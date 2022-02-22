@@ -4,7 +4,9 @@ TSoperation::TSoperation(const TSInput& input)
 :VectorTS_(input.vectorTS_), pack_(input.pack_)
 {
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional, VectorOutputNames_);
-    pack_.ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
+    pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
+
+    ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "Output files does not match output names.");
 
     outputs_ = OutputFuncPtr(new Output());
 
