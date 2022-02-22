@@ -26,4 +26,6 @@ class HistogramOP : public TSoperation
         int binDimension_;
         std::vector<std::vector<Real>> xi_;
         std::map<std::vector<int>, int> histogramMap_;
+
+        std::vector<std::vector<std::vector<Real>>> histogram_;
 };
