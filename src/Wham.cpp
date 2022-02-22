@@ -89,6 +89,7 @@ void Wham::initializeTimeSeries()
         ASSERT((readN || readNvec), "Must provide a N in combined data input.");
 
         Ntot_ = std::accumulate(N_.begin(), N_.end(), Ntot_);
+        ASSERT((Ntot_ == xi_.size()), "The inputted Nvec or N does not sum up to the size of xi, one is " << Ntot_ << " while latter is " << xi_.size());
     }
 }
 
@@ -499,7 +500,6 @@ WhamTools::Real WhamTools::Uwham_NLL_equation(const std::vector<Real>& f_k, cons
     {
         firstPart += N[i] * f_k[i];
     }
-    firstPart /= Ntot;
 
     // Calculates the second part of the equation
     Real secondPart = 0.0;
@@ -514,8 +514,6 @@ WhamTools::Real WhamTools::Uwham_NLL_equation(const std::vector<Real>& f_k, cons
 
         secondPart += WhamTools::LogSumExp(temp,N_fraction);
     }
-
-    secondPart /= Ntot;
 
     return -firstPart + secondPart;
 }
