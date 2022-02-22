@@ -26,12 +26,7 @@ void UwhamLBFGS::calculate()
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
     // copy the data -> fk
-    Eigen::VectorXd fk = Eigen::VectorXd::Zero(BUki_.getNR());
-    for (int i=0;i<BUki_.getNR();i++)
-    {
-        fk[i] = fk_[i];
-    }
-    
+    Eigen::VectorXd fk = Eigen::Map<Eigen::VectorXd>(fk_.data(), BUki_.getNR());
     Real fx;
 
     int numiterations = solver.minimize(*NLLeq_,fk, fx);
@@ -43,10 +38,10 @@ void UwhamLBFGS::calculate()
     }
 
     // subtract the minimum fk 
-    Real min = *(std::min_element(fk_.begin(), fk_.end()));
+    Real normalize = fk_[0];
     for (int i=0;i<fk_.size();i++)
     {
-        fk_[i] = fk_[i] - min;
+        fk_[i] = fk_[i] - normalize;
     }
 
     std::cout << "Function value = " << fx << "\n";
@@ -55,12 +50,6 @@ void UwhamLBFGS::calculate()
     // need to reweight lnwji
     std::vector<Real> ones(lnwji_.size(),1);
     Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
-
-    // for (int i=0;i<fk.size();i++)
-    // {
-    //     //fk_[i] = fk[i] - fk[BUki_.getNR()-1];
-    //     fk_[i] = fk_[i] - f;
-    // }
 
     #pragma omp parallel for 
     for (int i=0;i<lnwji_.size();i++)
@@ -96,42 +85,19 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
 
     ASSERT((x.size() == Nsim), "The dimension of fk does not match that of the number of simulation.");
 
+    std::vector<Real> fk(x.size(),0.0);
+
     for (int i=0;i<x.size();i++)
     {
-        fk_[i] = x[i];
+        fk[i] = x[i] - x[0];
     }
 
-    Real firstPart = 0.0;
-
-    for (int i=0;i<Nsim;i++)
-    {
-        firstPart += N_[i] * x[i];
-    }
-
-    firstPart /= Ntot_;
-
-    Real secondPart = 0.0;
-
-    #pragma omp parallel for reduction(+:secondPart)
-    for (int i=0;i<Ndata;i++)
-    {
-        std::vector<Real> temp(Nsim);
-        for (int j=0;j<Nsim;j++)
-        {
-            temp[j] = x[j] - BUki_(j,i);
-        }
-
-        secondPart += WhamTools::LogSumExp(temp,N_fraction_);
-    }
-
-    secondPart /= Ntot_;
-
-    auto gradient = WhamTools::Gradient(BUki_, fk_, N_);
-
+    Real value = WhamTools::Uwham_NLL_equation(fk, BUki_, N_);
+    auto gradient = WhamTools::Gradient(BUki_, fk, N_);
     grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim); 
 
     derives_.push_back(grad);
     norms_.push_back(grad.norm());
 
-    return -firstPart + secondPart;
+    return value;
 }
