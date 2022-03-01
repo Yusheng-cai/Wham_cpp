@@ -9,6 +9,7 @@
 #include "Array.h"
 #include "VectorOperations.h"
 #include "Bias.h"
+#include "Bin.h"
 
 #include <vector>
 #include <array>
@@ -44,6 +45,8 @@ class Wham
         virtual void calculate() = 0;
         virtual void initializeBias();
         virtual void initializeTimeSeries();
+        void binTimeSeries();
+        void initializeBins();
 
         // check if all the outputs are registered
         void isRegistered();
@@ -56,6 +59,14 @@ class Wham
         std::string getName() {return name_;}
         int getDimension() const {return dimension_;}
 
+        // Printing functions to be registered
+        void printTimeSeriesBins(std::string name);
+
+        // print out the force -dU/dx of the bias
+        void printForce(std::string name);
+
+        // print out the autocorrelation of the data 
+        void printAutocorrelation(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTimeSeries_;
@@ -89,6 +100,16 @@ class Wham
 
         // name of the wham  --> defaulted to "w"
         std::string name_ = "w";
+
+        // histogram for each dimension of data
+        std::vector<std::vector<std::vector<Real>>> histogram_;
+
+        // The bins used in the calculation
+        std::vector<Bin> Bins_;
+
+        // The averages and standard deviations of the timeseries 
+        std::vector<std::vector<Real>> Averages_;
+        std::vector<std::vector<Real>> Std_;
 };
 
 namespace WhamRegistry

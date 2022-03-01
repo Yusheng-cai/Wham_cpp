@@ -12,6 +12,93 @@ Wham::Wham(const WhamInput& input)
     whamPack_ -> ReadString("name" , ParameterPack::KeyType::Optional, name_);
 
     ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "The output and the output files size is different.");
+    registerOutput("histogram", [this](std::string name) -> void{this -> printTimeSeriesBins(name);});
+    registerOutput("Autocorrelation", [this](std::string name) -> void{this -> printAutocorrelation(name);});
+    registerOutput("forces", [this](std::string name) -> void {this -> printForce(name);});
+
+    // initialize the biases
+    initializeBias();
+
+    // let's first initialize the time series 
+    initializeTimeSeries();
+
+    // Now initialize the bins 
+    initializeBins();
+
+    // bin the time series 
+    binTimeSeries();
+}
+
+void Wham::printAutocorrelation(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    std::vector<std::vector<Real>> LagTimes_;
+
+    for (auto& ts : VectorTimeSeries_)
+    {
+        ts -> calculateAutoCorrelation();
+
+        LagTimes_.push_back(ts -> getLagTime());
+    }
+
+    ofs << "# ";
+    for (int i=0;i<dimension_;i++)
+    {
+        ofs << "dim" << i+1 << " ";
+    }
+    ofs << "\n";
+
+    for (int i=0;i<VectorTimeSeries_.size();i++)
+    {
+        ofs << i+1 << " ";
+        for (int j=0;j<dimension_;j++)
+        {
+            ofs << LagTimes_[i][j] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
+}
+
+void Wham::printTimeSeriesBins(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    int numTs = histogram_.size();
+    int dim   = histogram_[0].size();
+
+    ofs << "#";
+    for (int i=0;i<numTs;i++)
+    {
+        for (int j=0;j<dim;j++)
+        {
+            ofs << "Ts" << i + 1 << "dim" << j + 1 << "\t";
+        }
+    }
+
+    ofs << "\n";
+
+    for (int i=0;i<dim;i++)
+    {
+        int numdata = Bins_[i].getNumbins();
+        for (int j=0;j<numdata;j++)
+        {
+            for(int k=0;k<numTs;k++)
+            {
+                ofs << histogram_[k][i][j] << "\t";
+            }
+
+            ofs << "\n";
+        }
+    }
+
+
+
+    ofs.close();
 }
 
 void Wham::registerOutput(std::string name, valueFunction func)
@@ -21,6 +108,56 @@ void Wham::registerOutput(std::string name, valueFunction func)
     ASSERT((it == MapNameToFunction_.end()), "The output with name " << name << " is already registered.");
 
     MapNameToFunction_.insert(std::make_pair(name, func));
+}
+
+void Wham::initializeBins()
+{
+    auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
+    auto BinPacks = whamPack -> findParamPacks("bins", ParameterPack::KeyType::Required);
+
+    ASSERT((BinPacks.size() == dimension_), "The binning dimension is " << BinPacks.size() << " while the dimension of the Wham is " << dimension_);
+
+    if (BinPacks.size() != 0)
+    {
+        for (int i=0;i<BinPacks.size();i++)
+        {
+            Bins_.push_back(Bin(*BinPacks[i])); 
+        }
+    }
+}
+
+void Wham::binTimeSeries()
+{
+    histogram_.clear();
+
+    histogram_.resize(VectorTimeSeries_.size());
+
+    for (int i=0;i<VectorTimeSeries_.size();i++)
+    {
+        auto Ts = VectorTimeSeries_[i];
+
+        // resize to dimension
+        histogram_[i].resize(Ts->getDimension());
+
+        // bins is also synonymous with dimension
+        for (int j=0;j<Bins_.size();j++)
+        {
+            int dim = Bins_[j].getDimension() - 1;
+            int size = Ts->getSize();
+            auto& b = Bins_[j];
+
+            histogram_[i][j].resize(b.getNumbins(),0.0);
+
+            for (int k=0;k<size;k++)
+            {
+                if (b.isInRange((*Ts)[k][dim]))
+                {
+                    int num = b.findBin((*Ts)[k][dim]);
+                    histogram_[i][j][num] += 1;
+                }
+            }
+        }
+    }
 }
 
 void Wham::isRegistered()
@@ -75,13 +212,9 @@ void Wham::initializeTimeSeries()
         int N;
         bool readN = whamPack_->ReadNumber("N", ParameterPack::KeyType::Optional, N);
 
-        dimensions_.resize(Biases_.size());
-        N_.resize(Biases_.size());
-
         dimension_ = VectorTimeSeries_[0] -> getDimension();
-
-        std::fill(dimensions_.begin(), dimensions_.end(), dimension_);
-        std::fill(N_.begin(), N_.end(), N);
+        dimensions_.resize(Biases_.size(), dimension_);
+        N_.resize(Biases_.size(), N);
 
         bool readNvec = whamPack_->ReadVectorNumber("Nvec", ParameterPack::KeyType::Optional, N_);
 
@@ -91,6 +224,56 @@ void Wham::initializeTimeSeries()
         Ntot_ = std::accumulate(N_.begin(), N_.end(), Ntot_);
         ASSERT((Ntot_ == xi_.size()), "The inputted Nvec or N does not sum up to the size of xi, one is " << Ntot_ << " while latter is " << xi_.size());
     }
+
+    for (auto ts : VectorTimeSeries_)
+    {
+        Averages_.push_back(ts->getMean());
+        Std_.push_back(ts->getstd());
+    }
+}
+
+void Wham::printForce(std::string name)
+{
+    ASSERT((VectorTimeSeries_.size() == Biases_.size()) && (Averages_.size() == Biases_.size()), "To perform the force output, you cannot use the combined output option.");
+
+    std::vector<std::vector<Real>> Forces;
+
+    for (int i=0;i<Biases_.size();i++)
+    {
+        Forces.push_back(Biases_[i] -> calculateForce(Averages_[i]));
+    }
+
+    std::ofstream ofs;
+    ofs.open(name);
+
+    ofs << "# ";
+    for (int i=0;i<dimension_;i++)
+    {
+        ofs << "Average" << i+1 << " ";
+    }
+
+    for (int i=0;i<dimension_;i++)
+    {
+        ofs << "dFOP" << i+1 << " ";
+    }
+    ofs << "\n";
+
+    for (int i=0;i<Forces.size();i++)
+    {
+        for (auto a : Averages_[i])
+        {
+            ofs << a << " ";
+        }
+
+        for (auto num : Forces[i])
+        {
+            ofs << num  << " ";
+        }
+        
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
 
 void Wham::initializeBias()
