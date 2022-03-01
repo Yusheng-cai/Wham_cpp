@@ -82,8 +82,11 @@ class TimeSeries
         std::vector<Real>& operator[](int i) { return chosen_data_[i];}
 
         // get the mean of the timeseries 
-        const std::vector<Real>& getMean() const {return Mean_;}
-        const std::vector<Real>& getstd() const {return std_;}
+        std::vector<Real> getMean() const {return Mean_;}
+        std::vector<Real> getstd() const {return std_;}
+
+        // get the lag time / autocorrelation time 
+        std::vector<Real> getLagTime() const {return lag_time_;}
 
     
     private:
