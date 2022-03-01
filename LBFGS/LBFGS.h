@@ -76,7 +76,7 @@ public:
     /// \return Number of iterations used.
     ///
     template <typename Foo>
-    inline int minimize(Foo& f, Vector& x, Scalar& fx)
+    inline int minimize(Foo& f, Vector& x, Scalar& fx, int printevery=-1)
     {
         using std::abs;
 
@@ -117,6 +117,14 @@ public:
 
             // New gradient norm
             gnorm = m_grad.norm();
+
+            // BEGIN YC EDIT
+            if ((printevery != -1) && (k % printevery ==0))
+            {
+                std::cout << "Derivative norm = " << gnorm * gnorm << " at iteration " << k << "\n";
+                std::cout << "Function value = " << fx << " at iteration " << k << "\n";
+            }
+            // END YC EDIT
 
             // Convergence test -- gradient
             if(gnorm <= m_param.epsilon || gnorm <= m_param.epsilon_rel * x.norm())
