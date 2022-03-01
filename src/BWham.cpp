@@ -8,18 +8,6 @@ namespace WhamRegistry
 Bwham::Bwham(const WhamInput& input)
 :Wham(input)
 {
-    // intialize the timeseries 
-    initializeTimeSeries();
-
-    // initialize the bins
-    initializeBins();
-
-    // Bin the data set 
-    bindata();
-
-    // initialize the Bias
-    initializeBias();
-
     // initialize Wil
     initializeWil();
 
