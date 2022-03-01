@@ -23,7 +23,6 @@ class Uwham:public Wham
         Uwham(const WhamInput& pack);
         virtual ~Uwham(){};
         void initializeStrat();
-        void initializeBins();
         void initializeBUki();
 
         // This needs to be called after calculation of BUki --> calculates the initial guess using BAR method
@@ -45,9 +44,6 @@ class Uwham:public Wham
         void printderivative(std::string name);
         void printderivativeNormTS(std::string name);
 
-        // bin the timeseries 
-        void binTimeSeries();
-
         // getters 
         const UWhamCalculationStrategy& getStrategy() const {return *strat_;}
         const std::vector<Real>& getlnwji() const {return getStrategy().getlnwji_();}
@@ -64,8 +60,6 @@ class Uwham:public Wham
         // strategy for solving the Uwham
         stratptr strat_;
 
-        std::vector<Bin> Bins_;
-
         // The lnwji that falls within each of the bins
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
         std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
@@ -74,13 +68,8 @@ class Uwham:public Wham
         // specify which bin each of the data falls into 
         std::vector<std::vector<int>> binneddata_;
 
-        // Total histogram 
-
         // precision of the output
         int precision_=3;
-
-        // histogram for each dimension of data
-        std::vector<std::vector<std::vector<Real>>> histogram_;
 
         // the initial guess for f_k
         std::vector<Real> fk_;
@@ -89,4 +78,5 @@ class Uwham:public Wham
 
         // whether or not we are doing BAR initialization
         bool BAR_=false;
+
 };
