@@ -29,7 +29,7 @@ void UwhamLBFGS::calculate()
     Eigen::VectorXd fk = Eigen::Map<Eigen::VectorXd>(fk_.data(), BUki_.getNR());
     Real fx;
 
-    int numiterations = solver.minimize(*NLLeq_,fk, fx);
+    int numiterations = solver.minimize(*NLLeq_,fk, fx, print_every_);
     norms_ = NLLeq_->getNorms();
 
     for (int i=0;i<fk.size();i++)
@@ -44,7 +44,6 @@ void UwhamLBFGS::calculate()
         fk_[i] = fk_[i] - normalize;
     }
 
-    std::cout << "Function value = " << fx << "\n";
     lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
     // need to reweight lnwji

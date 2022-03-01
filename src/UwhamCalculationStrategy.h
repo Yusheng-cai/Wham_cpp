@@ -39,6 +39,9 @@ class UWhamCalculationStrategy
         std::vector<Real> fk_;
         std::vector<Real> lnwji_;
         std::vector<Real> norms_;
+
+        // print frequency
+        int print_every_=-1;
 };
 
 namespace UwhamCalculationStrategyRegistry

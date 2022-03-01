@@ -28,7 +28,4 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
 
         // tolerance is default to 1e-7
         Real tolerance_ = 1e-7;
-
-        // print frequency
-        int print_every_=-1;
 };

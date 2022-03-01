@@ -9,7 +9,6 @@ UwhamAdaptiveMethods::UwhamAdaptiveMethods(UwhamStrategyInput& input)
 :UWhamCalculationStrategy(input)
 {
     input.pack.ReadNumber("tolerance",ParameterPack::KeyType::Optional, tolerance_);
-    input.pack.ReadNumber("printevery", ParameterPack::KeyType::Optional,print_every_);
 }
 
 void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector<Real>& gradientNR)
