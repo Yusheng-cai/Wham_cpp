@@ -302,7 +302,7 @@ void Uwham::printNormalization(std::string name)
 
     for (int i=0;i<Nsim;i++)
     {
-        ofs << strat_ -> getFk_()[i] << "\n";
+        ofs << fk_[i] << "\n";
     }
     ofs.close();
 }
