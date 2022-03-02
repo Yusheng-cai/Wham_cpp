@@ -32,6 +32,9 @@ class UWhamCalculationStrategy
         const std::vector<Real>& getNorm() const {return norms_;}
 
         virtual void calculate() = 0;
+        std::string getName() {return name_;}
+
+        void setFk(std::vector<Real>& fk);
 
     protected:
         Matrix<Real>& BUki_;
@@ -42,6 +45,7 @@ class UWhamCalculationStrategy
 
         // print frequency
         int print_every_=-1;
+        std::string name_;
 };
 
 namespace UwhamCalculationStrategyRegistry
