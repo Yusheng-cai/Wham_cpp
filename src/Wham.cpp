@@ -15,6 +15,7 @@ Wham::Wham(const WhamInput& input)
     registerOutput("histogram", [this](std::string name) -> void{this -> printTimeSeriesBins(name);});
     registerOutput("Autocorrelation", [this](std::string name) -> void{this -> printAutocorrelation(name);});
     registerOutput("forces", [this](std::string name) -> void {this -> printForce(name);});
+    registerOutput("Averages", [this](std::string name) -> void {this -> printAverage(name);});
 
     // initialize the biases
     initializeBias();
@@ -27,6 +28,31 @@ Wham::Wham(const WhamInput& input)
 
     // bin the time series 
     binTimeSeries();
+}
+
+void Wham::printAverage(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    ofs << "# Timeseries ";
+    for (int i = 0; i<dimension_;i++)
+    {
+        ofs << "OP" << i+1 << " ";
+    }
+    ofs << "\n";
+
+    for (int i=0;i<Averages_.size();i++)
+    {
+        ofs << i+1 << " ";
+        for (int j=0;j<Averages_[i].size();j++)
+        {
+            ofs << Averages_[i][j] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
 
 void Wham::printAutocorrelation(std::string name)

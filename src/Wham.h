@@ -67,6 +67,9 @@ class Wham
 
         // print out the autocorrelation of the data 
         void printAutocorrelation(std::string name);
+
+        // print out the average quantities of the data 
+        void printAverage(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTimeSeries_;
