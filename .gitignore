@@ -35,3 +35,7 @@ program/
 RELEASE/
 DEBUG/
 .DS_Store
+.vscode/
+
+# build files
+build.sh
