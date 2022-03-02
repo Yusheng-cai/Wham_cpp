@@ -178,11 +178,27 @@ void Uwham::initializeStrat()
 {
     auto whampack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
-    std::string strat;
-    whampack->ReadString("strategy", ParameterPack::KeyType::Required, strat);
+    auto stratPacks = whampack->findParamPacks("Uwhamstrategy", ParameterPack::KeyType::Required);
+    for (auto s : stratPacks)
+    {
+        std::string strattype;
+        std::string name;
+        UwhamStrategyInput input = {BUki_, N_, const_cast<ParameterPack&>(*s), fk_};
+        int index = strategies_.size();
+        s -> ReadString("type", ParameterPack::KeyType::Required, strattype);
+        strategies_.push_back(stratptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input)));
+        MapNameToStrat_.insert(std::make_pair(strategies_[index]->getName(), strategies_[index].get()));
+    }
 
-    UwhamStrategyInput input = {BUki_, N_, const_cast<ParameterPack&>(*whampack), fk_};
-    strat_ = stratptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strat, input));
+
+    // read a vector of string that represents the order of optimization that we want to do , usually LBFGS --> adaptive     
+    whampack->ReadVectorString("strategyNames", ParameterPack::KeyType::Required, strategyNames_);
+
+    for (auto s : strategyNames_)
+    {
+        auto stratit = MapNameToStrat_.find(s);
+        ASSERT((stratit != MapNameToStrat_.end()), "Strategy name " << s << " not found.");
+    }
 }
 
 void Uwham::calculate()
@@ -197,14 +213,19 @@ void Uwham::calculate()
     std::cout << "We are using " << numthreads << " OpenMP threads for this operation." << std::endl;
 
     auto start = std::chrono::high_resolution_clock::now();
-    strat_ -> calculate();
-
+    for (auto s : strategyNames_)
+    {
+        auto strat = MapNameToStrat_.find(s)->second;
+        strat -> setFk(fk_);
+        strat -> calculate();
+        fk_ = strat -> getFk_();
+        lnwji_ = strat -> getlnwji_();
+    }
     auto end = std::chrono::high_resolution_clock::now();
 
     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Calculation took " << diff.count() << std::endl;
 
-    const auto& lnwji = strat_ -> getlnwji_(); 
     binneddata_.resize(xi_.size());
 
     for (int i=0;i<xi_.size();i++)
@@ -245,7 +266,7 @@ void Uwham::calculate()
                 std::vector<Real> lnwji_vec_;
                 std::vector<int> lnwjiIndex_vec_;
 
-                lnwji_vec_.push_back(lnwji[i]);
+                lnwji_vec_.push_back(lnwji_[i]);
                 lnwjiIndex_vec_.push_back(i);
 
                 MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex, lnwji_vec_));
@@ -253,7 +274,7 @@ void Uwham::calculate()
             }
             else
             {
-                it -> second.push_back(lnwji[i]);
+                it -> second.push_back(lnwji_[i]);
                 it2 -> second.push_back(i);
             }
         }

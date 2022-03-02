@@ -59,6 +59,8 @@ class Uwham:public Wham
 
         // strategy for solving the Uwham
         stratptr strat_;
+        std::vector<stratptr> strategies_;
+        std::vector<std::string> strategyNames_;
 
         // The lnwji that falls within each of the bins
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
@@ -79,4 +81,9 @@ class Uwham:public Wham
         // whether or not we are doing BAR initialization
         bool BAR_=false;
 
+        // Map from name to strategy
+        std::map<std::string, UWhamCalculationStrategy*> MapNameToStrat_;
+
+        // lnwji 
+        std::vector<Real> lnwji_;
 };
