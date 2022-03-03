@@ -280,6 +280,11 @@ void Wham::printForce(std::string name)
 
     for (int i=0;i<dimension_;i++)
     {
+        ofs << "Std" << i+1 << " ";
+    }
+
+    for (int i=0;i<dimension_;i++)
+    {
         ofs << "dFOP" << i+1 << " ";
     }
     ofs << "\n";
@@ -289,6 +294,11 @@ void Wham::printForce(std::string name)
         for (auto a : Averages_[i])
         {
             ofs << a << " ";
+        }
+
+        for (auto s : Std_[i])
+        {
+            ofs << s << " ";
         }
 
         for (auto num : Forces[i])
