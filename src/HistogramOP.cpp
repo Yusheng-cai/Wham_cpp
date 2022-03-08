@@ -16,6 +16,7 @@ HistogramOP::HistogramOP(const TSInput& input)
     }
     binDimension_ = Bins_.size();
     outputs_->registerOutputFunc("histogram", [this](std::string name) -> void {this -> printHistogram(name);});
+    outputs_->registerOutputFunc("totalhistogram", [this](std::string name) -> void { this -> printTotalHistogram(name);});
 }
 
 void HistogramOP::calculate()
@@ -28,7 +29,6 @@ void HistogramOP::calculate()
     }
 
     histogram_.clear();
-
     histogram_.resize(VectorTS_.size());
 
     for (int i=0;i<VectorTS_.size();i++)
@@ -57,6 +57,70 @@ void HistogramOP::calculate()
             }
         }
     }
+
+    for (int i=0;i<xi_.size();i++)
+    {
+        std::vector<int> Index;
+        bool isInBin=true;
+        for (int j=0;j<Bins_.size();j++)
+        {
+            auto& b  = Bins_[j];
+            int dim  = b->getDimension() - 1;
+
+            if (b -> isInRange(xi_[i][dim]))
+            {
+                int num = b -> findBin(xi_[i][dim]);
+                Index.push_back(num);
+            }
+            else
+            {
+                isInBin=false;
+                break;
+            }
+        }
+
+        // if the data point is inside the bin
+        if (isInBin)
+        {
+            auto it = MapIndexToHistogram_.find(Index);
+
+            if (it == MapIndexToHistogram_.end())
+            {
+                MapIndexToHistogram_.insert(std::make_pair(Index,1));
+            }
+            else
+            {
+                it -> second += 1;
+            }
+        }
+    }
+}
+
+void HistogramOP::printTotalHistogram(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (auto it = MapIndexToHistogram_.begin(); it != MapIndexToHistogram_.end(); it ++)
+    {
+        auto& Index = it -> first;
+
+        for (int i : Index)
+        {
+            ofs << i << " ";
+        }
+
+        for (int i=0;i<Index.size();i++)
+        {
+            ofs << Bins_[i] -> getLocationOfBin(Index[i]) << " ";
+        }
+
+        ofs << it -> second;
+
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
 
 void HistogramOP::printHistogram(std::string name)

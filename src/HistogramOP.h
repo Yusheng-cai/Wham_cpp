@@ -4,6 +4,8 @@
 #include "tools/CommonTypes.h"
 #include "TSoperation.h"
 #include "Bin.h"
+#include "parallel/OpenMP.h"
+#include "parallel/OpenMP_buffer.h"
 
 #include <vector>
 #include <array>
@@ -20,12 +22,13 @@ class HistogramOP : public TSoperation
 
         virtual void calculate() override;
         void printHistogram(std::string name);
+        void printTotalHistogram(std::string name);
 
     private:
         std::vector<Binptr> Bins_;
         int binDimension_;
-        std::vector<std::vector<Real>> xi_;
         std::map<std::vector<int>, int> histogramMap_;
 
         std::vector<std::vector<std::vector<Real>>> histogram_;
+        std::map<std::vector<int>, int> MapIndexToHistogram_;
 };
