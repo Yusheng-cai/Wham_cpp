@@ -33,6 +33,8 @@ class TSoperation
         virtual void print();
         void printTotalData(std::string name);
         void printTotalDataLength(std::string name);
+        void printMean(std::string name);
+        void printStd(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTS_;
@@ -47,6 +49,9 @@ class TSoperation
         std::vector<std::vector<Real>> xi_;
 
         std::vector<int> TotalDataLength_;
+
+        std::vector<std::vector<Real>> averages_;
+        std::vector<std::vector<Real>> std_;
 };
 
 namespace timeseriesOP

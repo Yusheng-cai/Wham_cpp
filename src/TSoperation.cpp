@@ -14,6 +14,7 @@ TSoperation::TSoperation(const TSInput& input)
 
     outputs_ -> registerOutputFunc("totaldata", [this](std::string name) -> void {printTotalData(name);});
     outputs_ -> registerOutputFunc("totaldatalength", [this](std::string name) -> void {printTotalDataLength(name);});
+    outputs_ -> registerOutputFunc("averages", [this](std::string name) -> void {printMean(name);});
 }
 
 void TSoperation::print()
@@ -22,6 +23,30 @@ void TSoperation::print()
     {
         outputs_ -> getOutputFuncByName(VectorOutputNames_[i])(VectorOutputFileNames_[i]);
     }
+}
+
+void TSoperation::printMean(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    int index = 1;
+    for (int i=0;i<averages_.size();i++)
+    {
+        ofs << i+1 << " ";
+        for (auto num : averages_[i])
+        {
+            ofs << num << " ";
+        }
+
+        for (auto num : std_[i])
+        {
+            ofs << num << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }
 
 void TSoperation::printTotalDataLength(std::string name)
@@ -43,6 +68,9 @@ void TSoperation::combineData()
     {
         xi_.insert(xi_.end(),VectorTS_[i]->begin(), VectorTS_[i]->end());
         TotalDataLength_.push_back(VectorTS_[i]->getSize());
+
+        averages_.push_back(VectorTS_[i]->getMean());
+        std_.push_back(VectorTS_[i]->getstd());
     }
 }
 
