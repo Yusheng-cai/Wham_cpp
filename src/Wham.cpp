@@ -122,8 +122,6 @@ void Wham::printTimeSeriesBins(std::string name)
         }
     }
 
-
-
     ofs.close();
 }
 
