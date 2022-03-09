@@ -59,7 +59,16 @@ void TimeSeries::readChosenData()
 
     // Resize the chosen data accordingly
     int index=0;
+
+    if (skipFromBeginning_ < 0)
+    {
+        ASSERT(((skipFromBeginning_ + Totaldata_.size()) >= 0), "Total data size is " << Totaldata_.size() << " while you specified skipfrombeginning = " << skipFromBeginning_);
+        skipFromBeginning_ = Totaldata_.size() + skipFromBeginning_;
+    }
+
     int originalIndex = skipFromBeginning_;
+
+
     while (originalIndex < Totaldata_.size())
     {
         std::vector<Real> temp;
