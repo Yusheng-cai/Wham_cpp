@@ -210,8 +210,9 @@ void Uwham::calculate()
         #pragma omp critical
         numthreads += 1;
     }
-    std::cout << "We are using " << numthreads << " OpenMP threads for this operation." << std::endl;
 
+    // Start calculation
+    std::cout << "We are using " << numthreads << " OpenMP threads for this operation." << std::endl;
     auto start = std::chrono::high_resolution_clock::now();
     for (auto s : strategyNames_)
     {
@@ -222,60 +223,113 @@ void Uwham::calculate()
         lnwji_ = strat -> getlnwji_();
     }
     auto end = std::chrono::high_resolution_clock::now();
-
     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Calculation took " << diff.count() << std::endl;
+    std::cout << "Calculation took " << diff.count() << " us." << std::endl;
 
+    // Now we perform the binning 
     binneddata_.resize(xi_.size());
-
-    for (int i=0;i<xi_.size();i++)
+    auto s = std::chrono::high_resolution_clock::now();
+    MapBinIndexToVectorlnwjiBuffer_.set_master_object(MapBinIndexToVectorlnwji_);
+    MapBinIndexTolnwjiIndexBuffer_.set_master_object(MapBinIndexTolnwjiIndex_);
+    #pragma omp parallel
     {
-        auto& x = xi_[i];
-        ASSERT((x.size() == Bins_.size()), "The dimension of the data = " << x.size() << " while the dimension of bins = " << Bins_.size());
-        std::vector<int> BinIndex;
-        BinIndex.resize(Bins_.size());
+        // access the local vector lnwji map 
+        auto& localVectorlnwjiMap = MapBinIndexToVectorlnwjiBuffer_.access_buffer_by_id();
+        // access the local lnwji index map
+        auto& locallnwjiIndexMap  = MapBinIndexTolnwjiIndexBuffer_.access_buffer_by_id();
 
-        bool isInRange = true; 
+        // clear the local maps
+        localVectorlnwjiMap.clear();
+        locallnwjiIndexMap.clear();
 
-        for (int j=0;j<Bins_.size();j++)
+        #pragma omp for
+        for (int i=0;i<xi_.size();i++)
         {
-            // User input is 1 based
-            int dim = Bins_[j].getDimension() - 1;
+            auto& x = xi_[i];
+            ASSERT((x.size() == Bins_.size()), "The dimension of the data = " << x.size() << " while the dimension of bins = " << Bins_.size());
+            std::vector<int> BinIndex;
+            BinIndex.resize(Bins_.size());
 
-            // If this data point is out of range for one of the bins, it is out of range, so we break
-            if (! Bins_[j].isInRange(xi_[i][dim]))
+            bool isInRange = true; 
+
+            for (int j=0;j<Bins_.size();j++)
             {
-                // break from the for loop
-                isInRange = false;
-                break;
+                // User input is 1 based
+                int dim = Bins_[j].getDimension() - 1;
+
+                // If this data point is out of range for one of the bins, it is out of range, so we break
+                if (! Bins_[j].isInRange(xi_[i][dim]))
+                {
+                    // break from the for loop
+                    isInRange = false;
+                    break;
+                }
+            
+                int index = Bins_[j].findBin(xi_[i][dim]);
+                BinIndex[j] = index;
             }
-        
-            int index = Bins_[j].findBin(xi_[i][dim]);
-            BinIndex[j] = index;
-        }
 
-        if (isInRange)
-        {
-            // add the indices to the binned data vector
-            binneddata_[i] = BinIndex;
-            auto it = MapBinIndexToVectorlnwji_.find(BinIndex);
-            auto it2= MapBinIndexTolnwjiIndex_.find(BinIndex);
-
-            if ( it == MapBinIndexToVectorlnwji_.end())
+            if (isInRange)
             {
-                std::vector<Real> lnwji_vec_;
-                std::vector<int> lnwjiIndex_vec_;
+                // add the indices to the binned data vector
+                binneddata_[i] = BinIndex;
+                auto it = localVectorlnwjiMap.find(BinIndex);
+                auto it2= locallnwjiIndexMap.find(BinIndex);
 
-                lnwji_vec_.push_back(lnwji_[i]);
-                lnwjiIndex_vec_.push_back(i);
+                if ( it == localVectorlnwjiMap.end())
+                {
+                    std::vector<Real> lnwji_vec_;
+                    std::vector<int> lnwjiIndex_vec_;
 
-                MapBinIndexToVectorlnwji_.insert(std::make_pair(BinIndex, lnwji_vec_));
-                MapBinIndexTolnwjiIndex_.insert(std::make_pair(BinIndex, lnwjiIndex_vec_));
+                    lnwji_vec_.push_back(lnwji_[i]);
+                    lnwjiIndex_vec_.push_back(i);
+
+                    localVectorlnwjiMap.insert(std::make_pair(BinIndex, lnwji_vec_));
+                    locallnwjiIndexMap.insert(std::make_pair(BinIndex, lnwjiIndex_vec_));
+                }
+                else
+                {
+                    it -> second.push_back(lnwji_[i]);
+                    it2 -> second.push_back(i);
+                }
+            }
+        }
+    }
+
+    // Now we combine all the maps for map bin index to vector lnwji
+    for (auto map = MapBinIndexToVectorlnwjiBuffer_.beginworker(); map != MapBinIndexToVectorlnwjiBuffer_.endworker(); map ++)
+    {
+        for (auto it = map->begin(); it != map -> end(); it++)
+        {
+            auto Vectorit = MapBinIndexToVectorlnwji_.find(it ->first);
+
+            // if the original map also has the bin index
+            if (Vectorit != MapBinIndexToVectorlnwji_.end())
+            {
+                Vectorit -> second.insert(Vectorit -> second.end(), it -> second.begin(), it ->second.end());
             }
             else
             {
-                it -> second.push_back(lnwji_[i]);
-                it2 -> second.push_back(i);
+                MapBinIndexToVectorlnwji_.insert(std::make_pair(it -> first, it -> second));
+            }
+        }
+    }
+
+    // Perform the same operation but for map bin index to ln index
+    for (auto map = MapBinIndexTolnwjiIndexBuffer_.beginworker(); map != MapBinIndexTolnwjiIndexBuffer_.endworker(); map ++)
+    {
+        for (auto it = map->begin(); it != map -> end(); it++)
+        {
+            auto Indexit = MapBinIndexTolnwjiIndex_.find(it -> first);
+
+            // if the original map also has the bin index
+            if (Indexit != MapBinIndexTolnwjiIndex_.end())
+            {
+                Indexit -> second.insert(Indexit -> second.end(), it -> second.begin(), it ->second.end());
+            }
+            else
+            {
+                MapBinIndexTolnwjiIndex_.insert(std::make_pair(it -> first, it -> second));
             }
         }
     }
@@ -289,6 +343,10 @@ void Uwham::calculate()
 
         MapBinIndexToWji_.insert(std::make_pair(it->first, wji));
     }
+
+    auto e = std::chrono::high_resolution_clock::now();
+    auto d = std::chrono::duration_cast<std::chrono::microseconds>(e - s);
+    std::cout << "Binning took " << d.count() << " us." << "\n";
 }
 
 void Uwham::printNormalization(std::string name)

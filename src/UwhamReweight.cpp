@@ -24,6 +24,12 @@ void UwhamReweight::calculate()
     const auto& MapBinToIndex = Uwham_->getMapBinIndexTolnwjiIndex();
     const auto& bindata = Uwham_->getBinnedData();
 
+    // resize the variables
+    ones_.resize(xi.size(),1.0);
+    dimension_ = xi[0].size();
+    averages_.resize(numBias_,std::vector<Real>(dimension_,0.0));
+    FE_.resize(numBias_);
+
     ASSERT((bindata.size() == xi.size()), "The size of the bindata mismatches the xi data.");
 
     // find the BUji 

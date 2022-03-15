@@ -5,6 +5,7 @@
 #include "Bias.h"
 #include "Bin.h"
 #include "UwhamCalculationStrategy.h"
+#include "parallel/OpenMP_buffer.h"
 
 #include <vector>
 #include <iomanip>
@@ -45,8 +46,7 @@ class Uwham:public Wham
         void printderivativeNormTS(std::string name);
 
         // getters 
-        const UWhamCalculationStrategy& getStrategy() const {return *strat_;}
-        const std::vector<Real>& getlnwji() const {return getStrategy().getlnwji_();}
+        const std::vector<Real>& getlnwji() const {return lnwji_;}
         const std::map<std::vector<int>, std::vector<Real>>& getMapBinIndexToVectorlnwji_() const {return MapBinIndexToVectorlnwji_;}
         const std::map<std::vector<int>, std::vector<int>>& getMapBinIndexTolnwjiIndex() const {return MapBinIndexTolnwjiIndex_;}
         const std::vector<std::vector<Real>>& getxi() const {return xi_;}
@@ -66,6 +66,8 @@ class Uwham:public Wham
         std::map<std::vector<int>, std::vector<Real>> MapBinIndexToVectorlnwji_;
         std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
         std::map<std::vector<int>, Real> MapBinIndexToWji_;
+        OpenMP::OpenMP_buffer<std::map<std::vector<int>, std::vector<Real>>> MapBinIndexToVectorlnwjiBuffer_;
+        OpenMP::OpenMP_buffer<std::map<std::vector<int>, std::vector<int>>> MapBinIndexTolnwjiIndexBuffer_;
 
         // specify which bin each of the data falls into 
         std::vector<std::vector<int>> binneddata_;
