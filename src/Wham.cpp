@@ -258,7 +258,7 @@ void Wham::initializeTimeSeries()
 
 void Wham::printForce(std::string name)
 {
-    ASSERT((VectorTimeSeries_.size() == Biases_.size()) && (Averages_.size() == Biases_.size()), "To perform the force output, you cannot use the combined output option.");
+    ASSERT((VectorTimeSeries_.size() == Biases_.size() && Averages_.size() == Biases_.size()), "To perform the force output, you cannot use the combined output option.");
 
     std::vector<std::vector<Real>> Forces;
 
