@@ -148,6 +148,11 @@ void UwhamAdaptiveMethods::calculate()
         lnwji_[i] = f + lnwji_[i];
     }
 
+    for (int i=0;i<fk_.size();i++)
+    {
+        fk_[i] = fk_[i] - f;
+    }
+
     // calculates the NLL equation
     Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
 
