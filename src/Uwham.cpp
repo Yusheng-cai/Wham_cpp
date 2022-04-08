@@ -15,6 +15,8 @@ Uwham::Uwham(const WhamInput& input)
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
     registerOutput("derivative", [this](std::string name) -> void{this -> printderivative(name);});
     registerOutput("derivativeNormTS", [this](std::string name) -> void {this -> printderivativeNormTS(name);});
+    registerOutput("reweightFE", [this](std::string name) -> void {this -> printReweightFE(name);});
+    registerOutput("KL_divergence", [this](std::string name) -> void {this -> printKL(name);});
 
     // check if the outputs are registered
     isRegistered();
@@ -27,6 +29,39 @@ Uwham::Uwham(const WhamInput& input)
  
     // Now read in what type of calculation are you letting Uwham do
     initializeStrat();
+}
+
+void Uwham::printKL(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (int i=0;i<KL_divergence_.size();i++)
+    {
+        ofs << KL_divergence_[i] << "\n";
+    }
+    ofs.close();
+}
+
+void Uwham::printReweightFE(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (int i=0;i<reweightFE_.size();i++)
+    {
+        for (auto it = reweightFE_[i].begin(); it != reweightFE_[i].end(); it ++)
+        {
+            ofs << i+1 << " ";
+            for (int j=0;j<it->first.size();j++)
+            {
+                ofs << it -> first[j] << " ";
+            }
+            ofs << it -> second << "\n";
+        }
+    }
+
+    ofs.close();
 }
 
 void Uwham::printderivativeNormTS(std::string name)
@@ -222,6 +257,7 @@ void Uwham::calculate()
         fk_ = strat -> getFk_();
         lnwji_ = strat -> getlnwji_();
     }
+
     auto end = std::chrono::high_resolution_clock::now();
     auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
     std::cout << "Calculation took " << diff.count() << " us." << std::endl;
@@ -342,6 +378,56 @@ void Uwham::calculate()
         Real wji = WhamTools::LogSumExp(l, ones);
 
         MapBinIndexToWji_.insert(std::make_pair(it->first, wji));
+    }
+
+    // We should also reweight the data to each of the simulations
+    // resize lnpji to the size of 'Number of biases'
+    lnpji_.resize(BUki_.getNR(), std::vector<Real>(lnwji_.size(),0.0));
+    reweightFE_.resize(BUki_.getNR());
+
+    // Reweight to various biases 
+    for (int i=0;i<BUki_.getNR();i++)
+    {
+        #pragma omp parallel for
+        for (int j=0;j<lnwji_.size();j++)
+        {
+            lnpji_[i][j] = fk_[i] - BUki_(i,j) + lnwji_[j];
+        }
+    }
+
+    for (int i=0;i<BUki_.getNR();i++)
+    {
+        for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end(); it ++)
+        {
+            auto& l  = it -> second;
+            std::vector<Real> lnpi;
+
+            for (int j=0;j< l.size(); j++)
+            {
+                lnpi.push_back(lnpji_[i][l[j]]);
+            }
+
+            std::vector<Real> ones(l.size(), 1.0);
+            Real pi = -WhamTools::LogSumExp(lnpi, ones);
+
+            reweightFE_[i].insert(std::make_pair(it -> first, pi));
+        }
+    }
+
+    // Now let's calculate KL divergence
+    KL_divergence_.resize(BUki_.getNR(),0.0);
+    for (int i=0;i<BUki_.getNR();i++)
+    {
+        for (auto it = dataFE_[i].begin(); it != dataFE_[i].end(); it ++)
+        {
+            auto Index = it -> first;
+
+            Real ref_val = it -> second;
+            Real prob = std::exp(-ref_val);
+            Real val = reweightFE_[i].find(Index) -> second;
+
+            KL_divergence_[i] = prob * (-ref_val + val);
+        }
     }
 
     auto e = std::chrono::high_resolution_clock::now();
