@@ -49,6 +49,12 @@ void Wham::printAverage(std::string name)
         {
             ofs << Averages_[i][j] << " ";
         }
+
+        for (int j=0;j<Std_[i].size();j++)
+        {
+            ofs << Std_[i][j] << " ";
+        }
+
         ofs << "\n";
     }
 
@@ -404,8 +410,8 @@ std::vector<WhamTools::Real> WhamTools::calculatelnpl(const Matrix<Real>& BWil, 
     int Nsim  = BWil.getNR();
 
     std::vector<Real> lnpl(Nbins, 0.0);
-
     std::vector<Real> temp;
+
     for (int i=0;i<Nbins;i++)
     {
         std::vector<Real> temp(Nsim,0.0);
