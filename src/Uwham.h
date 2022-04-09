@@ -44,6 +44,8 @@ class Uwham:public Wham
         void printTimeSeriesBins(std::string name);
         void printderivative(std::string name);
         void printderivativeNormTS(std::string name);
+        void printReweightFE(std::string name);
+        void printKL(std::string name);
 
         // getters 
         const std::vector<Real>& getlnwji() const {return lnwji_;}
@@ -88,4 +90,13 @@ class Uwham:public Wham
 
         // lnwji 
         std::vector<Real> lnwji_;
+
+        // lnpji
+        std::vector<std::vector<Real>> lnpji_;
+
+        // The constructed FE from lnpji
+        std::vector<std::map<std::vector<int>, Real>> reweightFE_;
+
+        // the KL divergence 
+        std::vector<Real> KL_divergence_;
 };

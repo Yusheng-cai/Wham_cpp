@@ -70,7 +70,9 @@ class Wham
 
         // print out the average quantities of the data 
         void printAverage(std::string name);
-    
+
+        void printdataFE(std::string name);
+
     protected:
         std::vector<tsptr>& VectorTimeSeries_;
 
@@ -106,6 +108,9 @@ class Wham
 
         // histogram for each dimension of data
         std::vector<std::vector<std::vector<Real>>> histogram_;
+
+        // normalized histogram --> -ln(pk)
+        std::vector<std::map<std::vector<int>, Real>> dataFE_;
 
         // The bins used in the calculation
         std::vector<Bin> Bins_;

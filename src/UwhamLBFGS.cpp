@@ -55,6 +55,11 @@ void UwhamLBFGS::calculate()
     {
         lnwji_[i] = f + lnwji_[i];
     }
+
+    for (int i=0;i<fk_.size();i++)
+    {
+        fk_[i] = fk_[i] - f;
+    }
 }
 
 UwhamNLL::UwhamNLL(UwhamNLLInput& input)
