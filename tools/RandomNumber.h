@@ -8,6 +8,8 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+#include <vector>
+#include <algorithm>
 
 class Random 
 {
@@ -49,4 +51,12 @@ class Random
         std::mt19937 generator_;
 
         std::random_device rd;
+};
+
+namespace RandomTools
+{
+    using Real = CommonTypes::Real;
+
+    // randomly generate a permutation of num samples for (0,N-1)
+    std::vector<int> RandomPermute(int N, int num);
 };

@@ -44,3 +44,21 @@ Random::Real Random::DrawUniform_minmax(Real min, Real max){
 }
 
 Random Random::_instance;
+
+
+std::vector<int> RandomTools::RandomPermute(int N, int num)
+{
+    std::vector<int> Index(N);
+    std::iota(Index.begin(), Index.end(), 0);
+
+    auto rng = std::default_random_engine {};
+    std::shuffle(Index.begin(), Index.end(), rng);
+
+    std::vector<int> Output(num);
+    for (int i=0;i<num;i++)
+    {
+        Output[i] = Index[i];
+    }
+
+    return Output;
+}
