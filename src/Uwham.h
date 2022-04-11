@@ -46,6 +46,10 @@ class Uwham:public Wham
         void printderivativeNormTS(std::string name);
         void printReweightFE(std::string name);
         void printKL(std::string name);
+        void printFEdim(std::string name);
+
+        // calculation functions
+        void calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>& BUki);
 
         // getters 
         const std::vector<Real>& getlnwji() const {return lnwji_;}
@@ -54,6 +58,9 @@ class Uwham:public Wham
         const std::vector<std::vector<Real>>& getxi() const {return xi_;}
         const std::vector<std::vector<int>>& getBinnedData() const {return binneddata_;}
         int getNumBinsPerDimension(int num);
+
+        // reduce FE to various dimensions
+        void ReduceFEDimension();
 
     private:
         // Beta Uki energy matrix
@@ -93,6 +100,8 @@ class Uwham:public Wham
 
         // lnpji
         std::vector<std::vector<Real>> lnpji_;
+        // reduced Free energy in each of the dimensions
+        std::vector<std::map<int, Real>> FE_dim_;
 
         // The constructed FE from lnpji
         std::vector<std::map<std::vector<int>, Real>> reweightFE_;

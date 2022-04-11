@@ -17,6 +17,7 @@ Uwham::Uwham(const WhamInput& input)
     registerOutput("derivativeNormTS", [this](std::string name) -> void {this -> printderivativeNormTS(name);});
     registerOutput("reweightFE", [this](std::string name) -> void {this -> printReweightFE(name);});
     registerOutput("KL_divergence", [this](std::string name) -> void {this -> printKL(name);});
+    registerOutput("FE_dim", [this](std::string name) -> void {this -> printFEdim(name);});
 
     // check if the outputs are registered
     isRegistered();
@@ -58,6 +59,22 @@ void Uwham::printReweightFE(std::string name)
                 ofs << it -> first[j] << " ";
             }
             ofs << it -> second << "\n";
+        }
+    }
+
+    ofs.close();
+}
+
+void Uwham::printFEdim(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+    ofs << "# dimension bin FE \n";
+    for (int i=0;i<FE_dim_.size();i++)
+    {
+        for (auto it = FE_dim_[i].begin(); it != FE_dim_[i].end(); it ++)
+        {
+            ofs << i+1 << " " << it -> first << " " << it -> second << "\n";
         }
     }
 
@@ -135,14 +152,19 @@ void Uwham::initializeBUki()
 {
     std::cout << "The total data in BUki is " << Biases_.size() * xi_.size() << std::endl;
     std::cout << "The space it takes is around " << Biases_.size() * xi_.size() * sizeof(Real) / 1e6 << " Mb" << std::endl;
-    BUki_.resize(Biases_.size(), xi_.size());
+    calculateBUki(xi_, BUki_); 
+}
+
+void Uwham::calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>& BUki)
+{
+    BUki.resize(Biases_.size(), xi.size());
     #pragma omp parallel for
-    for (int i=0;i<xi_.size();i++)
+    for (int i=0;i<xi.size();i++)
     {
         for (int j=0;j<Biases_.size();j++)
         {
-            Real val = Biases_[j]->calculate(xi_[i]); 
-            BUki_(j,i) = Biases_[j]->getBeta()*val;
+            Real val = Biases_[j]->calculate(xi[i]); 
+            BUki(j,i) = Biases_[j]->getBeta()*val;
         }
     }
 }
@@ -430,9 +452,55 @@ void Uwham::calculate()
         }
     }
 
+    // get the FE in each of the dimensions
+    ReduceFEDimension();
+
     auto e = std::chrono::high_resolution_clock::now();
     auto d = std::chrono::duration_cast<std::chrono::microseconds>(e - s);
     std::cout << "Binning took " << d.count() << " us." << "\n";
+}
+
+void Uwham::ReduceFEDimension()
+{
+    FE_dim_.clear();
+    FE_dim_.resize(Bins_.size());
+
+    for (int i=0;i<Bins_.size();i++)
+    {
+        // map each of the bin num in various dimension to lnwji index 
+        std::map<int, std::vector<int>> MapDimBinNumTolnwjiIndex;
+        for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end();it++)
+        {
+            int binnum = it -> first[i];
+            auto value = it -> second;
+
+            auto itt = MapDimBinNumTolnwjiIndex.find(binnum);
+
+            if (itt != MapDimBinNumTolnwjiIndex.end())
+            {
+                itt -> second.insert(itt -> second.end(), value.begin(), value.end());
+            }
+            else
+            {
+                MapDimBinNumTolnwjiIndex.insert(std::make_pair(binnum, value));
+            }
+        }
+        // Now using those index, find the -log(sum(exp(lnwji)))
+        for (auto it = MapDimBinNumTolnwjiIndex.begin(); it != MapDimBinNumTolnwjiIndex.end();it++)
+        {
+            std::vector<Real> lnwji_dim;
+
+            for (int j=0;j<it -> second.size();j++)
+            {
+                lnwji_dim.push_back(lnwji_[it ->second[j]]);
+            }
+
+            std::vector<Real> ones(lnwji_dim.size(),1.0);
+            Real Fe = -1.0 * WhamTools::LogSumExpOMP(lnwji_dim, ones);
+
+            FE_dim_[i].insert(std::make_pair(it -> first, Fe));
+        }
+    }
 }
 
 void Uwham::printNormalization(std::string name)
