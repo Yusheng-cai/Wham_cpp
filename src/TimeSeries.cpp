@@ -47,6 +47,9 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
 
     // normalize the data 
     findNormalizedData();
+
+    // calculate the autocorrelation
+    calculateAutoCorrelation();
 }
 
 void TimeSeries::readChosenData()
@@ -233,7 +236,32 @@ void TimeSeries::calculateAutoCorrelation()
         lag_time_[i] = 1 + 2 * lag_time_[i];
     }
 
-    std::cout << "lag time = " << lag_time_[0] << std::endl;
+    if (dimension_ > 1)
+    {
+        auto long_it = std::max_element(lag_time_.begin(), lag_time_.end());
+        longest_lag_time_ = *long_it;
+    }
+    else
+    {
+        longest_lag_time_ = lag_time_[0];
+    }
+
+    // get number of independent points
+    numIndependentPoints_ = (int)(chosen_data_.size() / longest_lag_time_);
+}
+
+std::vector<std::vector<TimeSeries::Real>> TimeSeries::getIndependentsample()
+{
+    std::vector<int> Index = RandomTools::RandomPermute(chosen_data_.size(), numIndependentPoints_);
+
+    std::vector<std::vector<Real>> data_independent;
+
+    for (int i=0;i<Index.size();i++)
+    {
+        data_independent[i] = chosen_data_[Index[i]];
+    }
+
+    return data_independent;
 }
 
 void TimeSeries::checkOutputValidity()

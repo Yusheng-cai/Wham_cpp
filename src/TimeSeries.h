@@ -5,6 +5,7 @@
 #include "DataFileParser.h"
 #include "Array.h"
 #include "FFT.h"
+#include "tools/RandomNumber.h"
 
 #include <vector>
 #include <array>
@@ -84,9 +85,14 @@ class TimeSeries
         // get the mean of the timeseries 
         std::vector<Real> getMean() const {return Mean_;}
         std::vector<Real> getstd() const {return std_;}
+        int getNumberOfIndependentPoints() const {return numIndependentPoints_;} 
+
+        // obtain a randomly sampled points from the data that equals to the number of independent points
+        std::vector<std::vector<Real>> getIndependentsample();
 
         // get the lag time / autocorrelation time 
         std::vector<Real> getLagTime() const {return lag_time_;}
+        Real getLongestLagTime() const {return longest_lag_time_;}
 
     
     private:
@@ -123,6 +129,10 @@ class TimeSeries
         // vector of autocorrelations
         std::vector<std::vector<Real>> AC_vector_;
         std::vector<Real> lag_time_;
+        Real longest_lag_time_;
+
+        // number of independent points
+        int numIndependentPoints_;
 
         // normalized data 
         std::vector<std::vector<Real>> normalized_Data_;
