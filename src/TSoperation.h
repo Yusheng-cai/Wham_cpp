@@ -35,6 +35,7 @@ class TSoperation
         void printTotalDataLength(std::string name);
         void printMean(std::string name);
         void printStd(std::string name);
+        void printLagTime(std::string name);
     
     protected:
         std::vector<tsptr>& VectorTS_;
@@ -52,6 +53,9 @@ class TSoperation
 
         std::vector<std::vector<Real>> averages_;
         std::vector<std::vector<Real>> std_;
+
+        // lag times
+        std::vector<Real> LongestLagTimes_;
 };
 
 namespace timeseriesOP
