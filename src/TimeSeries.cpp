@@ -254,7 +254,7 @@ std::vector<std::vector<TimeSeries::Real>> TimeSeries::getIndependentsample()
 {
     std::vector<int> Index = RandomTools::RandomPermute(chosen_data_.size(), numIndependentPoints_);
 
-    std::vector<std::vector<Real>> data_independent;
+    std::vector<std::vector<Real>> data_independent(Index.size());
 
     for (int i=0;i<Index.size();i++)
     {
