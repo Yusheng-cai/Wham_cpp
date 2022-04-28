@@ -31,10 +31,8 @@ class UWhamCalculationStrategy
         const std::vector<Real>& getlnwji_() const {return lnwji_;}
         const std::vector<Real>& getNorm() const {return norms_;}
 
-        virtual void calculate() = 0;
+        virtual void calculate(std::vector<Real>& fk) = 0;
         std::string getName() {return name_;}
-
-        void setFk(std::vector<Real>& fk);
 
     protected:
         Matrix<Real>& BUki_;

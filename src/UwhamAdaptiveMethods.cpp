@@ -72,8 +72,11 @@ void UwhamAdaptiveMethods::SelfConsistentStep(std::vector<Real>& fsc, std::vecto
     gradientSC = WhamTools::Gradient(BUki_, fsc, N_);  
 }
 
-void UwhamAdaptiveMethods::calculate()
+void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
 {
+    // set our fk to be the input fk
+    fk_ = fk;
+
     int Nsim = BUki_.getNR();
     int Ndata= BUki_.getNC();
 

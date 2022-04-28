@@ -8,13 +8,17 @@ namespace WhamRegistry
 Uwham::Uwham(const WhamInput& input)
 :Wham(input)
 {
-    bool real = whamPack_->Readbool("BAR", ParameterPack::KeyType::Optional, BAR_);
+    whamPack_->Readbool("BAR", ParameterPack::KeyType::Optional, BAR_);
+    bool readE=whamPack_->Readbool("ErrorAnalysis", ParameterPack::KeyType::Optional, Error_);
+    if (readE)
+    {
+        whamPack_->ReadNumber("ErrorIteration", ParameterPack::KeyType::Required, ErrorIter_);
+    }
 
     registerOutput("normalization", [this](std::string name)-> void {this->printNormalization(name);});
     registerOutput("pji", [this](std::string name)->void{this->printPji(name);});
     registerOutput("lnwji", [this](std::string name)->void{this->printlnwji(name);});
     registerOutput("derivative", [this](std::string name) -> void{this -> printderivative(name);});
-    registerOutput("derivativeNormTS", [this](std::string name) -> void {this -> printderivativeNormTS(name);});
     registerOutput("reweightFE", [this](std::string name) -> void {this -> printReweightFE(name);});
     registerOutput("KL_divergence", [this](std::string name) -> void {this -> printKL(name);});
     registerOutput("FE_dim", [this](std::string name) -> void {this -> printFEdim(name);});
@@ -26,127 +30,15 @@ Uwham::Uwham(const WhamInput& input)
     initializeBUki();
 
     // make BAR initial guess
-    BARInitialGuess();
+    MakeInitialGuess(BUki_, N_, fk_);
  
     // Now read in what type of calculation are you letting Uwham do
-    initializeStrat();
+    initializeStrat(BUki_, N_, strategies_);
+
+    // bin the data upfront
+    bindata(xi_, MapBinIndexTolnwjiIndex_);
 }
 
-void Uwham::printKL(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-
-    for (int i=0;i<KL_divergence_.size();i++)
-    {
-        ofs << KL_divergence_[i] << "\n";
-    }
-    ofs.close();
-}
-
-void Uwham::printReweightFE(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-
-    for (int i=0;i<reweightFE_.size();i++)
-    {
-        for (auto it = reweightFE_[i].begin(); it != reweightFE_[i].end(); it ++)
-        {
-            ofs << i+1 << " ";
-            for (int j=0;j<it->first.size();j++)
-            {
-                ofs << it -> first[j] << " ";
-            }
-            ofs << it -> second << "\n";
-        }
-    }
-
-    ofs.close();
-}
-
-void Uwham::printFEdim(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-    ofs << "# dimension bin FE \n";
-    for (int i=0;i<FE_dim_.size();i++)
-    {
-        for (auto it = FE_dim_[i].begin(); it != FE_dim_[i].end(); it ++)
-        {
-            ofs << i+1 << " " << it -> first << " " << it -> second << "\n";
-        }
-    }
-
-    ofs.close();
-}
-
-void Uwham::printderivativeNormTS(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-
-    const auto& derivativeNorm = strat_->getNorm();
-
-    ofs << " Iteration \t DerivativeNorm \n";
-    for (int i=0;i<derivativeNorm.size();i++)
-    {
-        ofs << i+1 << "\t" << derivativeNorm[i] << "\n";
-    }
-    ofs.close();
-}
-
-void Uwham::printderivative(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-
-    // we have to calculate the derivative
-    const auto& lnwji = strat_ -> getlnwji_();
-    const auto& fk    = strat_ -> getFk_();
-    int dim = Bins_.size();
-
-    std::vector<std::vector<Real>> dFdN(Biases_.size(), std::vector<Real>(dim,0.0));
-    std::vector<std::vector<Real>> avgs(Biases_.size(), std::vector<Real>(dim,0.0));
-
-    // each bias has a point
-    for (int i=0;i<Biases_.size();i++)
-    {
-        std::vector<Real> avg(dim,0.0);
-        for (int j=0;j<xi_.size();j++)
-        {
-            Real factor = fk[i] - BUki_(i,j) + lnwji[j];
-            factor = std::exp(factor);
-
-            for (int k=0;k<dim;k++)
-            {
-                avg[k] += factor * xi_[j][k];
-            }
-        }
-
-        avgs[i] = avg;
-        std::vector<Real> dF = Biases_[i] -> calculateForce(avg);
-        ASSERT((dF.size() == dim), "The dimensions don't match.");
-
-        dFdN[i] = dF;
-    }
-
-    for (int i=0;i<Biases_.size();i++)
-    {
-        for (int j=0;j<dim;j++)
-        {
-            ofs << avgs[i][j] << " ";
-        }
-
-        for(int j=0;j<dim;j++)
-        {
-            ofs << dFdN[i][j] << " ";
-        }
-        ofs << "\n";
-    }
-
-    ofs.close();
-}
 
 void Uwham::initializeBUki()
 {
@@ -169,19 +61,25 @@ void Uwham::calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>
     }
 }
 
-void Uwham::BARInitialGuess()
+void Uwham::MakeInitialGuess(const Matrix<Real>& BUki, const std::vector<Real>& N, std::vector<Real>& fk)
 {
+    // inital guess for fk 
+    fk.clear();
+    fk.resize(N.size(),0.0);
+
+    // check if we are doing Bennet Acceptance Ratio (BAR) for initial guess 
     if (BAR_)
     {
         // map from group index to point index in xi
-        MakeGroupPointMap();
+        std::vector<std::vector<int>> GroupIndex;
+        MakeGroupPointMap(N, GroupIndex);
 
-        fk_ = std::vector<Real>(N_.size(),0.0);
+        fk = std::vector<Real>(N.size(),0.0);
 
-        for (int i=0;i<GroupIndex_.size()-1;i++)
+        for (int i=0;i<GroupIndex.size()-1;i++)
         {
-            int forwardSize = GroupIndex_[i].size();
-            int backwardSize= GroupIndex_[i+1].size();
+            int forwardSize = GroupIndex[i].size();
+            int backwardSize= GroupIndex[i+1].size();
 
             // forward work
             std::vector<Real> w_F(forwardSize);
@@ -192,47 +90,44 @@ void Uwham::BARInitialGuess()
 
             for (int j=0;j<forwardSize;j++)
             {
-                w_F[j] = BUki_(l,GroupIndex_[k][j]) - BUki_(k, GroupIndex_[k][j]);
+                w_F[j] = BUki(l,GroupIndex[k][j]) - BUki(k, GroupIndex[k][j]);
             }
 
             for (int j=0;j<backwardSize;j++)
             {
-                w_B[j] = BUki_(k, GroupIndex_[l][j]) - BUki_(l, GroupIndex_[l][j]);
+                w_B[j] = BUki(k, GroupIndex[l][j]) - BUki(l, GroupIndex[l][j]);
             }
 
             Real DeltaF = WhamTools::CalculateDeltaFBarIterative(w_F, w_B);
 
-            fk_[l] = fk_[k] + DeltaF;
-            std::cout << "fk " << l << " = " << fk_[l] << "\n";
+            fk[l] = fk[k] + DeltaF;
         }
     }
     else
     {
-        std::cout << "initializing fk to zeros." << "\n";
-        fk_ = std::vector<Real>(N_.size(),0.0);
+        fk = std::vector<Real>(N.size(),0.0);
     }
-
-    whamPack_->ReadVectorNumber("fk", ParameterPack::KeyType::Optional, fk_);
 }
 
-void Uwham::MakeGroupPointMap()
+void Uwham::MakeGroupPointMap(const std::vector<Real>& N, std::vector<std::vector<int>>& GroupIndex)
 {
-    GroupIndex_.clear();
-    GroupIndex_.resize(N_.size());
+    GroupIndex.clear();
+    GroupIndex.resize(N_.size());
 
     int initial=0;
-    for (int i=0;i<N_.size();i++)
+    for (int i=0;i<N.size();i++)
     {
-        std::vector<int> temp(N_[i],0);
+        std::vector<int> temp(N[i],0);
         std::iota(temp.begin(), temp.end(), initial);
-        GroupIndex_[i] = temp;
-        initial = initial + N_[i];
+        GroupIndex[i] = temp;
+        initial = initial + N[i];
     }
 }
 
-
-void Uwham::initializeStrat()
+void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vector<stratptr>& strategies)
 {
+    strategies.clear();
+
     auto whampack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
     auto stratPacks = whampack->findParamPacks("Uwhamstrategy", ParameterPack::KeyType::Required);
@@ -240,13 +135,12 @@ void Uwham::initializeStrat()
     {
         std::string strattype;
         std::string name;
-        UwhamStrategyInput input = {BUki_, N_, const_cast<ParameterPack&>(*s), fk_};
+        UwhamStrategyInput input = {BUki, N, const_cast<ParameterPack&>(*s)};
         int index = strategies_.size();
         s -> ReadString("type", ParameterPack::KeyType::Required, strattype);
-        strategies_.push_back(stratptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input)));
-        MapNameToStrat_.insert(std::make_pair(strategies_[index]->getName(), strategies_[index].get()));
+        auto sptr = UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input);
+        MapNameToStrat_.insert(std::make_pair(sptr -> getName(), sptr));
     }
-
 
     // read a vector of string that represents the order of optimization that we want to do , usually LBFGS --> adaptive     
     whampack->ReadVectorString("strategyNames", ParameterPack::KeyType::Required, strategyNames_);
@@ -255,56 +149,30 @@ void Uwham::initializeStrat()
     {
         auto stratit = MapNameToStrat_.find(s);
         ASSERT((stratit != MapNameToStrat_.end()), "Strategy name " << s << " not found.");
+        strategies.push_back(stratptr(stratit->second));
     }
 }
 
-void Uwham::calculate()
+void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int>, std::vector<int>>& map)
 {
-    // echo number of threads we are using 
-    int numthreads = 0;
+    map.clear();
+
+    OpenMP::OpenMP_buffer<std::map<std::vector<int>, std::vector<int>>> mapBuffer;
+    mapBuffer.set_master_object(map);
+
     #pragma omp parallel
     {
-        #pragma omp critical
-        numthreads += 1;
-    }
-
-    // Start calculation
-    std::cout << "We are using " << numthreads << " OpenMP threads for this operation." << std::endl;
-    auto start = std::chrono::high_resolution_clock::now();
-    for (auto s : strategyNames_)
-    {
-        auto strat = MapNameToStrat_.find(s)->second;
-        strat -> setFk(fk_);
-        strat -> calculate();
-        fk_ = strat -> getFk_();
-        lnwji_ = strat -> getlnwji_();
-    }
-
-    auto end = std::chrono::high_resolution_clock::now();
-    auto diff = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
-    std::cout << "Calculation took " << diff.count() << " us." << std::endl;
-
-    // Now we perform the binning 
-    binneddata_.resize(xi_.size());
-    auto s = std::chrono::high_resolution_clock::now();
-    MapBinIndexToVectorlnwjiBuffer_.set_master_object(MapBinIndexToVectorlnwji_);
-    MapBinIndexTolnwjiIndexBuffer_.set_master_object(MapBinIndexTolnwjiIndex_);
-    #pragma omp parallel
-    {
-        // access the local vector lnwji map 
-        auto& localVectorlnwjiMap = MapBinIndexToVectorlnwjiBuffer_.access_buffer_by_id();
         // access the local lnwji index map
-        auto& locallnwjiIndexMap  = MapBinIndexTolnwjiIndexBuffer_.access_buffer_by_id();
+        auto& localmap  = mapBuffer.access_buffer_by_id();
 
         // clear the local maps
-        localVectorlnwjiMap.clear();
-        locallnwjiIndexMap.clear();
+        localmap.clear();
 
         #pragma omp for
-        for (int i=0;i<xi_.size();i++)
+        for (int i=0;i<xi.size();i++)
         {
-            auto& x = xi_[i];
-            ASSERT((x.size() == Bins_.size()), "The dimension of the data = " << x.size() << " while the dimension of bins = " << Bins_.size());
+            std::vector<Real>& x = xi[i];
+
             std::vector<int> BinIndex;
             BinIndex.resize(Bins_.size());
 
@@ -316,88 +184,67 @@ void Uwham::calculate()
                 int dim = Bins_[j].getDimension() - 1;
 
                 // If this data point is out of range for one of the bins, it is out of range, so we break
-                if (! Bins_[j].isInRange(xi_[i][dim]))
+                if (! Bins_[j].isInRange(xi[i][dim]))
                 {
                     // break from the for loop
                     isInRange = false;
                     break;
                 }
             
-                int index = Bins_[j].findBin(xi_[i][dim]);
+                int index = Bins_[j].findBin(xi[i][dim]);
                 BinIndex[j] = index;
             }
 
             if (isInRange)
             {
                 // add the indices to the binned data vector
-                binneddata_[i] = BinIndex;
-                auto it = localVectorlnwjiMap.find(BinIndex);
-                auto it2= locallnwjiIndexMap.find(BinIndex);
-
-                if ( it == localVectorlnwjiMap.end())
-                {
-                    std::vector<Real> lnwji_vec_;
-                    std::vector<int> lnwjiIndex_vec_;
-
-                    lnwji_vec_.push_back(lnwji_[i]);
-                    lnwjiIndex_vec_.push_back(i);
-
-                    localVectorlnwjiMap.insert(std::make_pair(BinIndex, lnwji_vec_));
-                    locallnwjiIndexMap.insert(std::make_pair(BinIndex, lnwjiIndex_vec_));
-                }
-                else
-                {
-                    it -> second.push_back(lnwji_[i]);
-                    it2 -> second.push_back(i);
-                }
-            }
-        }
-    }
-
-    // Now we combine all the maps for map bin index to vector lnwji
-    for (auto map = MapBinIndexToVectorlnwjiBuffer_.beginworker(); map != MapBinIndexToVectorlnwjiBuffer_.endworker(); map ++)
-    {
-        for (auto it = map->begin(); it != map -> end(); it++)
-        {
-            auto Vectorit = MapBinIndexToVectorlnwji_.find(it ->first);
-
-            // if the original map also has the bin index
-            if (Vectorit != MapBinIndexToVectorlnwji_.end())
-            {
-                Vectorit -> second.insert(Vectorit -> second.end(), it -> second.begin(), it ->second.end());
-            }
-            else
-            {
-                MapBinIndexToVectorlnwji_.insert(std::make_pair(it -> first, it -> second));
+                templatetools::InsertIntoVectorMap(BinIndex, i, localmap);
             }
         }
     }
 
     // Perform the same operation but for map bin index to ln index
-    for (auto map = MapBinIndexTolnwjiIndexBuffer_.beginworker(); map != MapBinIndexTolnwjiIndexBuffer_.endworker(); map ++)
+    for (auto m = mapBuffer.beginworker(); m != mapBuffer.endworker(); m ++)
     {
-        for (auto it = map->begin(); it != map -> end(); it++)
+        for (auto it = m->begin(); it != m -> end(); it++)
         {
-            auto Indexit = MapBinIndexTolnwjiIndex_.find(it -> first);
+            auto Indexit = map.find(it -> first);
 
             // if the original map also has the bin index
-            if (Indexit != MapBinIndexTolnwjiIndex_.end())
+            if (Indexit != map.end())
             {
                 Indexit -> second.insert(Indexit -> second.end(), it -> second.begin(), it ->second.end());
             }
             else
             {
-                MapBinIndexTolnwjiIndex_.insert(std::make_pair(it -> first, it -> second));
+                map.insert(std::make_pair(it -> first, it -> second));
             }
         }
     }
+}
 
-    for (auto it = MapBinIndexToVectorlnwji_.begin();it != MapBinIndexToVectorlnwji_.end();it++)
+void Uwham::calculate()
+{
+    // Start calculation --> first calculate using the entire data set 
+    for (int i=0;i<strategies_.size();i++)
+    {
+        strategies_[i] -> calculate(fk_);
+        fk_ = strategies_[i] -> getFk_();
+        lnwji_ = strategies_[i] -> getlnwji_();
+    }
+
+    for (auto it = MapBinIndexTolnwjiIndex_.begin();it != MapBinIndexTolnwjiIndex_.end();it++)
     {
         auto& l = it -> second;
         std::vector<Real> ones(l.size(), 1.0);
 
-        Real wji = WhamTools::LogSumExp(l, ones);
+        std::vector<Real> lnwji_bin(l.size(),0.0);
+        for (int i=0;i<l.size();i++)
+        {
+            lnwji_bin[i] = lnwji_[l[i]];
+        }
+
+        Real wji = WhamTools::LogSumExp(lnwji_bin, ones);
 
         MapBinIndexToWji_.insert(std::make_pair(it->first, wji));
     }
@@ -454,10 +301,36 @@ void Uwham::calculate()
 
     // get the FE in each of the dimensions
     ReduceFEDimension();
+}
 
-    auto e = std::chrono::high_resolution_clock::now();
-    auto d = std::chrono::duration_cast<std::chrono::microseconds>(e - s);
-    std::cout << "Binning took " << d.count() << " us." << "\n";
+void Uwham::calculateError()
+{
+    for (int i=0;i<ErrorIter_;i++)
+    {
+        std::vector<std::vector<Real>> X;
+        std::vector<Real> N;
+        for (int i=0;i<VectorTimeSeries_.size();i++)
+        {
+            auto& ts = VectorTimeSeries_[i];
+            std::vector<std::vector<Real>> sample = ts->getIndependentsample();
+            X.insert(X.end(), sample.begin(), sample.end());
+            N.push_back(sample.size());
+        }
+        // calculate BUki
+        Matrix<Real> BUki;
+        calculateBUki(X, BUki);
+
+        // bin the data 
+        std::map<std::vector<int>,std::vector<int>> map;
+        bindata(X, map);
+
+        // make initial guess for fk = -log(Qk)
+        std::vector<Real> fk_guess;
+        MakeInitialGuess(BUki, N, fk_guess);
+
+        // make new strategies
+        std::vector<stratptr> strategies;
+    }
 }
 
 void Uwham::ReduceFEDimension()
@@ -503,22 +376,6 @@ void Uwham::ReduceFEDimension()
     }
 }
 
-void Uwham::printNormalization(std::string name)
-{
-    std::ofstream ofs;
-    ofs.open(name);
-
-    int Nsim = BUki_.getNR();
-    ofs << std::fixed << std::setprecision(precision_);
-    ofs << "# normalization constants" << "\n";
-
-    for (int i=0;i<Nsim;i++)
-    {
-        ofs << fk_[i] << "\n";
-    }
-    ofs.close();
-}
-
 int Uwham::getNumBinsPerDimension(int num)
 {
     ASSERT((num < Bins_.size()), "The dimension provided is larger than the total number of dimensions which is " << Bins_.size());
@@ -526,16 +383,27 @@ int Uwham::getNumBinsPerDimension(int num)
     return Bins_[num].getNumbins();
 }
 
+                            /*************************************
+                             ********** print functions **********
+                             ************************************/  
+void Uwham::printOutput()
+{
+    for (int i=0;i<VectorOutputNames_.size();i++)
+    {
+        std::string name = VectorOutputNames_[i];
+
+        printOutputFromName(name)(VectorOutputFileNames_[i]);
+    }
+}
+
 void Uwham::printlnwji(std::string name)
 {
     std::ofstream ofs;
     ofs.open(name);
 
-    const auto& lnwji = strat_ -> getlnwji_();
-
-    for (int i=0;i<lnwji.size();i++)
+    for (int i=0;i<lnwji_.size();i++)
     {
-        ofs << lnwji[i] << std::endl;
+        ofs << lnwji_[i] << std::endl;
     }
 
     ofs.close();
@@ -581,16 +449,117 @@ void Uwham::printPji(std::string name)
     ofs.close();
 }
 
-void Uwham::printOutput()
+void Uwham::printNormalization(std::string name)
 {
-    for (int i=0;i<VectorOutputNames_.size();i++)
-    {
-        std::string name = VectorOutputNames_[i];
+    std::ofstream ofs;
+    ofs.open(name);
 
-        printOutputFromName(name)(VectorOutputFileNames_[i]);
+    int Nsim = BUki_.getNR();
+    ofs << std::fixed << std::setprecision(precision_);
+    ofs << "# normalization constants" << "\n";
+
+    for (int i=0;i<Nsim;i++)
+    {
+        ofs << fk_[i] << "\n";
     }
+    ofs.close();
 }
 
-void Uwham::finishCalculate()
+void Uwham::printKL(std::string name)
 {
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (int i=0;i<KL_divergence_.size();i++)
+    {
+        ofs << KL_divergence_[i] << "\n";
+    }
+    ofs.close();
+}
+
+void Uwham::printReweightFE(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    for (int i=0;i<reweightFE_.size();i++)
+    {
+        for (auto it = reweightFE_[i].begin(); it != reweightFE_[i].end(); it ++)
+        {
+            ofs << i+1 << " ";
+            for (int j=0;j<it->first.size();j++)
+            {
+                ofs << it -> first[j] << " ";
+            }
+            ofs << it -> second << "\n";
+        }
+    }
+
+    ofs.close();
+}
+
+void Uwham::printFEdim(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+    ofs << "# dimension bin FE \n";
+    for (int i=0;i<FE_dim_.size();i++)
+    {
+        for (auto it = FE_dim_[i].begin(); it != FE_dim_[i].end(); it ++)
+        {
+            ofs << i+1 << " " << it -> first << " " << it -> second << "\n";
+        }
+    }
+
+    ofs.close();
+}
+
+void Uwham::printderivative(std::string name)
+{
+    std::ofstream ofs;
+    ofs.open(name);
+
+    // we have to calculate the derivative
+    int dim = Bins_.size();
+
+    std::vector<std::vector<Real>> dFdN(Biases_.size(), std::vector<Real>(dim,0.0));
+    std::vector<std::vector<Real>> avgs(Biases_.size(), std::vector<Real>(dim,0.0));
+
+    // each bias has a point
+    for (int i=0;i<Biases_.size();i++)
+    {
+        std::vector<Real> avg(dim,0.0);
+        for (int j=0;j<xi_.size();j++)
+        {
+            Real factor = fk_[i] - BUki_(i,j) + lnwji_[j];
+            factor = std::exp(factor);
+
+            for (int k=0;k<dim;k++)
+            {
+                avg[k] += factor * xi_[j][k];
+            }
+        }
+
+        avgs[i] = avg;
+        std::vector<Real> dF = Biases_[i] -> calculateForce(avg);
+        ASSERT((dF.size() == dim), "The dimensions don't match.");
+
+        dFdN[i] = dF;
+    }
+
+    for (int i=0;i<Biases_.size();i++)
+    {
+        for (int j=0;j<dim;j++)
+        {
+            ofs << avgs[i][j] << " ";
+        }
+
+        for(int j=0;j<dim;j++)
+        {
+            ofs << dFdN[i][j] << " ";
+        }
+        ofs << "\n";
+    }
+
+    ofs.close();
 }

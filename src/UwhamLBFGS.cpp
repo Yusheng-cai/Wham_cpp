@@ -16,7 +16,7 @@ UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
     NLLeq_ = NLLptr(new UwhamNLL(in));
 }
 
-void UwhamLBFGS::calculate()
+void UwhamLBFGS::calculate(std::vector<Real>& fk)
 {
     LBFGSpp::LBFGSParam<Real> Param;
     Param.epsilon = epsilon_;
@@ -26,15 +26,16 @@ void UwhamLBFGS::calculate()
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
     // copy the data -> fk
-    Eigen::VectorXd fk = Eigen::Map<Eigen::VectorXd>(fk_.data(), BUki_.getNR());
+    fk_ = fk;
+    Eigen::VectorXd fk_E = Eigen::Map<Eigen::VectorXd>(fk.data(), BUki_.getNR());
     Real fx;
 
-    int numiterations = solver.minimize(*NLLeq_,fk, fx, print_every_);
+    int numiterations = solver.minimize(*NLLeq_,fk_E, fx, print_every_);
     norms_ = NLLeq_->getNorms();
 
-    for (int i=0;i<fk.size();i++)
+    for (int i=0;i<fk_E.size();i++)
     {
-        fk_[i] = fk[i];
+        fk_[i] = fk_E[i];
     }
 
     // subtract the minimum fk 

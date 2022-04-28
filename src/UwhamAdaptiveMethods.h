@@ -10,7 +10,7 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
         UwhamAdaptiveMethods(UwhamStrategyInput& input);
         virtual ~UwhamAdaptiveMethods(){};
 
-        virtual void calculate();
+        virtual void calculate(std::vector<Real>& fk);
 
         // Calculate the error between 2 iterations
         Real calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev);
