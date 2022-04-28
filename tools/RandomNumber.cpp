@@ -51,8 +51,7 @@ std::vector<int> RandomTools::RandomPermute(int N, int num)
     std::vector<int> Index(N);
     std::iota(Index.begin(), Index.end(), 0);
 
-    auto rng = std::default_random_engine {};
-    std::shuffle(Index.begin(), Index.end(), rng);
+    std::random_shuffle(Index.begin(), Index.end());
 
     std::vector<int> Output(num);
     for (int i=0;i<num;i++)
