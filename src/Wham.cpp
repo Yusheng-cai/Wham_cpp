@@ -653,7 +653,6 @@ Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::
                     sum_sq += pki[i][k] * pki[i][k];
                 }
 
-                //Hessian(i,j) = -1.0/Ntot*(-N[i]*sum + N[i]*N[i]*sum_sq);
                 Hessian(i,j) = -1.0*(-N[i]*sum + N[i]*N[i]*sum_sq);
             }
             else
@@ -665,7 +664,6 @@ Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::
                     sum += pki[i][k] * pki[j][k];
                 }
 
-                //Hessian(i,j) = -1.0/Ntot*(sum*N[i]*N[j]);
                 Hessian(i,j) = -1.0*(sum*N[i]*N[j]);
             }
         }
