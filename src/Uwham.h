@@ -34,6 +34,9 @@ class Uwham:public Wham
         // Make indices as to which group each data point belongs to
         void MakeGroupPointMap(const std::vector<Real>& N, std::vector<std::vector<int>>& GroupIndex);
 
+        // calculate free energy from the bins and lnwji
+        void calculateFreeEnergy(const std::vector<Real>& lnwji, std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE);
+
         virtual void calculate() override;
         virtual void printOutput() override;
         virtual void finishCalculate() override {};
@@ -81,7 +84,6 @@ class Uwham:public Wham
         // the initial guess for f_k
         std::vector<Real> fk_;
         std::vector<std::vector<int>> GroupIndex_;
-        std::vector<Real> cumulativeSumN_;
 
         // whether or not we are doing BAR initialization
         bool BAR_=false;
@@ -95,9 +97,14 @@ class Uwham:public Wham
 
         // lnwji 
         std::vector<Real> lnwji_;
-
         // lnpji
         std::vector<std::vector<Real>> lnpji_;
+
+        // error vector
+        std::map<std::vector<int>, std::vector<Real>> ErrorFEMap_;
+        std::map<std::vector<int>, Real> ErrorMap_;
+        std::map<std::vector<int>, Real> MeanMap_;
+
         // reduced Free energy in each of the dimensions
         std::vector<std::map<int, Real>> FE_dim_;
 

@@ -130,25 +130,31 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
 
     auto whampack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
+    std::map<std::string, UWhamCalculationStrategy*> MapNameToStrat;
+    std::vector<std::string> strategyNames;
+
     auto stratPacks = whampack->findParamPacks("Uwhamstrategy", ParameterPack::KeyType::Required);
+
     for (auto s : stratPacks)
     {
         std::string strattype;
         std::string name;
         UwhamStrategyInput input = {BUki, N, const_cast<ParameterPack&>(*s)};
-        int index = strategies_.size();
+
         s -> ReadString("type", ParameterPack::KeyType::Required, strattype);
         auto sptr = UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input);
-        MapNameToStrat_.insert(std::make_pair(sptr -> getName(), sptr));
+        MapNameToStrat.insert(std::make_pair(sptr -> getName(), sptr));
     }
 
     // read a vector of string that represents the order of optimization that we want to do , usually LBFGS --> adaptive     
-    whampack->ReadVectorString("strategyNames", ParameterPack::KeyType::Required, strategyNames_);
+    whampack->ReadVectorString("strategyNames", ParameterPack::KeyType::Required, strategyNames);
 
-    for (auto s : strategyNames_)
+    for (auto s : strategyNames)
     {
-        auto stratit = MapNameToStrat_.find(s);
-        ASSERT((stratit != MapNameToStrat_.end()), "Strategy name " << s << " not found.");
+        auto stratit = MapNameToStrat.find(s);
+        ASSERT((stratit != MapNameToStrat.end()), "Strategy name " << s << " not found.");
+
+        // transfer ownership of the pointer
         strategies.push_back(stratptr(stratit->second));
     }
 }
@@ -223,6 +229,29 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
     }
 }
 
+void Uwham::calculateFreeEnergy(const std::vector<Real>& lnwji, std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE)
+{
+    FE.clear();
+
+    for (auto it = map.begin();it != map.end();it++)
+    {
+        auto& l = it -> second;
+        std::vector<Real> ones(l.size(), 1.0);
+        std::vector<Real> lnwji_bin(l.size(),0.0);
+
+        for (int i=0;i<l.size();i++)
+        {
+            lnwji_bin[i] = lnwji[l[i]];
+        }
+
+        Real wji = WhamTools::LogSumExp(lnwji_bin, ones);
+
+        FE.insert(std::make_pair(it->first, wji));
+    }
+
+    return;
+}
+
 void Uwham::calculate()
 {
     // Start calculation --> first calculate using the entire data set 
@@ -233,21 +262,8 @@ void Uwham::calculate()
         lnwji_ = strategies_[i] -> getlnwji_();
     }
 
-    for (auto it = MapBinIndexTolnwjiIndex_.begin();it != MapBinIndexTolnwjiIndex_.end();it++)
-    {
-        auto& l = it -> second;
-        std::vector<Real> ones(l.size(), 1.0);
-
-        std::vector<Real> lnwji_bin(l.size(),0.0);
-        for (int i=0;i<l.size();i++)
-        {
-            lnwji_bin[i] = lnwji_[l[i]];
-        }
-
-        Real wji = WhamTools::LogSumExp(lnwji_bin, ones);
-
-        MapBinIndexToWji_.insert(std::make_pair(it->first, wji));
-    }
+    // calculate the free energy 
+    calculateFreeEnergy(lnwji_, MapBinIndexTolnwjiIndex_, MapBinIndexToWji_);
 
     // We should also reweight the data to each of the simulations
     // resize lnpji to the size of 'Number of biases'
@@ -301,6 +317,12 @@ void Uwham::calculate()
 
     // get the FE in each of the dimensions
     ReduceFEDimension();
+
+    // if we want to calculate error 
+    if (Error_)
+    {
+        calculateError();
+    }
 }
 
 void Uwham::calculateError()
@@ -309,6 +331,7 @@ void Uwham::calculateError()
     {
         std::vector<std::vector<Real>> X;
         std::vector<Real> N;
+
         for (int i=0;i<VectorTimeSeries_.size();i++)
         {
             auto& ts = VectorTimeSeries_[i];
@@ -316,6 +339,7 @@ void Uwham::calculateError()
             X.insert(X.end(), sample.begin(), sample.end());
             N.push_back(sample.size());
         }
+
         // calculate BUki
         Matrix<Real> BUki;
         calculateBUki(X, BUki);
@@ -326,10 +350,53 @@ void Uwham::calculateError()
 
         // make initial guess for fk = -log(Qk)
         std::vector<Real> fk_guess;
+        std::vector<Real> lnwji;
         MakeInitialGuess(BUki, N, fk_guess);
 
         // make new strategies
         std::vector<stratptr> strategies;
+        std::map<std::vector<int>, Real> FE;
+        initializeStrat(BUki, N, strategies);
+
+        for (int i=0;i<strategies.size();i++)
+        {
+            strategies[i] -> calculate(fk_guess);
+            fk_guess = strategies[i]->getFk_();
+            lnwji = strategies[i]->getlnwji_();
+        }
+
+        // calculate the Free Energy
+        calculateFreeEnergy(lnwji, map, FE);
+
+        for (auto it = FE.begin(); it != FE.end(); it ++)
+        {
+            std::vector<int> copyK = it -> first;
+            templatetools::InsertIntoVectorMap(copyK, it -> second, ErrorFEMap_);
+        }
+    }
+
+    for (auto it = ErrorFEMap_.begin(); it != ErrorFEMap_.end(); it ++)
+    {
+        Real mean=0.0;
+        Real var =0.0;
+        for (int i=0;i<it->second.size();i++)
+        {
+            mean += it -> second[i];
+        }
+
+        mean = mean / ErrorIter_;
+        for (int i=0;i<it->second.size();i++)
+        {
+            var += std::pow((it->second[i] - mean),2.0);
+        }
+
+        var = var + (ErrorIter_ - it->second.size()) * (mean*mean);
+        var = var / ErrorIter_;
+
+        Real std = std::sqrt(var);
+
+        ErrorMap_.insert(std::make_pair(it -> first, std));
+        MeanMap_.insert(std::make_pair(it->first, mean));
     }
 }
 
@@ -428,6 +495,13 @@ void Uwham::printPji(std::string name)
     }
 
     ofs << "pji\tF";
+
+    if (Error_)
+    {
+        ofs << "\tStd";
+        ofs << "\tMean";
+    }
+
     ofs << "\n";
 
     for (auto it = MapBinIndexToWji_.begin();it != MapBinIndexToWji_.end();it++)
@@ -443,8 +517,36 @@ void Uwham::printPji(std::string name)
         {
             ofs << index[i] << " ";
         }
+
         ofs << it -> second << " ";
-        ofs << (-1.0)*(it -> second) << "\n"; 
+        ofs << (-1.0)*(it -> second); 
+
+        if (Error_)
+        {
+            auto it = ErrorMap_.find(index);
+
+            if (it != ErrorMap_.end())
+            {
+                ofs << " " << it -> second;
+            }
+            else
+            {
+                ofs << " " << 0;
+            }
+
+            auto itM = MeanMap_.find(index);
+
+            if ( itM != MeanMap_.end())
+            {
+                ofs << " " << itM -> second;
+            }
+            else
+            {
+                ofs << " " << 0;
+            }
+        }
+
+        ofs << "\n";
     }
     ofs.close();
 }
