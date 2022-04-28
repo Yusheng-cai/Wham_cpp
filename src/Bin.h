@@ -26,8 +26,6 @@ class Bin
 
 
     private:
-        std::vector<Real> bins_;
-
         Range range_;
         int numbins_;
         int dimension_ = 1;

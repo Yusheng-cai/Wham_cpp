@@ -29,9 +29,10 @@ void BwhamLBFGS::calculate()
 
     solver.minimize(*NLLeq_,fk, fx);
 
+    Real normalize = fk[0];
     for (int i=0;i<fk.size();i++)
     {
-        fk_[i] = fk[i] - fk[BWil_.getNR()-1];
+        fk_[i] = fk[i] - normalize;
     }
 
     // obtain the lnpl
