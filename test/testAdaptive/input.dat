@@ -102,10 +102,12 @@ wham = {
 		name = a
 	}
 	strategyNames = [ a ] 
-	outputs = [ normalization pji histogram ]
-	outputFile = [ norm.out pji.out h.out ]
+	outputs = [ normalization pji histogram dataFE reweightFE KL_divergence ]
+	outputFile = [ norm.out pji.out h.out fe.out refe.out kl.out ]
 	bins = {
 		range = [ 0 35 ]
 		numbins = 35
 	}
+	ErrorAnalysis = true
+	ErrorIteration = 1000
 }
