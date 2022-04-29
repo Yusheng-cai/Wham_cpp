@@ -1,9 +1,10 @@
 # C++ implementation of the Weighted Histogram Analysis Method (WHAM)
 
 ## Validation of Code 
-### Image 
+### Free Energy 
 Validation of the Unbinned WHAM (UWHAM) using different optimization methods, specifically in this case for adaptive and LBFGS. Using the method of bootstrapping, error was also obtained for estimated free energy.
 ![wham](/test/validate.png)
+### KL Divergence
 Their KL divergences is also evaluated and shown below for the 8 biased simulations performed. (1 is unbiased) 
 ![kl](/test/KL.png)
 
