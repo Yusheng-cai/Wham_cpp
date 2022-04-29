@@ -18,4 +18,4 @@ if __name__ == "__main__":
     ax.set_xlabel(r"$\tilde{N}$")
     ax.set_ylabel(r"$\beta F$")
     ax.legend(fontsize=15)
-    plt.savefig("validate.png")
+    plt.savefig("../Images/validate.png")
