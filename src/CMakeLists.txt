@@ -22,7 +22,7 @@ target_sources(WHAMsrc PRIVATE
     "HistogramOP.cpp"
     "CombineData.cpp"
     "Reweight.cpp"
-    "UwhamConditionReweight.cpp"
+    "UwhamConditionalReweight.cpp"
 )
 
 set(WHAMsrc_HEADER
@@ -47,7 +47,7 @@ set(WHAMsrc_HEADER
     "TSoperation.h"
     "CombineData.h"
     "Reweight.h"
-    "UwhamConditionReweight.h"
+    "UwhamConditionalReweight.h"
 )
 
 target_include_directories(WHAMsrc
