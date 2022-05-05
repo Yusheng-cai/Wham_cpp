@@ -314,6 +314,7 @@ void Wham::initializeTimeSeries()
     else
     {
         std::cout << "Performing combined data input." << std::endl;
+        combined_input_=true;
         int N;
         bool readN = whamPack_->ReadNumber("N", ParameterPack::KeyType::Optional, N);
 

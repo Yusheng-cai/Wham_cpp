@@ -118,6 +118,9 @@ class Wham
         // The averages and standard deviations of the timeseries 
         std::vector<std::vector<Real>> Averages_;
         std::vector<std::vector<Real>> Std_;
+
+        // Combined input
+        bool combined_input_=false;
 };
 
 namespace WhamRegistry

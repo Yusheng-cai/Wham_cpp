@@ -27,17 +27,10 @@ class UwhamReweight : public Reweight
         void calculate();
 
         void printAverages(std::string name);
-        void printFE(std::string name);
 
     private:
         // input parameters
         Uwham* Uwham_;
-
-        // The ones vector used for calculating each of the normalizing factors 
-        std::vector<Real> ones_;
-
-        // Free energy 
-        std::vector<std::vector<Real>> FE_;
 
         // The averages of each set of data under new potential
         std::vector<std::vector<Real>> averages_;

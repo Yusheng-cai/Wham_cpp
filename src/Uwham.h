@@ -26,7 +26,7 @@ class Uwham:public Wham
         virtual ~Uwham(){};
         void initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vector<stratptr>& strategies);
         void initializeBUki();
-        void bindata(std::vector<std::vector<Real>>& x, std::map<std::vector<int>, std::vector<int>>& map);
+        void bindata(std::vector<std::vector<Real>>& x, std::map<std::vector<int>, std::vector<int>>& map, std::vector<std::vector<int>>& DataBinIndex);
 
         // This needs to be called after calculation of BUki --> calculates the initial guess using BAR method
         void MakeInitialGuess(const Matrix<Real>& BUki, const std::vector<Real>& N, std::vector<Real>& fk);
@@ -52,15 +52,16 @@ class Uwham:public Wham
         void printKL(std::string name);
         void printFEdim(std::string name);
 
-        // calculation functions
+        // Calculate the energy beta * Uki
         void calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>& BUki);
-        // get error
+
+        // Calculate the error
         void calculateError();
 
         // getters 
         const std::vector<Real>& getlnwji() const {return lnwji_;}
         const std::vector<std::vector<Real>>& getxi() const {return xi_;}
-        const std::vector<std::vector<int>>& getBinnedData() const {return binneddata_;}
+        const std::vector<std::vector<int>>& getDataBinIndex() const {return DataBinIndex_;}
         const std::map<std::vector<int>, std::vector<int>>& getMapBinIndexTolnwjiIndex() {return MapBinIndexTolnwjiIndex_;}
         int getNumBinsPerDimension(int num);
 
@@ -73,10 +74,10 @@ class Uwham:public Wham
 
         // The lnwji that falls within each of the bins
         std::map<std::vector<int>, std::vector<int>> MapBinIndexTolnwjiIndex_;
-        std::map<std::vector<int>, Real> MapBinIndexToWji_;
+        std::map<std::vector<int>, Real> FreeEnergy_;
 
         // specify which bin each of the data falls into 
-        std::vector<std::vector<int>> binneddata_;
+        std::vector<std::vector<int>> DataBinIndex_;
 
         // precision of the output
         int precision_=3;

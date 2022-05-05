@@ -36,7 +36,7 @@ Uwham::Uwham(const WhamInput& input)
     initializeStrat(BUki_, N_, strategies_);
 
     // bin the data upfront
-    bindata(xi_, MapBinIndexTolnwjiIndex_);
+    bindata(xi_, MapBinIndexTolnwjiIndex_, DataBinIndex_);
 }
 
 
@@ -159,8 +159,13 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
     }
 }
 
-void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int>, std::vector<int>>& map)
+void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int>, std::vector<int>>& map, std::vector<std::vector<int>>& DataBinIndex)
 {
+    // clear the bin index for each of the data point
+    DataBinIndex.clear();
+    DataBinIndex.resize(xi.size());
+
+    // clear the map
     map.clear();
 
     OpenMP::OpenMP_buffer<std::map<std::vector<int>, std::vector<int>>> mapBuffer;
@@ -205,6 +210,7 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
             {
                 // add the indices to the binned data vector
                 templatetools::InsertIntoVectorMap(BinIndex, i, localmap);
+                DataBinIndex[i] = BinIndex;
             }
         }
     }
@@ -263,7 +269,7 @@ void Uwham::calculate()
     }
 
     // calculate the free energy 
-    calculateFreeEnergy(lnwji_, MapBinIndexTolnwjiIndex_, MapBinIndexToWji_);
+    calculateFreeEnergy(lnwji_, MapBinIndexTolnwjiIndex_, FreeEnergy_);
 
     // We should also reweight the data to each of the simulations
     // resize lnpji to the size of 'Number of biases'
@@ -280,38 +286,42 @@ void Uwham::calculate()
         }
     }
 
-    for (int i=0;i<BUki_.getNR();i++)
+    // only do this procedure if we are not doing combined input
+    if (! combined_input_)
     {
-        for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end(); it ++)
+        for (int i=0;i<BUki_.getNR();i++)
         {
-            auto& l  = it -> second;
-            std::vector<Real> lnpi;
-
-            for (int j=0;j< l.size(); j++)
+            for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end(); it ++)
             {
-                lnpi.push_back(lnpji_[i][l[j]]);
+                auto& l  = it -> second;
+                std::vector<Real> lnpi;
+
+                for (int j=0;j< l.size(); j++)
+                {
+                    lnpi.push_back(lnpji_[i][l[j]]);
+                }
+
+                std::vector<Real> ones(l.size(), 1.0);
+                Real pi = -WhamTools::LogSumExp(lnpi, ones);
+
+                reweightFE_[i].insert(std::make_pair(it -> first, pi));
             }
-
-            std::vector<Real> ones(l.size(), 1.0);
-            Real pi = -WhamTools::LogSumExp(lnpi, ones);
-
-            reweightFE_[i].insert(std::make_pair(it -> first, pi));
         }
-    }
 
-    // Now let's calculate KL divergence
-    KL_divergence_.resize(BUki_.getNR(),0.0);
-    for (int i=0;i<BUki_.getNR();i++)
-    {
-        for (auto it = dataFE_[i].begin(); it != dataFE_[i].end(); it ++)
+        // Now let's calculate KL divergence
+        KL_divergence_.resize(BUki_.getNR(),0.0);
+        for (int i=0;i<BUki_.getNR();i++)
         {
-            auto Index = it -> first;
+            for (auto it = dataFE_[i].begin(); it != dataFE_[i].end(); it ++)
+            {
+                auto Index = it -> first;
 
-            Real ref_val = it -> second;
-            Real prob = std::exp(-ref_val);
-            Real val = reweightFE_[i].find(Index) -> second;
+                Real ref_val = it -> second;
+                Real prob = std::exp(-ref_val);
+                Real val = reweightFE_[i].find(Index) -> second;
 
-            KL_divergence_[i] = prob * (-ref_val + val);
+                KL_divergence_[i] = prob * (-ref_val + val);
+            }
         }
     }
 
@@ -346,7 +356,8 @@ void Uwham::calculateError()
 
         // bin the data 
         std::map<std::vector<int>,std::vector<int>> map;
-        bindata(X, map);
+        std::vector<std::vector<int>> dbinIndex;
+        bindata(X, map, dbinIndex);
 
         // make initial guess for fk = -log(Qk)
         std::vector<Real> fk_guess;
@@ -504,7 +515,7 @@ void Uwham::printPji(std::string name)
 
     ofs << "\n";
 
-    for (auto it = MapBinIndexToWji_.begin();it != MapBinIndexToWji_.end();it++)
+    for (auto it = FreeEnergy_.begin();it != FreeEnergy_.end();it++)
     {
         auto& index = it -> first;
         for (int i=0;i<Bins_.size();i++)
