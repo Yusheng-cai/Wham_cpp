@@ -17,14 +17,17 @@ class UwhamConditionalReweight : public Reweight
 
         virtual void calculate() override;
 
-        void printAverage(std::string name);
+        void printConditionalAverage(std::string name);
 
     private:
         Uwham* uwhamptr_=nullptr;
 
+        // the axis at which we want to perform average conditioned on 
         int axis_;
-        int axisavg_;
 
-        std::vector<std::vector<Real>> axisdata_;
-        std::vector<std::vector<Real>> peraxisaverage_;
+        // dimension of the data 
+        int dimension_;
+
+        std::vector<std::vector<Real>> ConditionalIndex_;
+        std::vector<std::vector<std::vector<Real>>> ConditionalAverage_;
 };

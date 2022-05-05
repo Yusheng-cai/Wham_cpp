@@ -8,112 +8,132 @@ namespace ReweightRegistry
 UwhamConditionalReweight::UwhamConditionalReweight(const ReweightInput& input)
 : Reweight(input)
 {
+    // check if the Wham passed in is Uwham
     uwhamptr_ = dynamic_cast<Uwham*>(wham_);
-
     ASSERT((uwhamptr_ != nullptr), "The reweight procedure does not apply to the wham with name " << uwhamptr_->getName());
 
+    // axis is the one where we are calculating averages give so <O|axis>
     pack_.ReadNumber("axis", ParameterPack::KeyType::Required, axis_);
-    pack_.ReadNumber("axis_avg", ParameterPack::KeyType::Required, axisavg_);
-
     axis_--;
-    axisavg_--;
 
-    output_->registerOutputFunc("average", [this](std::string name) -> void {this -> printAverage(name);});
+    // register average
+    output_->registerOutputFunc("ConditionalAverage", [this](std::string name) -> void {this -> printConditionalAverage(name);});
 
     checkOutputValidity();
 }
 
 void UwhamConditionalReweight::calculate()
 {
+    // obtain the necessary data 
     const auto& xi = uwhamptr_->getxi();
     const auto& lnwji = uwhamptr_->getlnwji();
     const auto& DataBinIndex = uwhamptr_->getDataBinIndex();
     int numbins = uwhamptr_->getNumBinsPerDimension(axis_);
+    dimension_ = xi[0].size();
 
     // resize axis data 
-    axisdata_.resize(numbins);
+    ConditionalIndex_.resize(numbins);
 
-    // get the index of data per axis
+    // get the index of data give axis 
     for (int i=0;i<DataBinIndex.size();i++)
     {
         // this means that the data is not in range
         if (DataBinIndex[i].size() != 0)
         {
             int index = DataBinIndex[i][axis_];
-            axisdata_[index].push_back(i);
+            ConditionalIndex_[index].push_back(i);
         }
     }
 
+    // with size (Numbias of bias, numer of bins, data dimension)
+    ConditionalAverage_.resize(numBias_, std::vector<std::vector<Real>>(numbins, std::vector<Real>(dimension_,0.0)));
 
-    peraxisaverage_.resize(numBias_, std::vector<Real>(numbins, 0.0));
+    // iterate over number of bias 
     for (int i=0;i<numBias_;i++)
     {
-        // first let's update the new weight
-        std::vector<Real> lnpji_vec(xi.size(),0.0);
+        // first let's update the new weight based on the bias 
+        std::vector<Real> lnpji(xi.size(),0.0);
 
+        // obtain the biased weights 
         #pragma omp parallel for 
         for (int j=0;j<xi.size();j++)
         {
             Real value = Vectorbias_[i]->getBeta()*Vectorbias_[i]->calculate(xi[j]);
-            lnpji_vec[j] = lnwji[j] - value;
+            lnpji[j] = lnwji[j] - value;
         }
 
-        std::vector<Real> ones(lnpji_vec.size(),1.0);
-        Real fk = - WhamTools::LogSumExpOMP(lnpji_vec,ones);
+        // normalized fk 
+        std::vector<Real> ones(lnpji.size(),1.0);
+        Real fk = - WhamTools::LogSumExpOMP(lnpji,ones);
 
+        // normalize lnpji
         #pragma omp parallel for
         for (int j=0;j<xi.size();j++)
         {
-            lnpji_vec[j] = lnpji_vec[j] + fk;
+            lnpji[j] = lnpji[j] + fk;
         }
 
-        // let's calculate average per axis 
-        for (int j=0;j<axisdata_.size();j++)
+        // let's calculate average give axis 
+        for (int j=0;j<ConditionalIndex_.size();j++)
         {
-            if (axisdata_[j].size() > 0 )
+            if (ConditionalIndex_[j].size() > 0 )
             {
-                std::vector<Real> peraxisweight_(axisdata_[j].size());
-                std::vector<Real> peraxisdata_(axisdata_[j].size());
-                for (int k=0;k<axisdata_[j].size();k++)
+                // fill the weight and data give the dimension
+                std::vector<Real> ConditionalWeight(ConditionalIndex_[j].size());
+                std::vector<std::vector<Real>> ConditionalData(ConditionalIndex_[j].size());
+                for (int k=0;k<ConditionalIndex_[j].size();k++)
                 {
-                    int index = axisdata_[j][k];
-                    peraxisweight_[k] = lnpji_vec[index];
-                    peraxisdata_[k] = xi[index][axisavg_];
+                    int index = ConditionalIndex_[j][k];
+
+                    // the conditional weight as well as condition data 
+                    ConditionalWeight[k] = lnpji[index];
+                    ConditionalData[k] = xi[index];
                 }
 
-                std::vector<Real> ones(peraxisweight_.size(),1.0);
+                // Ones 
+                std::vector<Real> ones(ConditionalWeight.size(),1.0);
 
-                Real fk =  - WhamTools::LogSumExp(peraxisweight_, ones);
-                for (int k=0;k<axisdata_[j].size();k++)
+                // normalize per axis weights 
+                Real fk =  - WhamTools::LogSumExp(ConditionalWeight, ones);
+                for (int k=0;k<ConditionalWeight.size();k++)
                 {
-                    peraxisweight_[k] = peraxisweight_[k] + fk; 
+                    ConditionalWeight[k] = ConditionalWeight[k] + fk; 
                 }
 
-                Real avg=0.0;
-                std::vector<Real> avglogsumexp(peraxisdata_.size());
-                for (int k=0;k<peraxisdata_.size();k++)
+                // find the average for this particular bin
+                std::vector<Real> avg(dimension_,0.0);
+                for (int k=0;k<ConditionalData.size();k++)
                 {
-                    avg += std::exp(peraxisweight_[k]) * peraxisdata_[k];
+                    for (int m=0;m<dimension_;m++)
+                    {
+                        avg[m] += std::exp(ConditionalWeight[k]) * ConditionalData[k][m];
+                    }
                 }
 
-                peraxisaverage_[i][j] = avg;
+                ConditionalAverage_[i][j] = avg;
             }
         }
         std::cout << "Bias " << i << " is done." << std::endl;
     }
 }
 
-void UwhamConditionalReweight::printAverage(std::string name)
+void UwhamConditionalReweight::printConditionalAverage(std::string name)
 {
     std::ofstream ofs;
 
     ofs.open(name);
 
-    for (int i=0;i<peraxisaverage_.size();i++)
+    int AxisNumber = 1;
+    pack_.ReadNumber("AxisNumber", ParameterPack::KeyType::Required, AxisNumber);
+    AxisNumber--;
+
+    // How should we print out the conditional averages ?
+    // TODO : Figure out how to print out higher dimensional conditional averages 
+    for (int i=0;i<ConditionalAverage_.size();i++)
     {
-        for (int j=0;j<peraxisaverage_[i].size();j++)
+        for (int j=0;j<ConditionalAverage_[i].size();j++)
         {
-            ofs << peraxisaverage_[i][j] << " ";
+            ofs << ConditionalAverage_[i][j][AxisNumber] << " ";
         }
         ofs << "\n";
     }

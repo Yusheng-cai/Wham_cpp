@@ -8,7 +8,8 @@ namespace ReweightRegistry
 UwhamReweight::UwhamReweight(const ReweightInput& input)
 :Reweight(input)
 {
-    output_->registerOutputFunc("averages", [this](std::string name) -> void {this -> printAverages(name);});
+    // register the outputs 
+    output_->registerOutputFunc("ReweightAverages", [this](std::string name) -> void {this -> printReweightAverages(name);});
 
     // dynamically check the type of Wham
     Uwham_ = dynamic_cast<Uwham*>(wham_);
@@ -18,20 +19,15 @@ UwhamReweight::UwhamReweight(const ReweightInput& input)
 
 void UwhamReweight::calculate()
 {
+    // obtain the necessary data 
     const auto& xi = Uwham_->getxi();
     const auto& lnwji = Uwham_->getlnwji();
-    const auto& MapBinToIndex = Uwham_->getMapBinIndexTolnwjiIndex();
-    const auto& DataBinIndex = Uwham_->getDataBinIndex();
 
     // resize the variables
     std::vector<Real> ones(xi.size(),1.0);
 
-    // get 
     dimension_ = xi[0].size();
     averages_.resize(numBias_,std::vector<Real>(dimension_,0.0));
-    FE_.resize(numBias_);
-
-    ASSERT((DataBinIndex.size() == xi.size()), "The size of the bindata mismatches the xi data.");
 
     // Iterate through each of the Biases for reweighting 
     for (int i=0;i<numBias_;i++)
@@ -46,7 +42,7 @@ void UwhamReweight::calculate()
         }
 
         // calculate the normalization constant 
-        Real fk = -1.0 * WhamTools::LogSumExpOMP(lnpji_vec, ones);
+        Real fk = -1.0 * WhamTools::LogSumExpOMP(lnpji, ones);
 
         #pragma omp parallel
         {
@@ -54,7 +50,7 @@ void UwhamReweight::calculate()
             #pragma omp for
             for (int j=0;j<xi.size();j++)
             {
-                lnpji[j] = lnpji_vec[j] + fk;
+                lnpji[j] = lnpji[j] + fk;
             }
 
             // declare local average
@@ -78,7 +74,7 @@ void UwhamReweight::calculate()
     }
 }
 
-void UwhamReweight::printAverages(std::string name)
+void UwhamReweight::printReweightAverages(std::string name)
 {
     std::ofstream ofs;
     ofs.open(name);

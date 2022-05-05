@@ -26,7 +26,7 @@ class UwhamReweight : public Reweight
         // inputs are the lnwji weights and the xi points
         void calculate();
 
-        void printAverages(std::string name);
+        void printReweightAverages(std::string name);
 
     private:
         // input parameters
