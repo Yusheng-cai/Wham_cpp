@@ -23,13 +23,11 @@ SimpleBias::SimpleBias(const ParameterPack& pack)
     ASSERT((kappa_.size() == dimension_), "The size of the input kappa does not match dimension");
     ASSERT((phi_.size() == dimension_), "The size of the phi input does not match dimension.");
 
-    for (int i=0;i<dimension_;i++)
-    {
+    for (int i=0;i<dimension_;i++){
         hkappa_[i] = 0.5*kappa_[i];
     }
 
-    if ( kapparead)
-    {
+    if ( kapparead){
         pack.ReadVectorNumber("xstar", ParameterPack::KeyType::Required, xstar_);
         ASSERT((xstar_.size() == dimension_), "The dimension of xstar must match that of the kappa.");
     }
@@ -42,8 +40,7 @@ SimpleBias::Real SimpleBias::calculate(const std::vector<Real>& x)
     the input data size = " << x.size());
 
     Real energy_ = 0.0;
-    for (int i=0;i<dimension_;i++)
-    {
+    for (int i=0;i<dimension_;i++){
         energy_ += hkappa_[i]*std::pow(x[i] - xstar_[i],2.0);
         energy_ += phi_[i] * x[i];
     }

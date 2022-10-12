@@ -10,8 +10,7 @@ Driver::Driver(const ParameterPack& pack, const CommandLineArguments& cmd)
     // find all the instances of the timeseries block
     auto TsPacks = pack_.findParamPacks("timeseries", ParameterPack::KeyType::Required);
 
-    for (int i= 0 ;i < TsPacks.size();i++)
-    {
+    for (int i= 0 ;i < TsPacks.size();i++){
         TimeSeriesInputPack input = { const_cast<ParameterPack&>(*TsPacks[i]), abspath};
         VectorTimeSeries_.push_back(tsptr(new TimeSeries(input)));
     }

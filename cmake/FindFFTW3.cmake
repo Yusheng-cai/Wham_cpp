@@ -11,6 +11,8 @@ if(FFTW3_DIR)
 	list(APPEND CMAKE_PREFIX_PATH ${FFTW3_DIR})
 endif() 
 
+set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+
 find_path(
     FFTW3_INCLUDE_DIR 
         fftw3.h
@@ -20,9 +22,7 @@ find_path(
 
 find_library(
     FFTW3_LIBRARY
-	NAMES "fftw3"
-    PATH_SUFFIXES "a"
-	HINTS ${FFTW3_DIR}
+	NAMES fftw3
 )
 
 

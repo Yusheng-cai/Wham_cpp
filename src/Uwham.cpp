@@ -10,8 +10,7 @@ Uwham::Uwham(const WhamInput& input)
 {
     whamPack_->Readbool("BAR", ParameterPack::KeyType::Optional, BAR_);
     bool readE=whamPack_->Readbool("ErrorAnalysis", ParameterPack::KeyType::Optional, Error_);
-    if (readE)
-    {
+    if (readE){
         whamPack_->ReadNumber("ErrorIteration", ParameterPack::KeyType::Required, ErrorIter_);
     }
 
@@ -53,8 +52,7 @@ void Uwham::calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>
     #pragma omp parallel for
     for (int i=0;i<xi.size();i++)
     {
-        for (int j=0;j<Biases_.size();j++)
-        {
+        for (int j=0;j<Biases_.size();j++){
             Real val = Biases_[j]->calculate(xi[i]); 
             BUki(j,i) = Biases_[j]->getBeta()*val;
         }
@@ -68,8 +66,7 @@ void Uwham::MakeInitialGuess(const Matrix<Real>& BUki, const std::vector<Real>& 
     fk.resize(N.size(),0.0);
 
     // check if we are doing Bennet Acceptance Ratio (BAR) for initial guess 
-    if (BAR_)
-    {
+    if (BAR_){
         // map from group index to point index in xi
         std::vector<std::vector<int>> GroupIndex;
         MakeGroupPointMap(N, GroupIndex);
@@ -88,13 +85,11 @@ void Uwham::MakeInitialGuess(const Matrix<Real>& BUki, const std::vector<Real>& 
             int k = i;
             int l = i+1;
 
-            for (int j=0;j<forwardSize;j++)
-            {
+            for (int j=0;j<forwardSize;j++){
                 w_F[j] = BUki(l,GroupIndex[k][j]) - BUki(k, GroupIndex[k][j]);
             }
 
-            for (int j=0;j<backwardSize;j++)
-            {
+            for (int j=0;j<backwardSize;j++){
                 w_B[j] = BUki(k, GroupIndex[l][j]) - BUki(l, GroupIndex[l][j]);
             }
 
@@ -180,8 +175,7 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
         localmap.clear();
 
         #pragma omp for
-        for (int i=0;i<xi.size();i++)
-        {
+        for (int i=0;i<xi.size();i++){
             std::vector<Real>& x = xi[i];
 
             std::vector<int> BinIndex;
@@ -189,14 +183,12 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
 
             bool isInRange = true; 
 
-            for (int j=0;j<Bins_.size();j++)
-            {
+            for (int j=0;j<Bins_.size();j++){
                 // User input is 1 based
                 int dim = Bins_[j].getDimension() - 1;
 
                 // If this data point is out of range for one of the bins, it is out of range, so we break
-                if (! Bins_[j].isInRange(xi[i][dim]))
-                {
+                if (! Bins_[j].isInRange(xi[i][dim])){
                     // break from the for loop
                     isInRange = false;
                     break;
@@ -206,8 +198,7 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
                 BinIndex[j] = index;
             }
 
-            if (isInRange)
-            {
+            if (isInRange){
                 // add the indices to the binned data vector
                 templatetools::InsertIntoVectorMap(BinIndex, i, localmap);
                 DataBinIndex[i] = BinIndex;
@@ -261,8 +252,7 @@ void Uwham::calculateFreeEnergy(const std::vector<Real>& lnwji, std::map<std::ve
 void Uwham::calculate()
 {
     // Start calculation --> first calculate using the entire data set 
-    for (int i=0;i<strategies_.size();i++)
-    {
+    for (int i=0;i<strategies_.size();i++){
         strategies_[i] -> calculate(fk_);
         fk_ = strategies_[i] -> getFk_();
         lnwji_ = strategies_[i] -> getlnwji_();
@@ -329,8 +319,7 @@ void Uwham::calculate()
     ReduceFEDimension();
 
     // if we want to calculate error 
-    if (Error_)
-    {
+    if (Error_){
         calculateError();
     }
 }
