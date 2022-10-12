@@ -1,6 +1,7 @@
 add_library(WHAMtools SHARED)
 
 target_sources(WHAMtools PRIVATE
+    "Algorithm.cpp"
     "RandomNumber.cpp"
     "InputParser.cpp"
     "CommandLineArguments.cpp"
@@ -10,8 +11,10 @@ target_sources(WHAMtools PRIVATE
 
 set(WHAMTOOLS_HEADER
     "Assert.h"
+    "Algorithm.h"
     "CommonTypes.h"
     "GenericFactory.h"
+    "CommonOperations.h"
     "InputParser.h"
     "RandomNumber.h"
     "CommandLineArguments.h"
