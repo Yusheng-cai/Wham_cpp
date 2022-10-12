@@ -30,18 +30,17 @@ void UwhamLBFGS::calculate(std::vector<Real>& fk)
     Eigen::VectorXd fk_E = Eigen::Map<Eigen::VectorXd>(fk.data(), BUki_.getNR());
     Real fx;
 
+    // do the solver minimization
     int numiterations = solver.minimize(*NLLeq_,fk_E, fx, print_every_);
     norms_ = NLLeq_->getNorms();
 
-    for (int i=0;i<fk_E.size();i++)
-    {
+    for (int i=0;i<fk_E.size();i++){
         fk_[i] = fk_E[i];
     }
 
     // subtract the minimum fk 
     Real normalize = fk_[0];
-    for (int i=0;i<fk_.size();i++)
-    {
+    for (int i=0;i<fk_.size();i++){
         fk_[i] = fk_[i] - normalize;
     }
 
@@ -52,15 +51,12 @@ void UwhamLBFGS::calculate(std::vector<Real>& fk)
     Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
 
     #pragma omp parallel for 
-    for (int i=0;i<lnwji_.size();i++)
-    {
+    for (int i=0;i<lnwji_.size();i++){
         lnwji_[i] = f + lnwji_[i];
     }
 
-    for (int i=0;i<fk_.size();i++)
-    {
-        fk_[i] = fk_[i] - f;
-    }
+    // normalize fk --> -log(Qi/Q0)
+    fk_ = fk_ - f;
 }
 
 UwhamNLL::UwhamNLL(UwhamNLLInput& input)
@@ -71,20 +67,16 @@ UwhamNLL::UwhamNLL(UwhamNLLInput& input)
     N_fraction_.resize(BUki_.getNR());
     Ntot_ = 0;
 
-    for (int i=0;i<BUki_.getNR();i++)
-    {
+    for (int i=0;i<BUki_.getNR();i++){
         Ntot_ += N_[i]; 
     }
 
-    for (int i=0;i<BUki_.getNR();i++)
-    {
-        N_fraction_[i] = N_[i]/Ntot_;
-    }
+    // Ni / Ntot
+    N_fraction_ = N_ / Ntot_;
 }
 
 
-UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad)
-{
+UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad){
     int Nsim = BUki_.getNR();
     int Ndata= BUki_.getNC();
 
@@ -92,10 +84,7 @@ UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& g
 
     std::vector<Real> fk(x.size(),0.0);
 
-    for (int i=0;i<x.size();i++)
-    {
-        fk[i] = x[i] - x[0];
-    }
+    for (int i=0;i<x.size();i++){fk[i] = x[i] - x[0];}
 
     Real value = WhamTools::Uwham_NLL_equation(fk, BUki_, N_);
     auto gradient = WhamTools::Gradient(BUki_, fk, N_);

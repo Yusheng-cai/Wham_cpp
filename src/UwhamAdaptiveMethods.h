@@ -1,5 +1,8 @@
+#pragma once
+
 #include "UwhamCalculationStrategy.h"
 #include "parallel/OpenMP_buffer.h"
+#include "tools/CommonOperations.h"
 
 #include <vector>
 #include <array>

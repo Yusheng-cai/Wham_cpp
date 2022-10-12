@@ -26,17 +26,13 @@ void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector
     Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
     Eigen::VectorXd Hinvg = (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
 
-    for (int i=0;i<Nsim;i++)
-    {
+    for (int i=0;i<Nsim;i++){
         fnr[i] = fk_[i] - Hinvg[i];
     }
 
     // normalize by the first value
     Real normalizedNR = fnr[0];
-    for (int i=0;i<Nsim;i++)
-    {
-        fnr[i] = fnr[i] - normalizedNR;
-    }
+    fnr = fnr - normalizedNR;
 
     gradientNR = WhamTools::Gradient(BUki_,fnr, N_);
 }
@@ -56,16 +52,14 @@ void UwhamAdaptiveMethods::SelfConsistentStep(std::vector<Real>& fsc, std::vecto
         std::vector<Real> column;
         column.resize(Ndata);
         #pragma omp parallel for
-        for (int j=0;j<Ndata;j++)
-        {
+        for (int j=0;j<Ndata;j++){
             column[j] = lnwji[j] - BUki_(i,j);
         }
         fsc[i] = -1.0*WhamTools::LogSumExpOMP(column, ones);
     }
 
     Real SC_normalized = fsc[0];
-    for (int i=0;i<Nsim;i++)
-    {
+    for (int i=0;i<Nsim;i++){
         fsc[i] = fsc[i] - SC_normalized;
     }
 
@@ -94,8 +88,7 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
     Real err = 0.0;
     int step = 1;
 
-    while ( ! converged)
-    {
+    while ( ! converged){
         // update Newton Raphson using current guess of fk
         NewtonRaphsonStep(fnr_, NRgradient);
         Real normNR = WhamTools::NormVector(NRgradient);
@@ -104,14 +97,12 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         SelfConsistentStep(fsc_, SCgradient); 
         Real normSC = WhamTools::NormVector(SCgradient);
 
-        if (normSC < normNR)
-        {
+        if (normSC < normNR){
             err = calculateError(fsc_, fk_);
             fk_.assign(fsc_.begin(), fsc_.end());
             norms_.push_back(std::sqrt(normSC));
         }
-        else
-        {
+        else{
             err = calculateError(fnr_, fk_);
             fk_.assign(fnr_.begin(), fnr_.end());
             norms_.push_back(std::sqrt(normNR));
@@ -120,22 +111,12 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         if ((print_every_ != -1) && (step % print_every_==0)) 
         {
             std::cout << "self consistent norm is " << normSC << " NR norm is " << normNR << "\n";
-
-            if (normSC < normNR)
-            {
-                std::cout << "Self consistent iteration is chosen because of lower norm." << "\n";
-            }
-            else
-            {
-                std::cout << "Newton Raphson is chosen because of lower norm." << "\n";
-            }
+            if (normSC < normNR){std::cout << "Self consistent iteration is chosen because of lower norm." << "\n";}
+            else{std::cout << "Newton Raphson is chosen because of lower norm." << "\n";}
             std::cout << "The error at step " << step << " is " << err << std::endl;
         }
 
-        if (err < tolerance_)
-        {
-            converged = true;
-        }
+        if (err < tolerance_){converged = true;}
 
         step++;
     }
@@ -170,13 +151,11 @@ UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vecto
     absdiff_.resize(fi.size());
     absprev_.resize(fi.size());
 
-    for (int i=0;i<absdiff_.size();i++)
-    {
+    for (int i=0;i<absdiff_.size();i++){
         absdiff_[i] = std::abs(fi[i] - fi_prev[i]);
     }
 
-    for (int i=0;i<absprev_.size();i++)
-    {
+    for (int i=0;i<absprev_.size();i++){
         absprev_[i] = std::abs(fi_prev[i]);
     }
 

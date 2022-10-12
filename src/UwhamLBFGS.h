@@ -3,6 +3,7 @@
 #include "Wham.h"
 #include "tools/CommonTypes.h"
 #include "LBFGS/LBFGS.h"
+#include "tools/CommonOperations.h"
 
 #include <vector>
 #include <string>
