@@ -35,8 +35,7 @@ void UwhamReweight::calculate()
         std::vector<Real> lnpji(xi.size(),0.0);
 
         #pragma omp parallel for 
-        for (int j=0;j<xi.size();j++)
-        {
+        for (int j=0;j<xi.size();j++){
             Real value = Vectorbias_[i]->getBeta()*Vectorbias_[i]->calculate(xi[j]);
             lnpji[j] = lnwji[j] - value;
         }
