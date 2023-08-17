@@ -13,8 +13,8 @@ Reweight::Reweight(const ReweightInput& input)
     numBias_ = biasPacks.size();
 
     // This param pack contains everything that is needed by the bias
-    for (int i=0;i<biasPacks.size();i++)
-    {
+    Vectorbias_.clear();
+    for (int i=0;i<biasPacks.size();i++){
         std::string type = "simplebias";
         biasPacks[i] -> ReadString("type", ParameterPack::KeyType::Optional,type);
         Vectorbias_.push_back(Biasptr(BiasRegistry::Factory::instance().create(type, *biasPacks[i])));
@@ -25,8 +25,7 @@ Reweight::Reweight(const ReweightInput& input)
 
 void Reweight::checkOutputValidity()
 {
-    for (int i=0;i<outputNames_.size();i++)
-    {
+    for (int i=0;i<outputNames_.size();i++){
         bool isregistered = output_->isregistered(outputNames_[i]);
 
         ASSERT((isregistered), "The name " << outputNames_[i] << " is not registered.");
@@ -35,8 +34,7 @@ void Reweight::checkOutputValidity()
 
 void Reweight::printOutput()
 {
-    for (int i=0;i<outputNames_.size();i++)
-    {
+    for (int i=0;i<outputNames_.size();i++){
         output_->getOutputFuncByName(outputNames_[i])(outputfileNames_[i]);
     }
 }

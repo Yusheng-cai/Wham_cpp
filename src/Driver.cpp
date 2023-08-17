@@ -24,10 +24,8 @@ void Driver::InitializeTSoperation()
 {
     auto TSPack = pack_.findParamPacks("tsoperation", ParameterPack::KeyType::Optional);
 
-    if (TSPack.size() != 0)
-    {
-        for (int i=0;i<TSPack.size();i++)
-        {
+    if (TSPack.size() != 0){
+        for (int i=0;i<TSPack.size();i++){
             std::string type_;
             TSPack[i] -> ReadString("type", ParameterPack::KeyType::Required,type_);
 
@@ -42,10 +40,8 @@ void Driver::InitializeWham()
 {
     auto whamPack = pack_.findParamPacks("wham", ParameterPack::KeyType::Optional);
 
-    if (whamPack.size() != 0)
-    {
-        for (int i=0;i<whamPack.size();i++)
-        {
+    if (whamPack.size() != 0){
+        for (int i=0;i<whamPack.size();i++){
             std::string whamType;
             whamPack[i]->ReadString("type", ParameterPack::KeyType::Required,whamType);
 
@@ -65,14 +61,15 @@ void Driver::InitializeReweight()
 {
     auto reweightPack = pack_.findParamPacks("Reweight", ParameterPack::KeyType::Optional);
 
-    for (int i=0;i<reweightPack.size();i++)
-    {
+    for (int i=0;i<reweightPack.size();i++){
         std::string whamName;
         std::string reweighttype;
 
+        // specify which WHAM this is acting on
         reweightPack[i] -> ReadString("wham", ParameterPack::KeyType::Required, whamName);
         reweightPack[i] -> ReadString("type", ParameterPack::KeyType::Required, reweighttype);
 
+        // find the WHAM 
         auto it = MapNameOfWhamToLoc_.find(whamName);
         ASSERT((it != MapNameOfWhamToLoc_.end()), "The name of wham " << whamName << " is not registered.");
         int index = it -> second;
@@ -85,23 +82,19 @@ void Driver::InitializeReweight()
 void Driver::calculate()
 {
     // calculate timeseries first 
-    for (int i=0;i<VectorTimeSeries_.size();i++)
-    {
+    for (int i=0;i<VectorTimeSeries_.size();i++){
         VectorTimeSeries_[i] -> calculate();
     }
 
-    for (int i=0;i<VectorWhamCalc_.size();i++)
-    {
+    for (int i=0;i<VectorWhamCalc_.size();i++){
         VectorWhamCalc_[i] -> calculate();
     }
 
-    for (int i=0;i<ReweightPtr_.size();i++)
-    {
+    for (int i=0;i<ReweightPtr_.size();i++){
         ReweightPtr_[i] -> calculate();
     }
 
-    for (int i=0;i<VectorTimeSeriesOP_.size();i++)
-    {
+    for (int i=0;i<VectorTimeSeriesOP_.size();i++){
         VectorTimeSeriesOP_[i] -> calculate();
     }
 

@@ -34,6 +34,8 @@ class Reweight
     protected:
         outputptr output_;
         ParameterPack& pack_;
+
+        // keep a record of the WHAM object 
         Wham* wham_;
 
         std::vector<std::string> outputNames_;
