@@ -50,8 +50,7 @@ void Uwham::calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>
 {
     BUki.resize(Biases_.size(), xi.size());
     #pragma omp parallel for
-    for (int i=0;i<xi.size();i++)
-    {
+    for (int i=0;i<xi.size();i++){
         for (int j=0;j<Biases_.size();j++){
             Real val = Biases_[j]->calculate(xi[i]); 
             BUki(j,i) = Biases_[j]->getBeta()*val;
