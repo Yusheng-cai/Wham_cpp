@@ -3,8 +3,8 @@ add_library(WHAMsrc SHARED)
 target_sources(WHAMsrc PRIVATE
     "DataFileParser.cpp"
     "TimeSeries.cpp"
-    "Wham.cpp"
     "WhamBinning.cpp"
+    "WhamInitialization.cpp"
     "WhamOutput.cpp"
     "WhamTools.cpp"
     "Uwham.cpp"

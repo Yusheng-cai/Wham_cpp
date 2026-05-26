@@ -1,5 +1,8 @@
 #include "Wham.h"
 
+#include <iostream>
+#include <numeric>
+
 Wham::Wham(const WhamInput& input)
 :VectorTimeSeries_(input.VectorTimeSeries_), pack_(input.pack_)
 {
@@ -22,13 +25,13 @@ Wham::Wham(const WhamInput& input)
     // initialize the biases
     initializeBias();
 
-    // let's first initialize the time series 
+    // let's first initialize the time series
     initializeTimeSeries();
 
-    // Now initialize the bins 
+    // Now initialize the bins
     initializeBins();
 
-    // bin the time series 
+    // bin the time series
     binTimeSeries();
 }
 
@@ -82,7 +85,7 @@ void Wham::initializeTimeSeries()
             Ntot_ += N_[i];
             dimensions_[i] = VectorTimeSeries_[i] -> getDimension();
         }
-        
+
         for (int i=0;i<dimensions_.size()-1;i++)
         {
             ASSERT((dimensions_[i] == dimensions_[i+1]), "The dimension in the " << i << "th timeseries does not match with the " << i+1 << "th time series");
@@ -124,7 +127,7 @@ void Wham::initializeBias()
 {
     auto biases = pack_.findParamPacks("bias", ParameterPack::KeyType::Required);
 
-    // no longer needed 
+    // no longer needed
     // ASSERT((biases.size() == VectorTimeSeries_.size()), "The number of time series does not match the number of biases.");
 
     for (int i=0;i<biases.size();i++)
