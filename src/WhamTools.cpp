@@ -5,7 +5,6 @@
 
 #include <algorithm>
 #include <cmath>
-#include <iostream>
 
 WhamTools::Real WhamTools::LogSumExp(const std::vector<Real>& vector, const std::vector<Real>& N)
 {
@@ -123,10 +122,6 @@ std::vector<WhamTools::Real> WhamTools::BGradient(const Matrix<Real>& BWil, cons
     // calculate lnpl
     std::vector<Real> lnpl = WhamTools::calculatelnpl(BWil, Ml, N, fk);
 
-    // calculate the derivative
-    std::vector<Real> ones(Nbins,1.0);
-    Real valu = WhamTools::LogSumExp(lnpl, ones);
-
     std::vector<Real> derivative(Nsim, 0.0);
     for (int i=0;i<Nsim;i++)
     {
@@ -146,12 +141,6 @@ std::vector<WhamTools::Real> WhamTools::BGradient(const Matrix<Real>& BWil, cons
 
 std::vector<WhamTools::Real> WhamTools::Gradient(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
 {
-    int Ntot = 0;
-    for (int i=0;i<N.size();i++)
-    {
-        Ntot += N[i];
-    }
-
     int Nsim = BUki.getNR();
     int Ndata= BUki.getNC();
 
@@ -192,11 +181,6 @@ std::vector<WhamTools::Real> WhamTools::Gradient(const Matrix<Real>& BUki, const
 
 Matrix<WhamTools::Real> WhamTools::Hessian(const Matrix<Real>& BUki, const std::vector<Real>& fk, const std::vector<Real>& N)
 {
-    int Ntot = 0;
-    for (int i=0;i<N.size();i++)
-    {
-        Ntot += N[i];
-    }
     int Nsim = BUki.getNR();
     int Ndata = BUki.getNC();
 
@@ -331,27 +315,69 @@ WhamTools::Real WhamTools::CalculateDeltaFBarIterative(const std::vector<Real>& 
 
 WhamTools::Real WhamTools::CalculateDeltaFBarBisection(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations)
 {
-    // give an initial guess
+    ASSERT((max_iterations > 0), "The maximum number of iterations must be positive.");
+
+    Real lowerB = -EXP(w_B);
     Real upperB = EXP(w_F);
-    Real LowerB = -EXP(w_B);
-
-    Real FUpperB= CalculateBAR(w_F, w_B, upperB);
-    Real FLowerB = CalculateBAR(w_F, w_B, LowerB);
-
-    while ((FUpperB * FLowerB) > 0)
+    if (upperB < lowerB)
     {
-        Real average = 0.5 * (upperB + LowerB);
+        std::swap(upperB, lowerB);
     }
-    Real multiple= FUpperB * FLowerB;
 
-    std::cout << "FupperB = " << FUpperB << "\n";
-    std::cout << "FlowerB = " << FLowerB << "\n";
-    std::cout << "Multiple = " << multiple << "\n";
+    Real FLowerB = CalculateBAR(w_F, w_B, lowerB);
+    Real FUpperB = CalculateBAR(w_F, w_B, upperB);
+    const Real tolerance = 1e-7;
 
+    if (std::abs(FLowerB) < tolerance)
+    {
+        return lowerB;
+    }
+    if (std::abs(FUpperB) < tolerance)
+    {
+        return upperB;
+    }
 
-    ASSERT((multiple<0.0), "The initial guesses must be opposite sign");
+    for (int i=0;i<max_iterations && FLowerB * FUpperB > 0.0;i++)
+    {
+        Real width = upperB - lowerB;
+        if (width == 0.0)
+        {
+            width = 1.0;
+        }
 
-    return 1;
+        lowerB -= width;
+        upperB += width;
+        FLowerB = CalculateBAR(w_F, w_B, lowerB);
+        FUpperB = CalculateBAR(w_F, w_B, upperB);
+    }
+
+    ASSERT((FLowerB * FUpperB <= 0.0), "The initial guesses must bracket a root.");
+
+    Real mid = 0.5 * (lowerB + upperB);
+    for (int i=0;i<max_iterations;i++)
+    {
+        mid = 0.5 * (lowerB + upperB);
+        Real FMid = CalculateBAR(w_F, w_B, mid);
+
+        Real scale = std::max(std::abs(mid), 1.0);
+        if (std::abs(FMid) < tolerance || std::abs(upperB - lowerB) / scale < tolerance)
+        {
+            return mid;
+        }
+
+        if (FLowerB * FMid <= 0.0)
+        {
+            upperB = mid;
+            FUpperB = FMid;
+        }
+        else
+        {
+            lowerB = mid;
+            FLowerB = FMid;
+        }
+    }
+
+    return mid;
 }
 
 WhamTools::Real WhamTools::Uwham_NLL_equation(const std::vector<Real>& f_k, const Matrix<Real>& BUki, const std::vector<Real>& N)

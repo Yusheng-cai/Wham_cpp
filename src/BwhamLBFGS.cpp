@@ -94,7 +94,10 @@ BwhamNLL::Real BwhamNLL::operator()(Eigen::VectorXd& x, Eigen::VectorXd& grad)
             temp[j] = fk_[j] - BWil_(j,i);
         }
 
-        secondPart += -Ml_[i] * std::log(Ml_[i]) + Ml_[i] * WhamTools::LogSumExp(temp,N_);
+        if (Ml_[i] > 0.0)
+        {
+            secondPart += -Ml_[i] * std::log(Ml_[i]) + Ml_[i] * WhamTools::LogSumExp(temp,N_);
+        }
     }
 
     auto gradient = WhamTools::BGradient(BWil_, Ml_, N_, fk_);
