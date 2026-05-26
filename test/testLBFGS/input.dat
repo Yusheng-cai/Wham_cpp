@@ -578,7 +578,7 @@ wham = {
 	Uwhamstrategy = {
 		type = LBFGS
 		name = l
-		max_iterations = 200
+		max_iterations = 49
 		printevery = 1
 		epsilon = 1e-3
 	}
@@ -589,7 +589,7 @@ wham = {
 		numbins = 50
 	}
 	ErrorAnalysis = true
-	ErrorIteration = 100
+	ErrorIteration = 1
 	outputs = [ pji normalization KL_divergence ]
 	outputFile = [ pji.out norm.out kl.out ]
 }

@@ -28,6 +28,8 @@ class UwhamReweight : public Reweight
 
         void printReweightAverages(std::string name);
 
+        void printFreeEnergys(std::string name);
+
     private:
         // input parameters
         Uwham* Uwham_;
@@ -37,4 +39,6 @@ class UwhamReweight : public Reweight
 
         // dimension of data 
         int dimension_;
+
+        std::vector<std::map<std::vector<int>, Real>> FreeEnergys_;
 };

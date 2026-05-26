@@ -593,7 +593,7 @@ wham = {
 		numbins = 50
 	}
 	ErrorAnalysis = true
-	ErrorIteration = 100
+	ErrorIteration = 1
 	outputs = [ pji normalization KL_divergence ]
 	outputFile = [ pji.out norm.out kl.out ]
 }

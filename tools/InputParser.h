@@ -14,11 +14,18 @@
 
 namespace StringTools
 {
+    // append an index to a name e.g. a.out -> a_1.out
+    template <typename T>
+    std::string AppendIndexToFileName(std::string str, T num, std::string delimiter=".");
+
     template <typename T>
     bool StringToType(std::string str, T& num);
 
     template <typename T>
     T StringToType(std::string str);
+
+    template <typename T>
+    std::string TypeToString(T num);
 
     void to_lower(std::string& str);
 
@@ -29,6 +36,12 @@ namespace StringTools
     bool VectorStringTransform(std::vector<std::string> vecstr, std::vector<T>& output);
 
     void RemoveBlankInString(std::string& str);
+
+    // function that reads the file extension 
+    std::string ReadFileExtension(std::string filename);
+
+    // function that reads the file name ignoring extension
+    std::string ReadFileName(std::string filename, std::string delimiter=".");
 }
 
 
@@ -133,6 +146,19 @@ bool StringTools::StringToType(std::string str, T& num)
 }
 
 template <typename T>
+std::string StringTools::AppendIndexToFileName(std::string str, T num, std::string delimiter)
+{
+    // find out the filename 
+    std::string fname = ReadFileName(str, delimiter);
+    std::string extension = ReadFileExtension(str);
+    std::string num_str = TypeToString(num);
+
+    std::string ret = fname + "_" + num_str + delimiter + extension;
+
+    return ret;
+}
+
+template <typename T>
 T StringTools::StringToType(std::string str)
 {
     std::stringstream ss(str);
@@ -143,6 +169,17 @@ T StringTools::StringToType(std::string str)
     ASSERT((! ss.fail()), "The conversion cannot be performed with string " << str);
 
     return num;
+}
+
+template <typename T>
+std::string StringTools::TypeToString(T num){
+    std::stringstream ss;
+    ss << num;
+
+    std::string ret;
+    ss >> ret;
+
+    return ret;
 }
 
 template <typename T>

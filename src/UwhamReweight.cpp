@@ -10,6 +10,7 @@ UwhamReweight::UwhamReweight(const ReweightInput& input)
 {
     // register the outputs 
     output_->registerOutputFunc("ReweightAverages", [this](std::string name) -> void {this -> printReweightAverages(name);});
+    output_->registerOutputFunc("FreeEnergys", [this](std::string name) -> void {this -> printFreeEnergys(name);});
 
     // dynamically check the type of Wham
     Uwham_ = dynamic_cast<Uwham*>(wham_);
@@ -28,10 +29,10 @@ void UwhamReweight::calculate()
 
     dimension_ = xi[0].size();
     averages_.resize(numBias_,std::vector<Real>(dimension_,0.0));
+    FreeEnergys_.resize(numBias_);
 
     // Iterate through each of the Biases for reweighting 
-    for (int i=0;i<numBias_;i++)
-    {
+    for (int i=0;i<numBias_;i++){
         std::vector<Real> lnpji(xi.size(),0.0);
 
         #pragma omp parallel for 
@@ -47,29 +48,34 @@ void UwhamReweight::calculate()
         {
             // normalized lnpji
             #pragma omp for
-            for (int j=0;j<xi.size();j++)
-            {
+            for (int j=0;j<xi.size();j++){
                 lnpji[j] = lnpji[j] + fk;
             }
 
             // declare local average
             std::vector<Real> LocalAverage(dimension_,0.0);
             #pragma omp for
-            for (int j=0;j<xi.size();j++)
-            {
-                for (int k=0;k<dimension_;k++)
-                {
+            for (int j=0;j<xi.size();j++){
+                for (int k=0;k<dimension_;k++){
                     LocalAverage[k] += std::exp(lnpji[j]) * xi[j][k];
                 }
             }
 
             #pragma omp critical
-            for (int k=0;k<dimension_;k++)
-            {
+            for (int k=0;k<dimension_;k++){
                 averages_[i][k] += LocalAverage[k];
             }
         }
+
+        Uwham_->calculateFreeEnergy(lnpji, Uwham_->getMapBinIndexTolnwjiIndex(), FreeEnergys_[i]);
         std::cout << "Done with bias " << i << std::endl;
+    }
+}
+
+void UwhamReweight::printFreeEnergys(std::string name){
+    for (int i=0;i<FreeEnergys_.size();i++){
+        std::string new_name = StringTools::AppendIndexToFileName(name, i + 1);
+        Uwham_->printPji(new_name, FreeEnergys_[i]);
     }
 }
 

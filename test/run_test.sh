@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 num_threads=0
 test_dir=""
@@ -50,8 +50,19 @@ then
     exit 1
 fi
 
+for ((i=0; i<${len}; ++i)) do
+    rm -f "${output_test[$i]}"
+done
+rm -f stdout
+
 # run the program with the input
 ${program} ${input} -abspath ${absP} > stdout
+program_status=$?
+if [[ ${program_status} -ne 0 ]]
+then
+    echo "Program failed with exit code ${program_status}."
+    exit ${program_status}
+fi
 
 for ((i=0; i<${len}; ++i)) do
     test_file=${output_test[$i]}
@@ -67,7 +78,7 @@ for ((i=0; i<${len}; ++i)) do
 
     # if diff fails, then we can directly exit 
     diff ${test_file} ${ref_file}
-    if [[ $? -eq 1 ]]
+    if [[ $? -ne 0 ]]
     then 
         ((failed_test++))
         exit 1

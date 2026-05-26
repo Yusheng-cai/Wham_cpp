@@ -55,6 +55,9 @@ class TimeSeries
         // find normalized data once mean and variance has been found  
         void findNormalizedData();
 
+        // check if the time series is constant
+        bool is_constant_dimension(const std::vector<std::vector<Real>>& data, int dim, float tol=1e-6);
+
         // print output
         void printOutput();
 

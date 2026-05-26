@@ -156,6 +156,16 @@ void TimeSeries::calculate()
     }
 }
 
+bool TimeSeries::is_constant_dimension(const std::vector<std::vector<Real>>& data, int dim, float tol){
+    if (data.empty()) return true;
+    float ref = data[0][dim];
+    for (const auto& row : data) {
+        if (std::fabs(row[dim] - ref) > tol)
+            return false;
+    }
+    return true;
+}
+
 void TimeSeries::calculateAutoCorrelation()
 {
     // we have an autocorrelation for each dimension
@@ -164,77 +174,77 @@ void TimeSeries::calculateAutoCorrelation()
     int N = chosen_data_.size();
     int N2 = N*2;
 
-    for (int i=0;i<dimension_;i++)
-    {
-        // to calculate autocorrelation, we must split the data up
-        std::vector<Real> data(N2,0.0);
+    for (int i=0;i<dimension_;i++){
+        if (! is_constant_dimension(normalized_Data_, i)){
+            // to calculate autocorrelation, we must split the data up
+            std::vector<Real> data(N2,0.0);
 
-        int hdatasize = N/2;
-        int otherhalf = N - hdatasize;
+            int hdatasize = N/2;
+            int otherhalf = N - hdatasize;
 
-        // resize the ith dimension AC to be data size large
-        AC_vector_[i].resize(N);
-        
-        for (int j=0;j<otherhalf;j++)
-        {
-            int indexCS = hdatasize + j;
-            data[j] = normalized_Data_[indexCS][i];
+            // resize the ith dimension AC to be data size large
+            AC_vector_[i].resize(N);
+            
+            for (int j=0;j<otherhalf;j++)
+            {
+                int indexCS = hdatasize + j;
+                data[j] = normalized_Data_[indexCS][i];
+            }
+
+            for (int j=0;j<hdatasize;j++)
+            {
+                int indexd = hdatasize + N + j + 1;
+                data[indexd] = normalized_Data_[j][i]; 
+            }
+
+            std::vector<ComplexReal> fft;
+            std::vector<ComplexReal> input(N2);
+
+            for (int j=0;j<N2;j++)
+            {
+                ComplexReal number(data[j],0);
+                input[j] = number;
+            }
+
+            FFT::fft(input, fft);
+
+            std::vector<ComplexReal> squared(N2);
+            for (int j=0;j<N2;j++)
+            {
+                Real square = std::pow(fft[j].real(),2.0) + std::pow(fft[j].imag(),2.0);
+                ComplexReal number(square,0.0);
+                squared[j] = number;
+            }
+
+            std::vector<ComplexReal> ifft;
+            FFT::ifft(squared, ifft);
+
+            for (int j=0;j<N;j++)
+            {
+                AC_vector_[i][j] = ifft[j].real()/N;
+            }
         }
-
-        for (int j=0;j<hdatasize;j++)
-        {
-            int indexd = hdatasize + N + j + 1;
-            data[indexd] = normalized_Data_[j][i]; 
-        }
-
-        std::vector<ComplexReal> fft;
-        std::vector<ComplexReal> input(N2);
-
-        for (int j=0;j<N2;j++)
-        {
-            ComplexReal number(data[j],0);
-            input[j] = number;
-        }
-
-        FFT::fft(input, fft);
-
-        std::vector<ComplexReal> squared(N2);
-        for (int j=0;j<N2;j++)
-        {
-            Real square = std::pow(fft[j].real(),2.0) + std::pow(fft[j].imag(),2.0);
-            ComplexReal number(square,0.0);
-            squared[j] = number;
-        }
-
-        std::vector<ComplexReal> ifft;
-        FFT::ifft(squared, ifft);
-
-        for (int j=0;j<N;j++)
-        {
-            AC_vector_[i][j] = ifft[j].real()/N;
+        else{
+            AC_vector_[i].resize(1);
+            AC_vector_[i][0] = 0.0;
         }
     }
 
     lag_time_.resize(dimension_,0.0);
-    for (int i=0;i<dimension_;i++)
-    {
-        for (int j=0;j<AC_vector_[i].size();j++)
-        {
-            if (AC_vector_[i][j] < 0.0)
-            {
-                break;
-            }
-            else
-            {
-                lag_time_[i] += AC_vector_[i][j];
-            }
+    for (int i=0;i<dimension_;i++){
+        for (int j=0;j<AC_vector_[i].size();j++){
+            if (AC_vector_[i][j] < 0.0){break;}
+            else{lag_time_[i] += AC_vector_[i][j];}
         }
     }
 
+    std::cout << "lag time = ";
     for (int i=0;i<dimension_;i++)
     {
         lag_time_[i] = 1 + 2 * lag_time_[i];
+        std::cout << lag_time_[i] << " ";
     }
+    std::cout << std::endl;
 
     if (dimension_ > 1)
     {
@@ -245,6 +255,7 @@ void TimeSeries::calculateAutoCorrelation()
     {
         longest_lag_time_ = lag_time_[0];
     }
+    std::cout << "lagtime = " << longest_lag_time_ << std::endl;
 
     // get number of independent points
     numIndependentPoints_ = (int)(chosen_data_.size() / longest_lag_time_);

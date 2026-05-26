@@ -731,14 +731,15 @@ WhamTools::Real WhamTools::EXP(const std::vector<Real>& w_F)
 
 WhamTools::Real WhamTools::CalculateDeltaFBarIterative(const std::vector<Real>& w_F, const std::vector<Real>& w_B, int max_iterations, Real tol)
 {
-    Real DeltaFold = 0.0;
     Real DeltaF = 0.0;
+
     for (int i=0;i<max_iterations;i++)
     {
-        DeltaF = - CalculateBAR(w_F, w_B, DeltaF) + DeltaFold;
-        DeltaFold = DeltaF;
+        Real DeltaFold = DeltaF;
+        DeltaF = DeltaFold - CalculateBAR(w_F, w_B, DeltaFold);
 
-        Real relativeChange = std::abs(DeltaFold - DeltaF)/DeltaFold;
+        Real scale = std::max(std::abs(DeltaFold), 1.0);
+        Real relativeChange = std::abs(DeltaF - DeltaFold) / scale;
 
         if (relativeChange < tol)
         {

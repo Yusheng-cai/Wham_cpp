@@ -6,7 +6,7 @@ LIST( APPEND CMAKE_MODULE_PATH
 )
 
 # create the new project
-project(Wham)
+project(Wham LANGUAGES C CXX)
 
 # Require C++11
 set(CMAKE_CXX_STANDARD 14)

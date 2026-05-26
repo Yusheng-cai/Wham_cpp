@@ -120,10 +120,8 @@ void UwhamConditionalReweight::printConditionalAverage(std::string name)
 
     // How should we print out the conditional averages ?
     // TODO : Figure out how to print out higher dimensional conditional averages 
-    for (int i=0;i<ConditionalAverage_.size();i++)
-    {
-        for (int j=0;j<ConditionalAverage_[i].size();j++)
-        {
+    for (int i=0;i<ConditionalAverage_.size();i++){
+        for (int j=0;j<ConditionalAverage_[i].size();j++){
             ofs << ConditionalAverage_[i][j][AxisNumber] << " ";
         }
         ofs << "\n";

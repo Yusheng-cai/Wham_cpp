@@ -21,6 +21,7 @@ Uwham::Uwham(const WhamInput& input)
     registerOutput("reweightFE", [this](std::string name) -> void {this -> printReweightFE(name);});
     registerOutput("KL_divergence", [this](std::string name) -> void {this -> printKL(name);});
     registerOutput("FE_dim", [this](std::string name) -> void {this -> printFEdim(name);});
+    registerOutput("ErrorFE", [this](std::string name) -> void {this->printErrroFE(name);});
 
     // check if the outputs are registered
     isRegistered();
@@ -225,7 +226,7 @@ void Uwham::bindata(std::vector<std::vector<Real>>& xi, std::map<std::vector<int
     }
 }
 
-void Uwham::calculateFreeEnergy(const std::vector<Real>& lnwji, std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE)
+void Uwham::calculateFreeEnergy(const std::vector<Real>& lnwji, const std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE)
 {
     FE.clear();
 
@@ -266,22 +267,17 @@ void Uwham::calculate()
     reweightFE_.resize(BUki_.getNR());
 
     // Reweight to various biases 
-    for (int i=0;i<BUki_.getNR();i++)
-    {
+    for (int i=0;i<BUki_.getNR();i++){
         #pragma omp parallel for
-        for (int j=0;j<lnwji_.size();j++)
-        {
+        for (int j=0;j<lnwji_.size();j++){
             lnpji_[i][j] = fk_[i] - BUki_(i,j) + lnwji_[j];
         }
     }
 
     // only do this procedure if we are not doing combined input
-    if (! combined_input_)
-    {
-        for (int i=0;i<BUki_.getNR();i++)
-        {
-            for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end(); it ++)
-            {
+    if (! combined_input_){
+        for (int i=0;i<BUki_.getNR();i++){
+            for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end(); it ++){
                 auto& l  = it -> second;
                 std::vector<Real> lnpi;
 
@@ -309,7 +305,7 @@ void Uwham::calculate()
                 Real prob = std::exp(-ref_val);
                 Real val = reweightFE_[i].find(Index) -> second;
 
-                KL_divergence_[i] = prob * (-ref_val + val);
+                KL_divergence_[i] += prob * (-ref_val + val);
             }
         }
     }
@@ -367,6 +363,9 @@ void Uwham::calculateError()
         // calculate the Free Energy
         calculateFreeEnergy(lnwji, map, FE);
 
+        // append to the free energy
+        ErrorFE_.push_back(FE);
+
         for (auto it = FE.begin(); it != FE.end(); it ++)
         {
             std::vector<int> copyK = it -> first;
@@ -404,8 +403,7 @@ void Uwham::ReduceFEDimension()
     FE_dim_.clear();
     FE_dim_.resize(Bins_.size());
 
-    for (int i=0;i<Bins_.size();i++)
-    {
+    for (int i=0;i<Bins_.size();i++){
         // map each of the bin num in various dimension to lnwji index 
         std::map<int, std::vector<int>> MapDimBinNumTolnwjiIndex;
         for (auto it = MapBinIndexTolnwjiIndex_.begin(); it != MapBinIndexTolnwjiIndex_.end();it++)
@@ -462,21 +460,29 @@ void Uwham::printOutput()
     }
 }
 
+void Uwham::printErrroFE(std::string name){
+    if (Error_){
+        for (int i=0;i<ErrorFE_.size();i++){
+            std::string fname = StringTools::AppendIndexToFileName(name, std::to_string(i));
+
+            printPji(fname, ErrorFE_[i]);
+        }
+    }
+}
+
 void Uwham::printlnwji(std::string name)
 {
     std::ofstream ofs;
     ofs.open(name);
 
-    for (int i=0;i<lnwji_.size();i++)
-    {
+    for (int i=0;i<lnwji_.size();i++){
         ofs << lnwji_[i] << std::endl;
     }
 
     ofs.close();
 }
 
-void Uwham::printPji(std::string name)
-{
+void Uwham::printPji(std::string name, const std::map<std::vector<int>, Real>& FE){
     std::ofstream ofs;
     ofs.open(name);
 
@@ -503,25 +509,21 @@ void Uwham::printPji(std::string name)
 
     ofs << "\n";
 
-    for (auto it = FreeEnergy_.begin();it != FreeEnergy_.end();it++)
-    {
+    for (auto it = FE.begin();it != FE.end();it++){
         auto& index = it -> first;
-        for (int i=0;i<Bins_.size();i++)
-        {
+        for (int i=0;i<Bins_.size();i++){
             Real pos = Bins_[i].getLocationOfBin(index[i]);
             ofs << pos << " ";
         }
 
-        for (int i=0;i<Bins_.size();i++)
-        {
+        for (int i=0;i<Bins_.size();i++){
             ofs << index[i] << " ";
         }
 
         ofs << it -> second << " ";
         ofs << (-1.0)*(it -> second); 
 
-        if (Error_)
-        {
+        if (Error_){
             auto it = ErrorMap_.find(index);
 
             if (it != ErrorMap_.end())
@@ -548,6 +550,11 @@ void Uwham::printPji(std::string name)
         ofs << "\n";
     }
     ofs.close();
+}
+
+void Uwham::printPji(std::string name)
+{
+    printPji(name, FreeEnergy_);
 }
 
 void Uwham::printNormalization(std::string name)

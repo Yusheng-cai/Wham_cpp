@@ -35,7 +35,7 @@ class Uwham:public Wham
         void MakeGroupPointMap(const std::vector<Real>& N, std::vector<std::vector<int>>& GroupIndex);
 
         // calculate free energy from the bins and lnwji
-        void calculateFreeEnergy(const std::vector<Real>& lnwji, std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE);
+        void calculateFreeEnergy(const std::vector<Real>& lnwji, const std::map<std::vector<int>, std::vector<int>>& map, std::map<std::vector<int>, Real>& FE);
 
         virtual void calculate() override;
         virtual void printOutput() override;
@@ -45,12 +45,14 @@ class Uwham:public Wham
         // output statements
         void printNormalization(std::string name);
         void printPji(std::string name);
+        void printPji(std::string name, const std::map<std::vector<int>, Real>& FE);
         void printlnwji(std::string name);
         void printTimeSeriesBins(std::string name);
         void printderivative(std::string name);
         void printReweightFE(std::string name);
         void printKL(std::string name);
         void printFEdim(std::string name);
+        void printErrroFE(std::string name);
 
         // Calculate the energy beta * Uki
         void calculateBUki(const std::vector<std::vector<Real>>& xi, Matrix<Real>& BUki);
@@ -104,6 +106,7 @@ class Uwham:public Wham
         // error vector
         std::map<std::vector<int>, std::vector<Real>> ErrorFEMap_;
         std::map<std::vector<int>, Real> ErrorMap_;
+        std::vector<std::map<std::vector<int>, Real>> ErrorFE_;
         std::map<std::vector<int>, Real> MeanMap_;
 
         // reduced Free energy in each of the dimensions
