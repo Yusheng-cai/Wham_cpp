@@ -1,6 +1,29 @@
 #include "Uwham.h"
+#include "UwhamAdaptiveMethods.h"
+#include "UwhamLBFGS.h"
 
 #include <numeric>
+
+namespace
+{
+std::unique_ptr<UWhamCalculationStrategy> makeUwhamStrategy(
+    const std::string& type,
+    UwhamStrategyInput& input)
+{
+    if (type == "LBFGS")
+    {
+        return std::unique_ptr<UWhamCalculationStrategy>(new UwhamLBFGS(input));
+    }
+
+    if (type == "adaptive")
+    {
+        return std::unique_ptr<UWhamCalculationStrategy>(new UwhamAdaptiveMethods(input));
+    }
+
+    ASSERT((false), "Unknown UWHAM strategy type " << type);
+    return nullptr;
+}
+}
 
 namespace WhamRegistry
 {
@@ -140,7 +163,7 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
         UwhamStrategyInput input = {BUki, N, const_cast<ParameterPack&>(*s)};
 
         s -> ReadString("type", ParameterPack::KeyType::Required, strattype);
-        stratptr sptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input));
+        stratptr sptr = makeUwhamStrategy(strattype, input);
         std::string strategyName = sptr -> getName();
         auto inserted = MapNameToStrat.insert(std::make_pair(strategyName, std::move(sptr)));
         ASSERT((inserted.second), "Strategy name " << strategyName << " is already registered in this WHAM calculation.");

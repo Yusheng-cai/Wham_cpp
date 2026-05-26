@@ -1,10 +1,5 @@
 #include "UwhamAdaptiveMethods.h"
 
-namespace UwhamCalculationStrategyRegistry
-{
-    registry<UwhamAdaptiveMethods> registerAdaptive("adaptive");
-};
-
 UwhamAdaptiveMethods::UwhamAdaptiveMethods(UwhamStrategyInput& input)
 :UWhamCalculationStrategy(input)
 {

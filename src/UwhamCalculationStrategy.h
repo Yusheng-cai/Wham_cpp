@@ -1,4 +1,5 @@
-#include "tools/GenericFactory.h"
+#pragma once
+
 #include "tools/CommonTypes.h"
 #include "Array.h"
 #include "Wham.h"
@@ -45,15 +46,4 @@ class UWhamCalculationStrategy
         // print frequency
         int print_every_=-1;
         std::string name_;
-};
-
-namespace UwhamCalculationStrategyRegistry
-{
-    using Key = std::string;
-    using Base= UWhamCalculationStrategy; 
-
-    using Factory = GenericFactory<Base, Key, UwhamStrategyInput&>;
-
-    template <typename D>
-    using registry = RegisterInFactory<Base, D, Key, UwhamStrategyInput&>;
 };

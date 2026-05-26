@@ -1,10 +1,5 @@
 #include "UwhamLBFGS.h"
 
-namespace UwhamCalculationStrategyRegistry
-{
-    registry<UwhamLBFGS> registerLBFGS("LBFGS");
-};
-
 UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
 :UWhamCalculationStrategy(input)
 {
