@@ -93,11 +93,7 @@ class Uwham:public Wham
         bool Error_=false;
         int ErrorIter_=0;
 
-        // Map from name to strategy
-        std::map<std::string, UWhamCalculationStrategy*> MapNameToStrat_;
         std::vector<stratptr> strategies_;
-        std::vector<std::string> strategyNames_;
-
         // lnwji 
         std::vector<Real> lnwji_;
         // lnpji

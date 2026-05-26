@@ -16,7 +16,7 @@ UwhamLBFGS::UwhamLBFGS(UwhamStrategyInput& input)
     NLLeq_ = NLLptr(new UwhamNLL(in));
 }
 
-void UwhamLBFGS::calculate(std::vector<Real>& fk)
+UwhamStrategyResult UwhamLBFGS::calculate(const std::vector<Real>& fk)
 {
     LBFGSpp::LBFGSParam<Real> Param;
     Param.epsilon = epsilon_;
@@ -26,41 +26,43 @@ void UwhamLBFGS::calculate(std::vector<Real>& fk)
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
     // copy the data -> fk
-    fk_ = fk;
-    Eigen::VectorXd fk_E = Eigen::Map<Eigen::VectorXd>(fk.data(), BUki_.getNR());
+    std::vector<Real> fk_result = fk;
+    Eigen::VectorXd fk_E = Eigen::Map<const Eigen::VectorXd>(fk.data(), BUki_.getNR());
     Real fx;
 
     // do the solver minimization
-    int numiterations = solver.minimize(*NLLeq_,fk_E, fx, print_every_);
-    norms_ = NLLeq_->getNorms();
+    solver.minimize(*NLLeq_,fk_E, fx, print_every_);
+    std::vector<Real> norms = NLLeq_->getNorms();
 
     for (int i=0;i<fk_E.size();i++){
-        fk_[i] = fk_E[i];
+        fk_result[i] = fk_E[i];
     }
 
     // subtract the minimum fk 
-    Real normalize = fk_[0];
-    for (int i=0;i<fk_.size();i++){
-        fk_[i] = fk_[i] - normalize;
+    Real normalize = fk_result[0];
+    for (int i=0;i<fk_result.size();i++){
+        fk_result[i] = fk_result[i] - normalize;
     }
 
-    lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
+    std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_result, N_);
 
     // need to reweight lnwji
-    std::vector<Real> ones(lnwji_.size(),1);
-    Real f = -1.0*WhamTools::LogSumExpOMP(lnwji_, ones);
+    std::vector<Real> ones(lnwji.size(),1);
+    Real f = -1.0*WhamTools::LogSumExpOMP(lnwji, ones);
 
     #pragma omp parallel for 
-    for (int i=0;i<lnwji_.size();i++){
-        lnwji_[i] = f + lnwji_[i];
+    for (int i=0;i<lnwji.size();i++){
+        lnwji[i] = f + lnwji[i];
     }
 
     // normalize fk --> -log(Qi/Q0)
-    fk_ = fk_ - f;
+    fk_result = fk_result - f;
+
+    return {fk_result, lnwji, norms};
 }
 
 UwhamNLL::UwhamNLL(UwhamNLLInput& input)
-:N_(input.N_), BUki_(input.BUki)
+:BUki_(input.BUki), N_(input.N_)
 {
     fk_.resize(BUki_.getNR());
 
@@ -78,7 +80,6 @@ UwhamNLL::UwhamNLL(UwhamNLLInput& input)
 
 UwhamNLL::Real UwhamNLL::operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad){
     int Nsim = BUki_.getNR();
-    int Ndata= BUki_.getNC();
 
     ASSERT((x.size() == Nsim), "The dimension of fk does not match that of the number of simulation.");
 

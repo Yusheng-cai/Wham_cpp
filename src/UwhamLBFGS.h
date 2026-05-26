@@ -48,7 +48,7 @@ class UwhamLBFGS : public UWhamCalculationStrategy
 
         UwhamLBFGS(UwhamStrategyInput& input);
 
-        virtual void calculate(std::vector<Real>& fk);
+        virtual UwhamStrategyResult calculate(const std::vector<Real>& fk);
     
     private:
         NLLptr NLLeq_;

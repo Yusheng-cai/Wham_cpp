@@ -5,7 +5,5 @@ UWhamCalculationStrategy::UWhamCalculationStrategy(UwhamStrategyInput& input)
 {
     input.pack.ReadNumber("printevery", ParameterPack::KeyType::Optional,print_every_);
 
-    lnwji_.resize(BUki_.getNC());
-
     input.pack.ReadString("name", ParameterPack::KeyType::Required, name_);
 };

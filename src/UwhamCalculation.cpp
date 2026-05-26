@@ -6,9 +6,9 @@ void Uwham::calculate()
 {
     // Start calculation --> first calculate using the entire data set
     for (int i=0;i<strategies_.size();i++){
-        strategies_[i] -> calculate(fk_);
-        fk_ = strategies_[i] -> getFk_();
-        lnwji_ = strategies_[i] -> getlnwji_();
+        UwhamStrategyResult result = strategies_[i] -> calculate(fk_);
+        fk_ = result.fk;
+        lnwji_ = result.lnwji;
     }
 
     // calculate the free energy
@@ -108,9 +108,9 @@ void Uwham::calculateError()
 
         for (int i=0;i<strategies.size();i++)
         {
-            strategies[i] -> calculate(fk_guess);
-            fk_guess = strategies[i]->getFk_();
-            lnwji = strategies[i]->getlnwji_();
+            UwhamStrategyResult result = strategies[i] -> calculate(fk_guess);
+            fk_guess = result.fk;
+            lnwji = result.lnwji;
         }
 
         // calculate the Free Energy

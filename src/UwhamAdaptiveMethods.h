@@ -13,7 +13,7 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
         UwhamAdaptiveMethods(UwhamStrategyInput& input);
         virtual ~UwhamAdaptiveMethods(){};
 
-        virtual void calculate(std::vector<Real>& fk);
+        virtual UwhamStrategyResult calculate(const std::vector<Real>& fk);
 
         // Calculate the error between 2 iterations
         Real calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev);
@@ -28,6 +28,7 @@ class UwhamAdaptiveMethods: public UWhamCalculationStrategy
     private:
         std::vector<Real> fnr_;
         std::vector<Real> fsc_;
+        std::vector<Real> fk_;
 
         // tolerance is default to 1e-7
         Real tolerance_ = 1e-7;

@@ -128,7 +128,7 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
 
     auto whampack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
-    std::map<std::string, UWhamCalculationStrategy*> MapNameToStrat;
+    std::map<std::string, stratptr> MapNameToStrat;
     std::vector<std::string> strategyNames;
 
     auto stratPacks = whampack->findParamPacks("Uwhamstrategy", ParameterPack::KeyType::Required);
@@ -140,8 +140,10 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
         UwhamStrategyInput input = {BUki, N, const_cast<ParameterPack&>(*s)};
 
         s -> ReadString("type", ParameterPack::KeyType::Required, strattype);
-        auto sptr = UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input);
-        MapNameToStrat.insert(std::make_pair(sptr -> getName(), sptr));
+        stratptr sptr(UwhamCalculationStrategyRegistry::Factory::instance().create(strattype, input));
+        std::string strategyName = sptr -> getName();
+        auto inserted = MapNameToStrat.insert(std::make_pair(strategyName, std::move(sptr)));
+        ASSERT((inserted.second), "Strategy name " << strategyName << " is already registered in this WHAM calculation.");
     }
 
     // read a vector of string that represents the order of optimization that we want to do , usually LBFGS --> adaptive
@@ -151,8 +153,9 @@ void Uwham::initializeStrat(Matrix<Real>& BUki, std::vector<Real>& N, std::vecto
     {
         auto stratit = MapNameToStrat.find(s);
         ASSERT((stratit != MapNameToStrat.end()), "Strategy name " << s << " not found.");
+        ASSERT((stratit->second != nullptr), "Strategy name " << s << " is requested more than once.");
 
         // transfer ownership of the pointer
-        strategies.push_back(stratptr(stratit->second));
+        strategies.push_back(std::move(stratit->second));
     }
 }

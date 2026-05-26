@@ -66,7 +66,7 @@ void UwhamAdaptiveMethods::SelfConsistentStep(std::vector<Real>& fsc, std::vecto
     gradientSC = WhamTools::Gradient(BUki_, fsc, N_);  
 }
 
-void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
+UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
 {
     // set our fk to be the input fk
     fk_ = fk;
@@ -87,6 +87,7 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
 
     Real err = 0.0;
     int step = 1;
+    std::vector<Real> norms;
 
     while ( ! converged){
         // update Newton Raphson using current guess of fk
@@ -100,12 +101,12 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         if (normSC < normNR){
             err = calculateError(fsc_, fk_);
             fk_.assign(fsc_.begin(), fsc_.end());
-            norms_.push_back(std::sqrt(normSC));
+            norms.push_back(std::sqrt(normSC));
         }
         else{
             err = calculateError(fnr_, fk_);
             fk_.assign(fnr_.begin(), fnr_.end());
-            norms_.push_back(std::sqrt(normNR));
+            norms.push_back(std::sqrt(normNR));
         }
 
         if ((print_every_ != -1) && (step % print_every_==0)) 
@@ -121,15 +122,15 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         step++;
     }
 
-    lnwji_ = WhamTools::calculatelnWi(BUki_, fk_, N_);
+    std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
     // need to reweight lnwji
-    Real f = -1.0*WhamTools::LogSumExp(lnwji_, ones);
+    Real f = -1.0*WhamTools::LogSumExp(lnwji, ones);
 
     #pragma omp parallel for 
-    for (int i=0;i<lnwji_.size();i++)
+    for (int i=0;i<lnwji.size();i++)
     {
-        lnwji_[i] = f + lnwji_[i];
+        lnwji[i] = f + lnwji[i];
     }
 
     for (int i=0;i<fk_.size();i++)
@@ -141,6 +142,8 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
         std::cout << "NLL value = " << NLL_val << "\n";
     }
+
+    return {fk_, lnwji, norms};
 }
 
 UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)

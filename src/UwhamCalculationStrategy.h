@@ -16,7 +16,15 @@ struct UwhamStrategyInput
     Matrix<Real>& BUki_;
     std::vector<Real>& N;
     ParameterPack& pack;
+};
+
+struct UwhamStrategyResult
+{
+    using Real = CommonTypes::Real;
+
     std::vector<Real> fk;
+    std::vector<Real> lnwji;
+    std::vector<Real> norms;
 };
 
 class UWhamCalculationStrategy
@@ -27,19 +35,12 @@ class UWhamCalculationStrategy
         UWhamCalculationStrategy(UwhamStrategyInput& input);
         virtual ~UWhamCalculationStrategy(){};
 
-        const std::vector<Real>& getFk_() const {return fk_;}
-        const std::vector<Real>& getlnwji_() const {return lnwji_;}
-        const std::vector<Real>& getNorm() const {return norms_;}
-
-        virtual void calculate(std::vector<Real>& fk) = 0;
+        virtual UwhamStrategyResult calculate(const std::vector<Real>& fk) = 0;
         std::string getName() {return name_;}
 
     protected:
         Matrix<Real>& BUki_;
         std::vector<Real>& N_;
-        std::vector<Real> fk_;
-        std::vector<Real> lnwji_;
-        std::vector<Real> norms_;
 
         // print frequency
         int print_every_=-1;
