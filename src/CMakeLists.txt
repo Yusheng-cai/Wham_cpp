@@ -4,6 +4,7 @@ target_sources(WHAMsrc PRIVATE
     "DataFileParser.cpp"
     "TimeSeries.cpp"
     "Wham.cpp"
+    "WhamBinning.cpp"
     "WhamOutput.cpp"
     "WhamTools.cpp"
     "Uwham.cpp"
