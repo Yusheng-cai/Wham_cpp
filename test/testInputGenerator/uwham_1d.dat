@@ -1,0 +1,64 @@
+timeseries = {
+    path = US_-0.100.dat
+    columns = [ 2 ]
+    skipfrombeginning = -1000
+}
+
+timeseries = {
+    path = US_0.000.dat
+    columns = [ 2 ]
+    skipfrombeginning = -1000
+}
+
+timeseries = {
+    path = US_0.100.dat
+    columns = [ 2 ]
+    skipfrombeginning = -1000
+}
+
+bias = {
+    dimension = 1
+    xstar = [ -0.1 ]
+    kappa = [ 1000 ]
+    temperature = 300
+}
+
+bias = {
+    dimension = 1
+    xstar = [ 0.0 ]
+    kappa = [ 1000 ]
+    temperature = 300
+}
+
+bias = {
+    dimension = 1
+    xstar = [ 0.1 ]
+    kappa = [ 1000 ]
+    temperature = 300
+}
+
+wham = {
+    name = w
+    type = Uwham
+    Uwhamstrategy = {
+        type = LBFGS
+        name = l
+        max_iterations = 50
+        printevery = -1
+    }
+    Uwhamstrategy = {
+        type = adaptive
+        name = a
+        printevery = -1
+    }
+    strategyNames = [ l a ]
+    bins = {
+        dimension = 1
+        range = [ -1.5 1.5 ]
+        numbins = 50
+    }
+    ErrorAnalysis = true
+    ErrorIteration = 1
+    outputs = [ pji normalization KL_divergence ]
+    outputFile = [ pji.out norm.out kl.out ]
+}

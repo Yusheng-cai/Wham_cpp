@@ -1,0 +1,57 @@
+{
+  "data": {
+    "columns": [2],
+    "skipfrombeginning": -1000,
+    "windows": [
+      {
+        "path": "US_-0.100.dat",
+        "xstar": [-0.1],
+        "kappa": [1000],
+        "temperature": 300
+      },
+      {
+        "path": "US_0.000.dat",
+        "xstar": [0.0],
+        "kappa": [1000],
+        "temperature": 300
+      },
+      {
+        "path": "US_0.100.dat",
+        "xstar": [0.1],
+        "kappa": [1000],
+        "temperature": 300
+      }
+    ]
+  },
+  "wham": {
+    "name": "w",
+    "type": "Uwham",
+    "strategies": [
+      {
+        "type": "LBFGS",
+        "name": "l",
+        "max_iterations": 50,
+        "printevery": -1
+      },
+      {
+        "type": "adaptive",
+        "name": "a",
+        "printevery": -1
+      }
+    ],
+    "bins": [
+      {
+        "dimension": 1,
+        "range": [-1.5, 1.5],
+        "numbins": 50
+      }
+    ],
+    "ErrorAnalysis": true,
+    "ErrorIteration": 1,
+    "outputs": {
+      "pji": "pji.out",
+      "normalization": "norm.out",
+      "KL_divergence": "kl.out"
+    }
+  }
+}

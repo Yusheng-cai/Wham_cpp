@@ -12,6 +12,11 @@ if (NOT BASH_PROGRAM)
     message(FATAL_ERROR "Bash program is not found on this computer.")
 endif()
 
+find_program(PYTHON3_PROGRAM python3)
+if (NOT PYTHON3_PROGRAM)
+    message(FATAL_ERROR "python3 program is not found on this computer.")
+endif()
+
 # define the test script
 set(TEST_RUN_SCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/run_test.sh")
 
@@ -55,6 +60,9 @@ add_executable(testCoreUtilities testCoreUtilities/test_core_utilities.cpp)
 target_include_directories(testCoreUtilities PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(testCoreUtilities PUBLIC WHAMsrc WHAMtools WHAMparallel)
 add_test(NAME testCoreUtilities COMMAND testCoreUtilities)
+
+add_test(NAME testGenerateWhamInput
+         COMMAND ${PYTHON3_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/testInputGenerator/test_generate_wham_input.py)
 
 add_custom_target(build_test COMMAND ${CMAKE_CTEST_COMMAND} 
                              DEPENDS ${TESTS_NAMES})

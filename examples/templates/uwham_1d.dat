@@ -1,0 +1,49 @@
+timeseries = {
+    path = <window_1_file>
+    columns = [ <column_index> ]
+    skipfrombeginning = <burn_in_frames>
+}
+
+timeseries = {
+    path = <window_2_file>
+    columns = [ <column_index> ]
+    skipfrombeginning = <burn_in_frames>
+}
+
+bias = {
+    dimension = 1
+    xstar = [ <window_1_center> ]
+    kappa = [ <force_constant> ]
+    temperature = <temperature_K>
+}
+
+bias = {
+    dimension = 1
+    xstar = [ <window_2_center> ]
+    kappa = [ <force_constant> ]
+    temperature = <temperature_K>
+}
+
+wham = {
+    name = w
+    type = Uwham
+    Uwhamstrategy = {
+        type = LBFGS
+        name = l
+        max_iterations = 50
+        printevery = -1
+    }
+    Uwhamstrategy = {
+        type = adaptive
+        name = a
+        printevery = -1
+    }
+    strategyNames = [ l a ]
+    bins = {
+        dimension = 1
+        range = [ <min> <max> ]
+        numbins = <num_bins>
+    }
+    outputs = [ pji normalization KL_divergence ]
+    outputFile = [ pji.out norm.out kl.out ]
+}

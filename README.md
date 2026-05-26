@@ -37,12 +37,13 @@ outputs.
 - OpenMP
 - FFTW3
 - Bash, for the registered CTest runner
+- Python 3, for input-generation utilities and their tests
 
 On Ubuntu, the system dependencies can be installed with:
 
 ```bash
 sudo apt-get update
-sudo apt-get install --yes cmake g++ libfftw3-dev
+sudo apt-get install --yes cmake g++ libfftw3-dev python3
 ```
 
 ## Build
@@ -91,6 +92,18 @@ build/bin/Wham test/testAdaptive/input.dat -abspath test/testdata/ModelPotential
 
 Output files are selected by each input file through the `outputs` and
 `outputFile` entries.
+
+## Input Generation
+
+For common umbrella-sampling workflows, use the structured input generator to
+create native WHAM `.dat` files from a compact JSON spec:
+
+```bash
+python3 tools/generate_wham_input.py examples/input_specs/uwham_1d.json -o input.dat
+```
+
+See [docs/input-format.md](docs/input-format.md) for the JSON schema, native
+template, and examples.
 
 ## Example Inputs
 
