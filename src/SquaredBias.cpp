@@ -14,8 +14,8 @@ SquaredBias::SquaredBias(const ParameterPack& pack)
     phi_.resize(dimension_,0.0);
 
     // Read in kappa and phi
-    bool phiread = pack.ReadVectorNumber("phi", ParameterPack::KeyType::Optional, phi_);
-    ASSERT((phi_.size() == dimension_), "The size of the phi input does not match dimension.");
+    pack.ReadVectorNumber("phi", ParameterPack::KeyType::Optional, phi_);
+    ASSERT((static_cast<int>(phi_.size()) == dimension_), "The size of the phi input does not match dimension.");
 }
 
 SquaredBias::Real SquaredBias::calculate(const std::vector<Real>& x)
@@ -42,7 +42,7 @@ std::vector<SquaredBias::Real> SquaredBias::calculateForce(const std::vector<Rea
     force.resize(x.size(),0.0);
 
     for (int i=0;i<dimension_;i++){
-        force[i] = - phi_[i] * x[i];
+        force[i] = -2.0 * phi_[i] * x[i];
     }
 
     return force;

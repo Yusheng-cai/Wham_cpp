@@ -51,5 +51,10 @@ target_include_directories(testWhamTools PUBLIC ${CMAKE_SOURCE_DIR})
 target_link_libraries(testWhamTools PUBLIC WHAMsrc WHAMtools WHAMparallel)
 add_test(NAME testWhamTools COMMAND testWhamTools)
 
+add_executable(testCoreUtilities testCoreUtilities/test_core_utilities.cpp)
+target_include_directories(testCoreUtilities PUBLIC ${CMAKE_SOURCE_DIR})
+target_link_libraries(testCoreUtilities PUBLIC WHAMsrc WHAMtools WHAMparallel)
+add_test(NAME testCoreUtilities COMMAND testCoreUtilities)
+
 add_custom_target(build_test COMMAND ${CMAKE_CTEST_COMMAND} 
                              DEPENDS ${TESTS_NAMES})

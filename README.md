@@ -70,7 +70,7 @@ ctest --test-dir build --output-on-failure
 
 The official suite currently validates the adaptive and L-BFGS UWHAM paths with
 `OMP_NUM_THREADS=1`, `4`, and `8`, plus focused unit coverage for shared WHAM
-helpers.
+helpers and core utilities.
 
 ## Usage
 
