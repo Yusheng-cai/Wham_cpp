@@ -137,10 +137,10 @@ void UwhamAdaptiveMethods::calculate(std::vector<Real>& fk)
         fk_[i] = fk_[i] - f;
     }
 
-    // calculates the NLL equation
-    Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
-
-    std::cout << "NLL value = " << NLL_val << "\n";
+    if (print_every_ != -1){
+        Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
+        std::cout << "NLL value = " << NLL_val << "\n";
+    }
 }
 
 UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)

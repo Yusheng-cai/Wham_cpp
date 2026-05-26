@@ -104,7 +104,9 @@ void UwhamConditionalReweight::calculate()
                 ConditionalAverage_[i][j] = avg;
             }
         }
-        std::cout << "Bias " << i << " is done." << std::endl;
+        if (verbose_){
+            std::cout << "Bias " << i << " is done." << std::endl;
+        }
     }
 }
 

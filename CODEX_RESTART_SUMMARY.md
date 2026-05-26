@@ -104,6 +104,19 @@ Result:
 Total Test time (real) = 57.51 sec
 ```
 
+After console-output cleanup, the latest full registered CTest run was:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+Result:
+
+```text
+100% tests passed, 0 tests failed out of 7
+Total Test time (real) = 13.00 sec
+```
+
 The registered CTest suite now passes:
 
 - `testAdaptive::OMP_1`
@@ -156,11 +169,15 @@ There is a newline-only diff in `src/UwhamLBFGS.h` from a reverted optimizer exp
 
 ## Recommended Next Step
 
-Next recommended cleanup: gate or remove routine `std::cout` progress output.
+Console-output cleanup has been implemented:
 
-Suggested order:
+- `TimeSeries` and `Wham` now read optional `verbose = true` flags and are quiet by default.
+- UWHAM setup, adaptive final NLL, and reweight progress messages are gated.
+- Official fixture strategy `printevery` settings were changed to `-1`.
+- `test/run_test.sh` supports `-s empty`, and CTest uses it for official fixtures so stdout noise is a regression.
 
-1. Add a narrow design for console-output cleanup before editing broadly.
-2. Gate routine progress messages in files like `src/TimeSeries.cpp`, `src/UwhamAdaptiveMethods.cpp`, `src/UwhamLBFGS.cpp`, and `src/Uwham.cpp`.
-3. Re-run `ctest --test-dir build --output-on-failure`.
-4. Then consider deterministic/tolerant handling for error-analysis columns, `WhamTools` extraction from `src/Wham.h`/`src/Wham.cpp`, and allocation/performance cleanup in `WhamTools::calculatelnWi`, `WhamTools::Gradient`, and `Uwham::calculate`.
+Next recommended cleanup:
+
+1. Consider deterministic/tolerant handling for error-analysis columns.
+2. Extract `WhamTools` from `src/Wham.h`/`src/Wham.cpp`.
+3. Then optimize repeated temporary allocations in `WhamTools::calculatelnWi`, `WhamTools::Gradient`, and `Uwham::calculate`.

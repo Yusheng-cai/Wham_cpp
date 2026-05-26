@@ -10,6 +10,7 @@ Wham::Wham(const WhamInput& input)
     whamPack_ -> ReadVectorString("outputFile", ParameterPack::KeyType::Optional, VectorOutputFileNames_);
     whamPack_ -> ReadNumber("precision", ParameterPack::KeyType::Optional, precision_);
     whamPack_ -> ReadString("name" , ParameterPack::KeyType::Optional, name_);
+    whamPack_ -> Readbool("verbose", ParameterPack::KeyType::Optional, verbose_);
 
     ASSERT((VectorOutputNames_.size() == VectorOutputFileNames_.size()), "The output and the output files size is different.");
     registerOutput("histogram", [this](std::string name) -> void{this -> printTimeSeriesBins(name);});
@@ -286,13 +287,17 @@ void Wham::initializeTimeSeries()
     for (int i=0;i<VectorTimeSeries_.size();i++)
     {
         xi_.insert(xi_.end(),VectorTimeSeries_[i]->begin(), VectorTimeSeries_[i]->end());
-        std::cout << "Length of data for " << i << " is " << VectorTimeSeries_[i]->getSize() << std::endl;
+        if (verbose_){
+            std::cout << "Length of data for " << i << " is " << VectorTimeSeries_[i]->getSize() << std::endl;
+        }
     }
 
     // if vector time series is not passed in as 1
     if (VectorTimeSeries_.size() > 1)
     {
-        std::cout << "Performing uncombined data input." << std::endl;
+        if (verbose_){
+            std::cout << "Performing uncombined data input." << std::endl;
+        }
         dimensions_.resize(VectorTimeSeries_.size());
         N_.resize(VectorTimeSeries_.size());
 
@@ -313,7 +318,9 @@ void Wham::initializeTimeSeries()
     }
     else
     {
-        std::cout << "Performing combined data input." << std::endl;
+        if (verbose_){
+            std::cout << "Performing combined data input." << std::endl;
+        }
         combined_input_=true;
         int N;
         bool readN = whamPack_->ReadNumber("N", ParameterPack::KeyType::Optional, N);

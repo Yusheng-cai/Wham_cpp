@@ -43,6 +43,8 @@ class Reweight
 
         int numBias_;
         std::vector<Biasptr> Vectorbias_;
+
+        bool verbose_ = false;
 };
 
 namespace ReweightRegistry

@@ -64,6 +64,13 @@ then
     exit ${program_status}
 fi
 
+if [[ ${stdout_comp} == "empty" && -s stdout ]]
+then
+    echo "Expected empty stdout, but program wrote:"
+    cat stdout
+    exit 1
+fi
+
 for ((i=0; i<${len}; ++i)) do
     test_file=${output_test[$i]}
     ref_file=${test_dir}/${output_ref[$i]}
@@ -89,6 +96,10 @@ done
 if [[ -f ${test_dir}/stdout_ref ]]
 then
     diff stdout ${test_dir}/stdout_ref
+    if [[ $? -ne 0 ]]
+    then
+        exit 1
+    fi
 fi
 
 rm stdout

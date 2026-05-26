@@ -13,6 +13,7 @@ TimeSeries::TimeSeries(const TimeSeriesInputPack& input)
     input.pack_.ReadVectorNumber("columns", ParameterPack::KeyType::Required, columns_);
     input.pack_.ReadVectorString("outputs", ParameterPack::KeyType::Optional,outputNames_);
     input.pack_.ReadNumber("skip", ParameterPack::KeyType::Optional, skipevery_);
+    input.pack_.Readbool("verbose", ParameterPack::KeyType::Optional, verbose_);
     skipevery_++;
     checkOutputValidity();
     input.pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Optional, outputFileNames_);
@@ -58,7 +59,9 @@ void TimeSeries::readChosenData()
     parser.ParseFile(path_, Totaldata_);
     
     // Find out the total size of the data
-    std::cout << "Reading data from file " <<path_ << " data size = " << Totaldata_.size() << std::endl;
+    if (verbose_){
+        std::cout << "Reading data from file " << path_ << " data size = " << Totaldata_.size() << std::endl;
+    }
 
     // Resize the chosen data accordingly
     int index=0;
@@ -238,13 +241,19 @@ void TimeSeries::calculateAutoCorrelation()
         }
     }
 
-    std::cout << "lag time = ";
+    if (verbose_){
+        std::cout << "lag time = ";
+    }
     for (int i=0;i<dimension_;i++)
     {
         lag_time_[i] = 1 + 2 * lag_time_[i];
-        std::cout << lag_time_[i] << " ";
+        if (verbose_){
+            std::cout << lag_time_[i] << " ";
+        }
     }
-    std::cout << std::endl;
+    if (verbose_){
+        std::cout << std::endl;
+    }
 
     if (dimension_ > 1)
     {
@@ -255,7 +264,9 @@ void TimeSeries::calculateAutoCorrelation()
     {
         longest_lag_time_ = lag_time_[0];
     }
-    std::cout << "lagtime = " << longest_lag_time_ << std::endl;
+    if (verbose_){
+        std::cout << "lagtime = " << longest_lag_time_ << std::endl;
+    }
 
     // get number of independent points
     numIndependentPoints_ = (int)(chosen_data_.size() / longest_lag_time_);

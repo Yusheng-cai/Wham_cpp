@@ -68,7 +68,9 @@ void UwhamReweight::calculate()
         }
 
         Uwham_->calculateFreeEnergy(lnpji, Uwham_->getMapBinIndexTolnwjiIndex(), FreeEnergys_[i]);
-        std::cout << "Done with bias " << i << std::endl;
+        if (verbose_){
+            std::cout << "Done with bias " << i << std::endl;
+        }
     }
 }
 

@@ -5,6 +5,7 @@ Reweight::Reweight(const ReweightInput& input)
 {
     pack_.ReadVectorString("outputs", ParameterPack::KeyType::Required, outputNames_);
     pack_.ReadVectorString("outputNames", ParameterPack::KeyType::Required, outputfileNames_);
+    pack_.Readbool("verbose", ParameterPack::KeyType::Optional, verbose_);
 
     ASSERT((outputNames_.size() == outputfileNames_.size()), "input size does not match with output.");
 

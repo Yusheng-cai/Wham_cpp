@@ -143,6 +143,8 @@ class TimeSeries
         std::vector<std::string> outputNames_;
         std::vector<std::string> outputFileNames_;
 
+        bool verbose_ = false;
+
         // Map from name to function
         std::map<std::string, valueFunction> MapNameToOutput_;
 

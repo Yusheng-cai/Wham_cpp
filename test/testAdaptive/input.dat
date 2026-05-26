@@ -579,12 +579,12 @@ wham = {
 		type = LBFGS
 		name = l
 		max_iterations = 50
-		printevery = 1
+		printevery = -1
 	}
 	Uwhamstrategy = {
 		type = adaptive
 		name = a
-		printevery = 1
+		printevery = -1
 	}
 	strategyNames = [ l a ]
 	bins = {

@@ -103,6 +103,8 @@ class Wham
 
         int precision_=3;
 
+        bool verbose_ = false;
+
         // name of the wham  --> defaulted to "w"
         std::string name_ = "w";
 
