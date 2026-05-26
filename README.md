@@ -1,17 +1,152 @@
-# C++ implementation of the Weighted Histogram Analysis Method (WHAM)
+# Wham_cpp
 
-## Validation of Code 
-### Free Energy 
-Validation of the Unbinned WHAM (UWHAM) using different optimization methods, specifically in this case for adaptive and LBFGS. Using the method of bootstrapping, error was also obtained for estimated free energy.
-![wham](/test/Images/validate.png)
+[![CI](https://github.com/Yusheng-cai/Wham_cpp/actions/workflows/build.yml/badge.svg)](https://github.com/Yusheng-cai/Wham_cpp/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
+`Wham_cpp` is a C++ implementation of the Weighted Histogram Analysis Method
+(WHAM) for reconstructing free-energy surfaces from biased molecular simulation
+data.
+
+The code supports binned and unbinned WHAM workflows, multiple optimization
+strategies, reweighting calculations, and validation against bundled reference
+outputs.
+
+## Features
+
+- Unbinned WHAM (UWHAM) with adaptive and L-BFGS optimization strategies.
+- Binned WHAM (BWHAM) support for histogram-based analysis.
+- Reweighting utilities for evaluating free energies under modified potentials.
+- OpenMP-enabled execution paths for thread-level parallelism.
+- CMake build system with an official CTest validation suite.
+
+## Repository Layout
+
+| Path | Purpose |
+| --- | --- |
+| `src/` | WHAM implementations, bias models, reweighting, and time-series operations. |
+| `tools/` | Input parsing, command-line handling, filesystem helpers, and shared utilities. |
+| `parallel/` | OpenMP and MPI-related helper code. |
+| `test/` | CTest wiring, shell test runner, fixtures, and golden reference outputs. |
+| `scripts/` | Example WHAM input files. |
+| `Eigen/`, `LBFGS/` | Vendored numerical dependencies. |
+
+## Requirements
+
+- CMake 3.18 or newer
+- A C++14 compiler
+- OpenMP
+- FFTW3
+- Bash, for the registered CTest runner
+
+On Ubuntu, the system dependencies can be installed with:
+
+```bash
+sudo apt-get update
+sudo apt-get install --yes cmake g++ libfftw3-dev
+```
+
+## Build
+
+Use an out-of-source build:
+
+```bash
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel
+```
+
+The executable is written to:
+
+```bash
+build/bin/Wham
+```
+
+## Test
+
+Run the registered CTest suite:
+
+```bash
+ctest --test-dir build --output-on-failure
+```
+
+The official suite currently validates the adaptive and L-BFGS UWHAM paths with
+`OMP_NUM_THREADS=1`, `4`, and `8`, plus focused unit coverage for shared WHAM
+helpers.
+
+## Usage
+
+The executable expects the WHAM input file as the first positional argument.
+When time-series paths in the input file are relative to a separate data
+directory, pass that directory with `-abspath`.
+
+```bash
+build/bin/Wham <input.dat> [-abspath <time-series-directory>]
+```
+
+For example, to run the adaptive validation input against the bundled 1D model
+potential data:
+
+```bash
+build/bin/Wham test/testAdaptive/input.dat -abspath test/testdata/ModelPotential1d
+```
+
+Output files are selected by each input file through the `outputs` and
+`outputFile` entries.
+
+## Example Inputs
+
+- `scripts/input.dat`: 1D UWHAM example using an adaptive strategy.
+- `scripts/inputBwham.dat`: BWHAM example using L-BFGS.
+- `scripts/input2d.dat`: 2D UWHAM example.
+- `scripts/inputpp.dat`: Example with additional time-series processing.
+
+## Validation
+
+### Free Energy
+
+The bundled validation cases compare UWHAM free-energy estimates from adaptive
+and L-BFGS optimization strategies. Bootstrap analysis is used to estimate
+uncertainty in the reconstructed free energy.
+
+![Free-energy validation](test/Images/validate.png)
+
 ### KL Divergence
-Their KL divergences is also evaluated and shown below for the 40 biased simulations performed.
-![kl](/test/Images/KL.png)
-### Reweight
-We can then reweight the free energy obtained to what we call the phi-ensemble. To do so, we just need to add a potential to the equilibrium free energy 
-![reweigth](/test/Images/Reweight.png)
 
-## References 
-1. Shirts, Michael R, and John D Chodera. “Statistically optimal analysis of samples from multiple equilibrium states.” The Journal of chemical physics vol. 129,12 (2008): 124105. doi:10.1063/1.2978177
-2. AJ Patel, P Varilly, D Chandler, and S Garde, "Quantifying Density Fluctuations in Volumes of All Shapes and Sizes using Indirect Umbrella Sampling", Journal of Statistical Physics, 145, 265 (2011).
-3. AJ Patel, P Varilly, and D Chandler, "Fluctuations of Water Near Extended Hydrophobic and Hydrophilic Surfaces", Journal of Physical Chemistry B 114, 1632 (2010).
+The validation workflow also evaluates KL divergence across the biased
+simulations.
+
+![KL divergence validation](test/Images/KL.png)
+
+### Reweighting
+
+The reweighting examples evaluate free energies in a modified ensemble by
+adding a target potential to the equilibrium free energy.
+
+![Reweighting validation](test/Images/Reweight.png)
+
+## Continuous Integration and Delivery
+
+Continuous integration (CI) automatically builds and tests the project when code
+changes. This repository uses GitHub Actions to configure CMake, compile the
+`Wham` executable, and run the registered CTest suite on pushes and pull
+requests.
+
+Continuous delivery or deployment (CD) takes a passing build and publishes
+something, such as release artifacts, packages, documentation, or a deployment.
+This repository does not publish release artifacts automatically yet; CD can be
+added once versioning and release packaging are defined.
+
+## References
+
+1. Shirts, Michael R., and John D. Chodera. "Statistically optimal analysis of
+   samples from multiple equilibrium states." *The Journal of Chemical Physics*
+   129, 124105 (2008). <https://doi.org/10.1063/1.2978177>
+2. A. J. Patel, P. Varilly, D. Chandler, and S. Garde. "Quantifying Density
+   Fluctuations in Volumes of All Shapes and Sizes using Indirect Umbrella
+   Sampling." *Journal of Statistical Physics* 145, 265 (2011).
+3. A. J. Patel, P. Varilly, and D. Chandler. "Fluctuations of Water Near
+   Extended Hydrophobic and Hydrophilic Surfaces." *Journal of Physical
+   Chemistry B* 114, 1632 (2010).
+
+## License
+
+This project is distributed under the MIT License. See [LICENSE](LICENSE).
