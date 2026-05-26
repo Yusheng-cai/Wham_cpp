@@ -1,4 +1,4 @@
-#include "src/Wham.h"
+#include "src/WhamTools.h"
 
 #include <cmath>
 #include <iostream>
