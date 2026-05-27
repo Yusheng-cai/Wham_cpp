@@ -6,20 +6,17 @@
 #include <map>
 #include <vector>
 
-namespace BwhamBinning
+namespace BwhamBinning {
+using Real = CommonTypes::Real;
+
+struct BinGrid
 {
-    using Real = CommonTypes::Real;
+    int totalBins = 0;
+    std::vector<std::vector<Real>> centers;
+    std::map<std::vector<int>, int> indexToFlat;
+};
 
-    struct BinGrid
-    {
-        int totalBins = 0;
-        std::vector<std::vector<Real>> centers;
-        std::map<std::vector<int>, int> indexToFlat;
-    };
-
-    BinGrid buildBinGrid(const std::vector<const Bin*>& bins, int dataDimension);
-    bool findBinIndexForSample(
-        const std::vector<const Bin*>& bins,
-        const std::vector<Real>& sample,
-        std::vector<int>& binIndex);
-}
+BinGrid buildBinGrid(const std::vector<const Bin*>& bins, int dataDimension);
+bool findBinIndexForSample(const std::vector<const Bin*>& bins, const std::vector<Real>& sample,
+                           std::vector<int>& binIndex);
+} // namespace BwhamBinning

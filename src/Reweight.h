@@ -1,17 +1,16 @@
-#pragma once 
+#pragma once
 
-#include "tools/Assert.h"
-#include "tools/OutputFunction.h"
-#include "tools/InputParser.h"
 #include "Bias.h"
-#include "tools/GenericFactory.h"
 #include "Wham.h"
+#include "tools/Assert.h"
+#include "tools/GenericFactory.h"
+#include "tools/InputParser.h"
+#include "tools/OutputFunction.h"
 
-#include <vector>
 #include <array>
-#include <string>
 #include <memory>
-
+#include <string>
+#include <vector>
 
 struct ReweightInput
 {
@@ -21,39 +20,38 @@ struct ReweightInput
 
 class Reweight
 {
-    public:
-        using outputfunc = std::function<void(std::string)>;
-        using outputptr = std::unique_ptr<Output>;
-        using Biasptr    = std::unique_ptr<Bias>;
-        Reweight(const ReweightInput& input);
+public:
+    using outputfunc = std::function<void(std::string)>;
+    using outputptr = std::unique_ptr<Output>;
+    using Biasptr = std::unique_ptr<Bias>;
+    Reweight(const ReweightInput& input);
 
-        void printOutput();
-        void checkOutputValidity();
+    void printOutput();
+    void checkOutputValidity();
 
-        virtual void calculate() = 0;
-    protected:
-        outputptr output_;
-        ParameterPack& pack_;
+    virtual void calculate() = 0;
 
-        // keep a record of the WHAM object 
-        Wham* wham_;
+protected:
+    outputptr output_;
+    ParameterPack& pack_;
 
-        std::vector<std::string> outputNames_;
-        std::vector<std::string> outputfileNames_;
+    // keep a record of the WHAM object
+    Wham* wham_;
 
-        int numBias_;
-        std::vector<Biasptr> Vectorbias_;
+    std::vector<std::string> outputNames_;
+    std::vector<std::string> outputfileNames_;
 
-        bool verbose_ = false;
+    int numBias_;
+    std::vector<Biasptr> Vectorbias_;
+
+    bool verbose_ = false;
 };
 
-namespace ReweightRegistry
-{
-    using Base = Reweight;
-    using Key  = std::string;
+namespace ReweightRegistry {
+using Base = Reweight;
+using Key = std::string;
 
-    using Factory = GenericFactory<Base,Key,const ReweightInput&>;
+using Factory = GenericFactory<Base, Key, const ReweightInput&>;
 
-    template<typename D>
-    using registry = RegisterInFactory<Base, D, Key, const ReweightInput&>;
-};
+template <typename D> using registry = RegisterInFactory<Base, D, Key, const ReweightInput&>;
+}; // namespace ReweightRegistry

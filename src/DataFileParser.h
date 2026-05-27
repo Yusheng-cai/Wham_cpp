@@ -3,23 +3,22 @@
 #include "tools/CommonTypes.h"
 #include "tools/InputParser.h"
 
+#include <iostream>
+#include <sstream>
 #include <string>
 #include <vector>
-#include <sstream>
-#include <iostream>
 
 class DataFileParser
 {
-    public:
-        DataFileParser(){};
-        template<typename T>
-        void ParseFile(std::string& name, std::vector<std::vector<T>>& input);
-    
-    private:
-        std::vector<std::string> comment_str = { "#", "@" };
+public:
+    DataFileParser() {};
+    template <typename T> void ParseFile(std::string& name, std::vector<std::vector<T>>& input);
+
+private:
+    std::vector<std::string> comment_str = {"#", "@"};
 };
 
-template<typename T>
+template <typename T>
 void DataFileParser::ParseFile(std::string& name, std::vector<std::vector<T>>& input)
 {
     std::ifstream file;
@@ -32,28 +31,23 @@ void DataFileParser::ParseFile(std::string& name, std::vector<std::vector<T>>& i
 
     std::string sentence;
 
-    while (std::getline(file, sentence))
-    {
+    while (std::getline(file, sentence)) {
         // see if the line is empty
-        if ( sentence.empty())
-        {
+        if (sentence.empty()) {
             continue;
         }
 
         // Find the comment symbol
         bool comment_ = false;
-        for (int i=0;i<comment_str.size();i++)
-        {
+        for (int i = 0; i < comment_str.size(); i++) {
             int found = sentence.find_first_of(comment_str[i]);
-            if (! (found == std::string::npos))
-            {
+            if (!(found == std::string::npos)) {
                 comment_ = true;
                 break;
             }
         }
 
-        if (comment_)
-        {
+        if (comment_) {
             continue;
         }
 
@@ -61,8 +55,7 @@ void DataFileParser::ParseFile(std::string& name, std::vector<std::vector<T>>& i
         std::vector<T> vec;
 
         ss.str(sentence);
-        while (ss >> num)
-        {
+        while (ss >> num) {
             vec.push_back(num);
         }
 

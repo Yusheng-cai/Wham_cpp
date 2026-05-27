@@ -1,143 +1,139 @@
-#pragma once 
+#pragma once
 #include "Assert.h"
 
 #include <algorithm>
-#include <iostream>
-#include <fstream>
-#include <map>
-#include <string>
-#include <vector>
-#include <sstream>
-#include <utility>
-#include <functional>
 #include <array>
+#include <fstream>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
-namespace StringTools
-{
-    // append an index to a name e.g. a.out -> a_1.out
-    template <typename T>
-    std::string AppendIndexToFileName(std::string str, T num, std::string delimiter=".");
+namespace StringTools {
+// append an index to a name e.g. a.out -> a_1.out
+template <typename T>
+std::string AppendIndexToFileName(std::string str, T num, std::string delimiter = ".");
 
-    template <typename T>
-    bool StringToType(std::string str, T& num);
+template <typename T> bool StringToType(std::string str, T& num);
 
-    template <typename T>
-    T StringToType(std::string str);
+template <typename T> T StringToType(std::string str);
 
-    template <typename T>
-    std::string TypeToString(T num);
+template <typename T> std::string TypeToString(T num);
 
-    void to_lower(std::string& str);
+void to_lower(std::string& str);
 
-    // Check if a string can be converted into a numeric number (float)
-    bool isNumber(std::string str);
+// Check if a string can be converted into a numeric number (float)
+bool isNumber(std::string str);
 
-    template<typename T>
-    bool VectorStringTransform(std::vector<std::string> vecstr, std::vector<T>& output);
+template <typename T>
+bool VectorStringTransform(std::vector<std::string> vecstr, std::vector<T>& output);
 
-    void RemoveBlankInString(std::string& str);
+void RemoveBlankInString(std::string& str);
 
-    // function that reads the file extension 
-    std::string ReadFileExtension(std::string filename);
+// function that reads the file extension
+std::string ReadFileExtension(std::string filename);
 
-    // function that reads the file name ignoring extension
-    std::string ReadFileName(std::string filename, std::string delimiter=".");
-}
-
+// function that reads the file name ignoring extension
+std::string ReadFileName(std::string filename, std::string delimiter = ".");
+} // namespace StringTools
 
 class ParameterPack
 {
-    public:
-        ParameterPack():packname_("default"){};
+public:
+    ParameterPack() : packname_("default") {};
 
-        // Instantiate the parameter pack by name 
-        ParameterPack(std::string packname):packname_(packname){};
-        ~ParameterPack(){};
+    // Instantiate the parameter pack by name
+    ParameterPack(std::string packname) : packname_(packname) {};
+    ~ParameterPack() {};
 
-        enum KeyType{
-            Required,
-            Optional
-        };
+    enum KeyType
+    {
+        Required,
+        Optional
+    };
 
-        // getters
-        std::string get_packname() const {return packname_;};
+    // getters
+    std::string get_packname() const { return packname_; };
 
-        // insert into the parameterpack object
-        std::string& insert(const std::string& key, const std::string& value);
-        std::vector<std::string>& insert(const std::string& key, const std::vector<std::string>& value);
-        ParameterPack& insert(const std::string& key, const ParameterPack& parampack);
+    // insert into the parameterpack object
+    std::string& insert(const std::string& key, const std::string& value);
+    std::vector<std::string>& insert(const std::string& key, const std::vector<std::string>& value);
+    ParameterPack& insert(const std::string& key, const ParameterPack& parampack);
 
-        // Find all instances of values in Parameter Pack that matches with key
-        // const function can be called by const + nonconst
-        // non-const function can only be called by non-const 
-        std::vector<const std::string*> findValues(const std::string& key, const KeyType) const;
-        const std::string* findValue(const std::string& key, const KeyType) const;
-        std::vector<const std::vector<std::string>*> findVectors(const std::string& key, const KeyType) const;
-        const std::vector<std::string>* findVector(const std::string& key, const KeyType) const;
-        std::vector<const ParameterPack*> findParamPacks(const std::string& key, const KeyType) const;
-        const ParameterPack* findParamPack(const std::string& key, const KeyType) const;
+    // Find all instances of values in Parameter Pack that matches with key
+    // const function can be called by const + nonconst
+    // non-const function can only be called by non-const
+    std::vector<const std::string*> findValues(const std::string& key, const KeyType) const;
+    const std::string* findValue(const std::string& key, const KeyType) const;
+    std::vector<const std::vector<std::string>*> findVectors(const std::string& key,
+                                                             const KeyType) const;
+    const std::vector<std::string>* findVector(const std::string& key, const KeyType) const;
+    std::vector<const ParameterPack*> findParamPacks(const std::string& key, const KeyType) const;
+    const ParameterPack* findParamPack(const std::string& key, const KeyType) const;
 
-        template <typename T>
-        bool ReadNumber(const std::string& key, const KeyType, T& val) const;
-        bool ReadString(const std::string& key, const KeyType, std::string& str) const;
-        bool Readbool(const std::string& key, const KeyType, bool& boolean) const;
+    template <typename T> bool ReadNumber(const std::string& key, const KeyType, T& val) const;
+    bool ReadString(const std::string& key, const KeyType, std::string& str) const;
+    bool Readbool(const std::string& key, const KeyType, bool& boolean) const;
 
-        template <typename T>
-        bool ReadVectorNumber(const std::string& key, const KeyType, std::vector<T>& vecval) const;
-        bool ReadVectorString(const std::string& key, const KeyType, std::vector<std::string>& vecstr) const;
+    template <typename T>
+    bool ReadVectorNumber(const std::string& key, const KeyType, std::vector<T>& vecval) const;
+    bool ReadVectorString(const std::string& key, const KeyType,
+                          std::vector<std::string>& vecstr) const;
 
-        template<typename T, std::size_t dim>
-        bool ReadArrayNumber(const std::string& key, const KeyType, std::array<T,dim>& arrval) const;
+    template <typename T, std::size_t dim>
+    bool ReadArrayNumber(const std::string& key, const KeyType, std::array<T, dim>& arrval) const;
 
-        void print();
- 
-    private:
-        std::multimap<std::string, std::string> value_;
-        std::multimap<std::string, std::vector<std::string>> vectors_;
-        std::multimap<std::string, ParameterPack> parampacks_;
-        std::string packname_;
+    void print();
+
+private:
+    std::multimap<std::string, std::string> value_;
+    std::multimap<std::string, std::vector<std::string>> vectors_;
+    std::multimap<std::string, ParameterPack> parampacks_;
+    std::string packname_;
 };
 
 class TokenStream
 {
-    public:
-        enum Status
-        {
-            Success, 
-            Close_Brace, // }
-            Open_Brace, // {
-            Open_bracket, // [
-            Close_bracket, // ]
-            Failure,
-            EndOfFile
-        };
+public:
+    enum Status
+    {
+        Success,
+        Close_Brace,   // }
+        Open_Brace,    // {
+        Open_bracket,  // [
+        Close_bracket, // ]
+        Failure,
+        EndOfFile
+    };
 
-        TokenStream(std::ifstream& ifstream):ifstream_(ifstream){};
+    TokenStream(std::ifstream& ifstream) : ifstream_(ifstream) {};
 
-        // This is the most general way of reading tokens, we should read tokens 1 by 1 instead of reading
-        // an entire line in first (former is more general) 
-        Status ReadNextToken(std::string& token);
-    private:   
-        std::ifstream& ifstream_;
-        std::stringstream line_stream_;
+    // This is the most general way of reading tokens, we should read tokens 1 by 1 instead of
+    // reading an entire line in first (former is more general)
+    Status ReadNextToken(std::string& token);
 
-        std::string comment_str_="#";
+private:
+    std::ifstream& ifstream_;
+    std::stringstream line_stream_;
+
+    std::string comment_str_ = "#";
 };
 
 class InputParser
 {
-    public:
-        InputParser(){};
-        ~InputParser(){};
-        void ParseFile(const std::string& filename, ParameterPack& parampack);
-        TokenStream::Status ParseNextToken(TokenStream& toks, ParameterPack& parampack);
-        TokenStream::Status ParseParamPack(TokenStream& toks, ParameterPack& parampack);
-        TokenStream::Status ParseVector(TokenStream& toks, std::vector<std::string>& vecvals);
+public:
+    InputParser() {};
+    ~InputParser() {};
+    void ParseFile(const std::string& filename, ParameterPack& parampack);
+    TokenStream::Status ParseNextToken(TokenStream& toks, ParameterPack& parampack);
+    TokenStream::Status ParseParamPack(TokenStream& toks, ParameterPack& parampack);
+    TokenStream::Status ParseVector(TokenStream& toks, std::vector<std::string>& vecvals);
 };
 
-
-template <typename T>
-bool StringTools::StringToType(std::string str, T& num)
+template <typename T> bool StringTools::StringToType(std::string str, T& num)
 {
     std::stringstream ss(str);
     ss >> num;
@@ -148,7 +144,7 @@ bool StringTools::StringToType(std::string str, T& num)
 template <typename T>
 std::string StringTools::AppendIndexToFileName(std::string str, T num, std::string delimiter)
 {
-    // find out the filename 
+    // find out the filename
     std::string fname = ReadFileName(str, delimiter);
     std::string extension = ReadFileExtension(str);
     std::string num_str = TypeToString(num);
@@ -158,21 +154,20 @@ std::string StringTools::AppendIndexToFileName(std::string str, T num, std::stri
     return ret;
 }
 
-template <typename T>
-T StringTools::StringToType(std::string str)
+template <typename T> T StringTools::StringToType(std::string str)
 {
     std::stringstream ss(str);
 
     T num;
     ss >> num;
 
-    ASSERT((! ss.fail()), "The conversion cannot be performed with string " << str);
+    ASSERT((!ss.fail()), "The conversion cannot be performed with string " << str);
 
     return num;
 }
 
-template <typename T>
-std::string StringTools::TypeToString(T num){
+template <typename T> std::string StringTools::TypeToString(T num)
+{
     std::stringstream ss;
     ss << num;
 
@@ -186,8 +181,7 @@ template <typename T>
 bool StringTools::VectorStringTransform(std::vector<std::string> vecstr, std::vector<T>& output)
 {
     output.clear();
-    for (auto str: vecstr)
-    {
+    for (auto str : vecstr) {
         T num;
         bool fail = StringTools::StringToType<T>(str, num);
         ASSERT((fail == false), "The read operation failed.");
@@ -198,13 +192,13 @@ bool StringTools::VectorStringTransform(std::vector<std::string> vecstr, std::ve
 }
 
 template <typename T>
-bool ParameterPack::ReadNumber(const std::string& key, const ParameterPack::KeyType keytype, T& val) const
+bool ParameterPack::ReadNumber(const std::string& key, const ParameterPack::KeyType keytype,
+                               T& val) const
 {
     auto str = findValue(key, keytype);
 
-    if (str != nullptr)
-    {
-        bool fail = StringTools::StringToType<T>(*str,val);
+    if (str != nullptr) {
+        bool fail = StringTools::StringToType<T>(*str, val);
 
         ASSERT((fail == false), "The read operation failed with key = " << key);
 
@@ -215,15 +209,14 @@ bool ParameterPack::ReadNumber(const std::string& key, const ParameterPack::KeyT
 }
 
 template <typename T>
-bool ParameterPack::ReadVectorNumber(const std::string& key, const ParameterPack::KeyType keytype, std::vector<T>& vecval) const
+bool ParameterPack::ReadVectorNumber(const std::string& key, const ParameterPack::KeyType keytype,
+                                     std::vector<T>& vecval) const
 {
     auto vecstr = findVector(key, keytype);
 
-    if (vecstr != nullptr)
-    {
+    if (vecstr != nullptr) {
         vecval.clear();
-        for (int i =0; i< vecstr->size();i++)
-        {
+        for (int i = 0; i < vecstr->size(); i++) {
             T val;
             bool fail = StringTools::StringToType<T>(vecstr->at(i), val);
             ASSERT((fail == false), "The read operation failed with key = " << key);
@@ -233,29 +226,27 @@ bool ParameterPack::ReadVectorNumber(const std::string& key, const ParameterPack
         return true;
     }
 
-        
     return false;
 }
 
 template <typename T, std::size_t dim>
-bool ParameterPack::ReadArrayNumber(const std::string& key, const ParameterPack::KeyType keytype, std::array<T,dim>& arrval) const
+bool ParameterPack::ReadArrayNumber(const std::string& key, const ParameterPack::KeyType keytype,
+                                    std::array<T, dim>& arrval) const
 {
     std::vector<T> vecval;
-    bool vecNum = ReadVectorNumber<T>(key,keytype, vecval);
+    bool vecNum = ReadVectorNumber<T>(key, keytype, vecval);
 
-    ASSERT((vecval.size() == dim), "In readArrayNumber, the read vector for key= " << key << " is " << vecval.size() << " while the required size is " << dim);
+    ASSERT((vecval.size() == dim), "In readArrayNumber, the read vector for key= "
+                                       << key << " is " << vecval.size()
+                                       << " while the required size is " << dim);
 
-    if (vecNum == true)
-    {
-        for (int i=0;i<dim;i++)
-        {
+    if (vecNum == true) {
+        for (int i = 0; i < dim; i++) {
             arrval[i] = vecval[i];
         }
 
         return true;
-    }
-    else
-    {
+    } else {
         return false;
     }
 }

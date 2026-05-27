@@ -13,8 +13,7 @@
 #include <string>
 #include <vector>
 
-namespace
-{
+namespace {
 bool near(double actual, double expected, double tolerance)
 {
     return std::abs(actual - expected) <= tolerance;
@@ -22,8 +21,7 @@ bool near(double actual, double expected, double tolerance)
 
 int require_true(const std::string& name, bool condition)
 {
-    if (!condition)
-    {
+    if (!condition) {
         std::cerr << name << " expected true\n";
         return 1;
     }
@@ -33,8 +31,7 @@ int require_true(const std::string& name, bool condition)
 
 int require_false(const std::string& name, bool condition)
 {
-    if (condition)
-    {
+    if (condition) {
         std::cerr << name << " expected false\n";
         return 1;
     }
@@ -42,11 +39,9 @@ int require_false(const std::string& name, bool condition)
     return 0;
 }
 
-template <typename T>
-int require_equal(const std::string& name, const T& actual, const T& expected)
+template <typename T> int require_equal(const std::string& name, const T& actual, const T& expected)
 {
-    if (actual != expected)
-    {
+    if (actual != expected) {
         std::cerr << name << " expected " << expected << " but got " << actual << "\n";
         return 1;
     }
@@ -56,8 +51,7 @@ int require_equal(const std::string& name, const T& actual, const T& expected)
 
 int require_near(const std::string& name, double actual, double expected, double tolerance)
 {
-    if (!near(actual, expected, tolerance))
-    {
+    if (!near(actual, expected, tolerance)) {
         std::cerr << name << " expected " << expected << " but got " << actual << "\n";
         return 1;
     }
@@ -92,10 +86,8 @@ ParameterPack make_squared_bias_pack()
     return pack;
 }
 
-ParameterPack make_bin_pack_with_dimension(
-    const std::vector<std::string>& range,
-    const std::string& numbins,
-    const std::string& dimension)
+ParameterPack make_bin_pack_with_dimension(const std::vector<std::string>& range,
+                                           const std::string& numbins, const std::string& dimension)
 {
     ParameterPack pack("bins");
     pack.insert("range", range);
@@ -135,47 +127,48 @@ int test_input_parser()
     bool enabled = false;
     std::vector<double> values;
 
-    failures += require_true(
-        "InputParser reads string",
-        pack.ReadString("title", ParameterPack::KeyType::Required, title));
+    failures += require_true("InputParser reads string",
+                             pack.ReadString("title", ParameterPack::KeyType::Required, title));
     failures += require_equal("InputParser string value", title, std::string("parser_smoke"));
 
-    failures += require_true(
-        "InputParser reads number",
-        pack.ReadNumber("temperature", ParameterPack::KeyType::Required, temperature));
+    failures +=
+        require_true("InputParser reads number",
+                     pack.ReadNumber("temperature", ParameterPack::KeyType::Required, temperature));
     failures += require_near("InputParser number value", temperature, 310.5, 1e-12);
 
-    failures += require_true(
-        "InputParser reads bool",
-        pack.Readbool("enabled", ParameterPack::KeyType::Required, enabled));
+    failures += require_true("InputParser reads bool",
+                             pack.Readbool("enabled", ParameterPack::KeyType::Required, enabled));
     failures += require_true("InputParser bool value", enabled);
 
-    failures += require_true(
-        "InputParser reads numeric vector",
-        pack.ReadVectorNumber("values", ParameterPack::KeyType::Required, values));
+    failures +=
+        require_true("InputParser reads numeric vector",
+                     pack.ReadVectorNumber("values", ParameterPack::KeyType::Required, values));
     failures += require_equal("InputParser vector size", static_cast<int>(values.size()), 3);
     failures += require_near("InputParser vector first", values[0], 1.0, 1e-12);
     failures += require_near("InputParser vector second", values[1], -2.5, 1e-12);
     failures += require_near("InputParser vector third", values[2], 3.25, 1e-12);
 
     std::string missing;
-    failures += require_false(
-        "InputParser optional missing string",
-        pack.ReadString("missing", ParameterPack::KeyType::Optional, missing));
+    failures +=
+        require_false("InputParser optional missing string",
+                      pack.ReadString("missing", ParameterPack::KeyType::Optional, missing));
 
     auto timeseries = pack.findParamPacks("timeseries", ParameterPack::KeyType::Required);
-    failures += require_equal("InputParser repeated pack count", static_cast<int>(timeseries.size()), 2);
+    failures +=
+        require_equal("InputParser repeated pack count", static_cast<int>(timeseries.size()), 2);
 
     std::string first_path;
     std::vector<int> second_columns;
     failures += require_true(
         "InputParser first nested path",
         timeseries[0]->ReadString("path", ParameterPack::KeyType::Required, first_path));
-    failures += require_equal("InputParser first nested path value", first_path, std::string("first.dat"));
-    failures += require_true(
-        "InputParser second nested columns",
-        timeseries[1]->ReadVectorNumber("columns", ParameterPack::KeyType::Required, second_columns));
-    failures += require_equal("InputParser second nested column count", static_cast<int>(second_columns.size()), 1);
+    failures +=
+        require_equal("InputParser first nested path value", first_path, std::string("first.dat"));
+    failures += require_true("InputParser second nested columns",
+                             timeseries[1]->ReadVectorNumber(
+                                 "columns", ParameterPack::KeyType::Required, second_columns));
+    failures += require_equal("InputParser second nested column count",
+                              static_cast<int>(second_columns.size()), 1);
     failures += require_equal("InputParser second nested column value", second_columns[0], 2);
 
     return failures;
@@ -183,20 +176,10 @@ int test_input_parser()
 
 int test_command_line_arguments()
 {
-    const char* raw_argv[] = {
-        "Wham",
-        "input.dat",
-        "-abspath",
-        "testdata",
-        "-window",
-        "-1.5",
-        "-0.25",
-        "--label",
-        "sample"
-    };
+    const char* raw_argv[] = {"Wham", "input.dat", "-abspath", "testdata", "-window",
+                              "-1.5", "-0.25",     "--label",  "sample"};
     std::vector<char*> argv;
-    for (const char* arg : raw_argv)
-    {
+    for (const char* arg : raw_argv) {
         argv.push_back(const_cast<char*>(arg));
     }
 
@@ -211,20 +194,22 @@ int test_command_line_arguments()
     failures += require_true("CommandLineArguments has abspath", args.has_key("abspath"));
     failures += require_true("CommandLineArguments has label", args.has_key("label"));
     failures += require_false("CommandLineArguments missing key", args.has_key("missing"));
-    failures += require_true(
-        "CommandLineArguments reads string",
-        args.readString("abspath", CommandLineArguments::Keys::Required, abspath));
-    failures += require_equal("CommandLineArguments string value", abspath, std::string("testdata"));
-    failures += require_true(
-        "CommandLineArguments reads double vector",
-        args.readVector("window", CommandLineArguments::Keys::Required, window));
-    failures += require_equal("CommandLineArguments vector size", static_cast<int>(window.size()), 2);
+    failures +=
+        require_true("CommandLineArguments reads string",
+                     args.readString("abspath", CommandLineArguments::Keys::Required, abspath));
+    failures +=
+        require_equal("CommandLineArguments string value", abspath, std::string("testdata"));
+    failures +=
+        require_true("CommandLineArguments reads double vector",
+                     args.readVector("window", CommandLineArguments::Keys::Required, window));
+    failures +=
+        require_equal("CommandLineArguments vector size", static_cast<int>(window.size()), 2);
     failures += require_near("CommandLineArguments negative first", window[0], -1.5, 1e-12);
     failures += require_near("CommandLineArguments negative second", window[1], -0.25, 1e-12);
-    failures += require_true(
-        "CommandLineArguments double dash key",
-        args.readString("label", CommandLineArguments::Keys::Required, label));
-    failures += require_equal("CommandLineArguments double dash value", label, std::string("sample"));
+    failures += require_true("CommandLineArguments double dash key",
+                             args.readString("label", CommandLineArguments::Keys::Required, label));
+    failures +=
+        require_equal("CommandLineArguments double dash value", label, std::string("sample"));
 
     return failures;
 }
@@ -261,7 +246,8 @@ int test_bwham_binning_helpers()
 
     int failures = 0;
     failures += require_equal("BwhamBinning total bins", grid.totalBins, 8);
-    failures += require_equal("BwhamBinning center count", static_cast<int>(grid.centers.size()), 8);
+    failures +=
+        require_equal("BwhamBinning center count", static_cast<int>(grid.centers.size()), 8);
 
     std::vector<int> lower_index{0, 0};
     std::vector<int> upper_index{1, 3};
@@ -273,22 +259,20 @@ int test_bwham_binning_helpers()
     failures += require_near("BwhamBinning upper center dim2", grid.centers[7][1], 0.75, 1e-12);
 
     std::vector<int> sample_index;
-    failures += require_true(
-        "BwhamBinning maps sample by declared dimensions",
-        BwhamBinning::findBinIndexForSample(bins, {1.2, 0.6}, sample_index));
+    failures += require_true("BwhamBinning maps sample by declared dimensions",
+                             BwhamBinning::findBinIndexForSample(bins, {1.2, 0.6}, sample_index));
     failures += require_equal("BwhamBinning sample dim1 index", sample_index[0], 1);
     failures += require_equal("BwhamBinning sample dim2 index", sample_index[1], 3);
 
     std::vector<const Bin*> reversed_bins{&dim2, &dim1};
-    failures += require_true(
-        "BwhamBinning maps sample independent of bin order",
-        BwhamBinning::findBinIndexForSample(reversed_bins, {1.2, 0.6}, sample_index));
+    failures +=
+        require_true("BwhamBinning maps sample independent of bin order",
+                     BwhamBinning::findBinIndexForSample(reversed_bins, {1.2, 0.6}, sample_index));
     failures += require_equal("BwhamBinning reversed sample dim1 index", sample_index[0], 1);
     failures += require_equal("BwhamBinning reversed sample dim2 index", sample_index[1], 3);
 
-    failures += require_false(
-        "BwhamBinning rejects upper bound",
-        BwhamBinning::findBinIndexForSample(bins, {1.2, 1.0}, sample_index));
+    failures += require_false("BwhamBinning rejects upper bound",
+                              BwhamBinning::findBinIndexForSample(bins, {1.2, 1.0}, sample_index));
 
     return failures;
 }
@@ -318,7 +302,7 @@ int test_biases()
 
     return failures;
 }
-}
+} // namespace
 
 int main()
 {

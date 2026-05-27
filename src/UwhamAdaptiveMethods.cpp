@@ -1,9 +1,9 @@
 #include "UwhamAdaptiveMethods.h"
 
 UwhamAdaptiveMethods::UwhamAdaptiveMethods(UwhamStrategyInput& input)
-:UWhamCalculationStrategy(input)
+    : UWhamCalculationStrategy(input)
 {
-    input.pack.ReadNumber("tolerance",ParameterPack::KeyType::Optional, tolerance_);
+    input.pack.ReadNumber("tolerance", ParameterPack::KeyType::Optional, tolerance_);
 }
 
 void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector<Real>& gradientNR)
@@ -14,14 +14,15 @@ void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector
     Eigen::VectorXd gradVec = Eigen::Map<Eigen::VectorXd>(grad.data(), Nsim);
 
     fnr.clear();
-    fnr.resize(Nsim,0.0);
+    fnr.resize(Nsim, 0.0);
 
-    // Find the hessian 
+    // Find the hessian
     Matrix<Real> hess = WhamTools::Hessian(BUki_, fk_, N_);
     Eigen::MatrixXd hessMat = Eigen::Map<Eigen::MatrixXd>(hess.data(), Nsim, Nsim);
-    Eigen::VectorXd Hinvg = (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
+    Eigen::VectorXd Hinvg =
+        (hessMat.transpose() * hessMat).ldlt().solve(hessMat.transpose() * gradVec);
 
-    for (int i=0;i<Nsim;i++){
+    for (int i = 0; i < Nsim; i++) {
         fnr[i] = fk_[i] - Hinvg[i];
     }
 
@@ -29,36 +30,35 @@ void UwhamAdaptiveMethods::NewtonRaphsonStep(std::vector<Real>& fnr, std::vector
     Real normalizedNR = fnr[0];
     fnr = fnr - normalizedNR;
 
-    gradientNR = WhamTools::Gradient(BUki_,fnr, N_);
+    gradientNR = WhamTools::Gradient(BUki_, fnr, N_);
 }
 
 void UwhamAdaptiveMethods::SelfConsistentStep(std::vector<Real>& fsc, std::vector<Real>& gradientSC)
 {
-    int Nsim  = BUki_.getNR();
+    int Nsim = BUki_.getNR();
     int Ndata = BUki_.getNC();
-    std::vector<Real> ones(Ndata , 1.0);
+    std::vector<Real> ones(Ndata, 1.0);
 
     fsc.clear();
     fsc.resize(Nsim, 0.0);
 
     std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
-    for (int i=0;i<Nsim;i++)
-    {
+    for (int i = 0; i < Nsim; i++) {
         std::vector<Real> column;
         column.resize(Ndata);
-        #pragma omp parallel for
-        for (int j=0;j<Ndata;j++){
-            column[j] = lnwji[j] - BUki_(i,j);
+#pragma omp parallel for
+        for (int j = 0; j < Ndata; j++) {
+            column[j] = lnwji[j] - BUki_(i, j);
         }
-        fsc[i] = -1.0*WhamTools::LogSumExpOMP(column, ones);
+        fsc[i] = -1.0 * WhamTools::LogSumExpOMP(column, ones);
     }
 
     Real SC_normalized = fsc[0];
-    for (int i=0;i<Nsim;i++){
+    for (int i = 0; i < Nsim; i++) {
         fsc[i] = fsc[i] - SC_normalized;
     }
 
-    gradientSC = WhamTools::Gradient(BUki_, fsc, N_);  
+    gradientSC = WhamTools::Gradient(BUki_, fsc, N_);
 }
 
 UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
@@ -67,15 +67,15 @@ UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
     fk_ = fk;
 
     int Nsim = BUki_.getNR();
-    int Ndata= BUki_.getNC();
+    int Ndata = BUki_.getNC();
 
     std::vector<Real> NRgradient(Nsim, 0.0);
     std::vector<Real> SCgradient(Nsim, 0.0);
 
-    fnr_.resize(Nsim,0.0);
-    fsc_.resize(Nsim,0.0);
+    fnr_.resize(Nsim, 0.0);
+    fsc_.resize(Nsim, 0.0);
     std::vector<Real> ones(Ndata, 1.0);
- 
+
     Eigen::VectorXd gradVec;
 
     bool converged = false;
@@ -84,35 +84,38 @@ UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
     int step = 1;
     std::vector<Real> norms;
 
-    while ( ! converged){
+    while (!converged) {
         // update Newton Raphson using current guess of fk
         NewtonRaphsonStep(fnr_, NRgradient);
         Real normNR = WhamTools::NormVector(NRgradient);
 
-        // update self consistent using current guess of fk 
-        SelfConsistentStep(fsc_, SCgradient); 
+        // update self consistent using current guess of fk
+        SelfConsistentStep(fsc_, SCgradient);
         Real normSC = WhamTools::NormVector(SCgradient);
 
-        if (normSC < normNR){
+        if (normSC < normNR) {
             err = calculateError(fsc_, fk_);
             fk_.assign(fsc_.begin(), fsc_.end());
             norms.push_back(std::sqrt(normSC));
-        }
-        else{
+        } else {
             err = calculateError(fnr_, fk_);
             fk_.assign(fnr_.begin(), fnr_.end());
             norms.push_back(std::sqrt(normNR));
         }
 
-        if ((print_every_ != -1) && (step % print_every_==0)) 
-        {
+        if ((print_every_ != -1) && (step % print_every_ == 0)) {
             std::cout << "self consistent norm is " << normSC << " NR norm is " << normNR << "\n";
-            if (normSC < normNR){std::cout << "Self consistent iteration is chosen because of lower norm." << "\n";}
-            else{std::cout << "Newton Raphson is chosen because of lower norm." << "\n";}
+            if (normSC < normNR) {
+                std::cout << "Self consistent iteration is chosen because of lower norm." << "\n";
+            } else {
+                std::cout << "Newton Raphson is chosen because of lower norm." << "\n";
+            }
             std::cout << "The error at step " << step << " is " << err << std::endl;
         }
 
-        if (err < tolerance_){converged = true;}
+        if (err < tolerance_) {
+            converged = true;
+        }
 
         step++;
     }
@@ -120,20 +123,18 @@ UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
     std::vector<Real> lnwji = WhamTools::calculatelnWi(BUki_, fk_, N_);
 
     // need to reweight lnwji
-    Real f = -1.0*WhamTools::LogSumExp(lnwji, ones);
+    Real f = -1.0 * WhamTools::LogSumExp(lnwji, ones);
 
-    #pragma omp parallel for 
-    for (int i=0;i<lnwji.size();i++)
-    {
+#pragma omp parallel for
+    for (int i = 0; i < lnwji.size(); i++) {
         lnwji[i] = f + lnwji[i];
     }
 
-    for (int i=0;i<fk_.size();i++)
-    {
+    for (int i = 0; i < fk_.size(); i++) {
         fk_[i] = fk_[i] - f;
     }
 
-    if (print_every_ != -1){
+    if (print_every_ != -1) {
         Real NLL_val = WhamTools::Uwham_NLL_equation(fk_, BUki_, N_);
         std::cout << "NLL value = " << NLL_val << "\n";
     }
@@ -141,7 +142,8 @@ UwhamStrategyResult UwhamAdaptiveMethods::calculate(const std::vector<Real>& fk)
     return {fk_, lnwji, norms};
 }
 
-UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi, const std::vector<Real>& fi_prev)
+UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vector<Real>& fi,
+                                                                const std::vector<Real>& fi_prev)
 {
     ASSERT((fi.size() == fi_prev.size()), "The sizes don't match in calculating error.");
     std::vector<Real> absdiff_;
@@ -149,16 +151,16 @@ UwhamAdaptiveMethods::Real UwhamAdaptiveMethods::calculateError(const std::vecto
     absdiff_.resize(fi.size());
     absprev_.resize(fi.size());
 
-    for (int i=0;i<absdiff_.size();i++){
+    for (int i = 0; i < absdiff_.size(); i++) {
         absdiff_[i] = std::abs(fi[i] - fi_prev[i]);
     }
 
-    for (int i=0;i<absprev_.size();i++){
+    for (int i = 0; i < absprev_.size(); i++) {
         absprev_[i] = std::abs(fi_prev[i]);
     }
 
-    auto it = std::max_element(absdiff_.begin(), absdiff_.end()-1);
-    auto itprev = std::max_element(absprev_.begin(), absprev_.end()-1);
+    auto it = std::max_element(absdiff_.begin(), absdiff_.end() - 1);
+    auto itprev = std::max_element(absprev_.begin(), absprev_.end() - 1);
 
-    return (*it)/(*itprev);
+    return (*it) / (*itprev);
 }

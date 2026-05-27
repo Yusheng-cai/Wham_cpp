@@ -7,17 +7,13 @@ void Random::seed()
 
 void Random::seedImpl()
 {
-    if (user_defined_seed) 
-    {
+    if (user_defined_seed) {
         std::cout << "Seed using user defined seed " << seed_ << std::endl;
         generator_ = std::mt19937(seed_);
-    }
-    else
-    {
+    } else {
         generator_ = std::mt19937(rd());
     }
 };
-
 
 Random::Real Random::DrawUniform()
 {
@@ -27,24 +23,25 @@ Random::Real Random::DrawUniform()
     return value;
 }
 
-Random::Real Random::DrawExponential(Real lambda){
+Random::Real Random::DrawExponential(Real lambda)
+{
     Real uniform = DrawUniform();
-    Real expr    = 0.0;
-    if (uniform > 0.0){
-        Real q = std::log(1.0/uniform);
-        expr   = q/lambda;
+    Real expr = 0.0;
+    if (uniform > 0.0) {
+        Real q = std::log(1.0 / uniform);
+        expr = q / lambda;
     }
 
     return expr;
 }
 
-Random::Real Random::DrawUniform_minmax(Real min, Real max){
+Random::Real Random::DrawUniform_minmax(Real min, Real max)
+{
     Real uniform = DrawUniform();
-    return min + (max - min)*uniform;
+    return min + (max - min) * uniform;
 }
 
 Random Random::_instance;
-
 
 std::vector<int> RandomTools::RandomPermute(int N, int num)
 {
@@ -54,8 +51,7 @@ std::vector<int> RandomTools::RandomPermute(int N, int num)
     std::random_shuffle(Index.begin(), Index.end());
 
     std::vector<int> Output(num);
-    for (int i=0;i<num;i++)
-    {
+    for (int i = 0; i < num; i++) {
         Output[i] = Index[i];
     }
 

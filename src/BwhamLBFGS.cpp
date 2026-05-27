@@ -1,12 +1,10 @@
 #include "BwhamLBFGS.h"
 
-namespace BwhamCalculationStrategyRegistry
-{
-    registry<BwhamLBFGS> registerLBFGS("LBFGS");
+namespace BwhamCalculationStrategyRegistry {
+registry<BwhamLBFGS> registerLBFGS("LBFGS");
 };
 
-BwhamLBFGS::BwhamLBFGS(BwhamStrategyInput& input)
-:BWhamCalculationStrategy(input)
+BwhamLBFGS::BwhamLBFGS(BwhamStrategyInput& input) : BWhamCalculationStrategy(input)
 {
     input.pack.ReadNumber("epsilon", ParameterPack::KeyType::Optional, epsilon_);
     input.pack.ReadNumber("max_iterations", ParameterPack::KeyType::Optional, max_iterations_);
@@ -24,14 +22,13 @@ void BwhamLBFGS::calculate()
     LBFGSpp::LBFGSSolver<Real> solver(Param);
 
     Eigen::VectorXd fk = Eigen::VectorXd::Zero(BWil_.getNR());
-    
+
     Real fx;
 
-    solver.minimize(*NLLeq_,fk, fx);
+    solver.minimize(*NLLeq_, fk, fx);
 
     Real normalize = fk[0];
-    for (int i=0;i<fk.size();i++)
-    {
+    for (int i = 0; i < fk.size(); i++) {
         fk_[i] = fk[i] - normalize;
     }
 
@@ -39,84 +36,74 @@ void BwhamLBFGS::calculate()
     lnpl_ = WhamTools::calculatelnpl(BWil_, Ml_, N_, fk_);
 }
 
-BwhamNLL::BwhamNLL(BwhamNLLInput& input)
-:N_(input.N_), BWil_(input.BWil) , Ml_(input.Ml_)
+BwhamNLL::BwhamNLL(BwhamNLLInput& input) : N_(input.N_), BWil_(input.BWil), Ml_(input.Ml_)
 {
-    fk_.resize(BWil_.getNR(),0.0);
+    fk_.resize(BWil_.getNR(), 0.0);
     N_fraction_.resize(BWil_.getNR());
     Ntot_ = 0;
 
-    for (int i=0;i<BWil_.getNR();i++)
-    {
-        Ntot_ += N_[i]; 
+    for (int i = 0; i < BWil_.getNR(); i++) {
+        Ntot_ += N_[i];
     }
 
-    for (int i=0;i<BWil_.getNR();i++)
-    {
-        N_fraction_[i] = N_[i]/Ntot_;
+    for (int i = 0; i < BWil_.getNR(); i++) {
+        N_fraction_[i] = N_[i] / Ntot_;
     }
 }
-
 
 BwhamNLL::Real BwhamNLL::operator()(Eigen::VectorXd& x, Eigen::VectorXd& grad)
 {
     int Nsim = BWil_.getNR();
-    int Ndata= BWil_.getNC();
+    int Ndata = BWil_.getNC();
 
-    ASSERT((x.size() == Nsim), "The dimension of fk does not match that of the number of simulation.");
+    ASSERT((x.size() == Nsim),
+           "The dimension of fk does not match that of the number of simulation.");
 
-    for (int i=0;i<x.size();i++)
-    {
+    for (int i = 0; i < x.size(); i++) {
         fk_[i] = x[i];
-        fk_[i]  -= x[Nsim-1];
+        fk_[i] -= x[Nsim - 1];
     }
 
     Real firstPart = 0.0;
 
-    for (int i=0;i<Nsim;i++)
-    {
+    for (int i = 0; i < Nsim; i++) {
         firstPart -= N_[i] * fk_[i];
     }
 
     Real secondPart = 0.0;
 
-    for (int i=0;i<Ndata;i++)
-    {
+    for (int i = 0; i < Ndata; i++) {
         std::vector<Real> temp(Nsim);
-        for (int j=0;j<Nsim;j++)
-        {
-            temp[j] = fk_[j] - BWil_(j,i);
+        for (int j = 0; j < Nsim; j++) {
+            temp[j] = fk_[j] - BWil_(j, i);
         }
 
-        if (Ml_[i] > 0.0)
-        {
-            secondPart += -Ml_[i] * std::log(Ml_[i]) + Ml_[i] * WhamTools::LogSumExp(temp,N_);
+        if (Ml_[i] > 0.0) {
+            secondPart += -Ml_[i] * std::log(Ml_[i]) + Ml_[i] * WhamTools::LogSumExp(temp, N_);
         }
     }
 
     auto gradient = WhamTools::BGradient(BWil_, Ml_, N_, fk_);
 
-    grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim); 
+    grad = Eigen::Map<Eigen::VectorXd>(gradient.data(), Nsim);
 
     // This step is especially important when the bin does not cover all the data points
-    Real sum_grad_=0.0;
-    for (int i=0;i<grad.size();i++)
-    {
+    Real sum_grad_ = 0.0;
+    for (int i = 0; i < grad.size(); i++) {
         sum_grad_ -= grad[i];
     }
 
-    #ifdef MY_DEBUG
+#ifdef MY_DEBUG
     std::cout << "New gradient for Bwham LBFGS" << std::endl;
-    for (int i=0;i<grad.size();i++)
-    {
+    for (int i = 0; i < grad.size(); i++) {
         std::cout << grad[i] << "\t";
     }
     std::cout << "\n";
-    std::cout << "Printing the value of the Bwham LBFGS function : " << firstPart + secondPart << std::endl;
-    #endif
+    std::cout << "Printing the value of the Bwham LBFGS function : " << firstPart + secondPart
+              << std::endl;
+#endif
 
-
-    grad[Nsim-1] +=  sum_grad_;
+    grad[Nsim - 1] += sum_grad_;
 
     return firstPart + secondPart;
 }

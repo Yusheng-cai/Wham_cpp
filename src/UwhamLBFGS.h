@@ -1,61 +1,63 @@
 #pragma once
+#include <iostream>
+
+#include "LBFGS/LBFGS.h"
 #include "Uwham.h"
 #include "Wham.h"
-#include "tools/CommonTypes.h"
-#include "LBFGS/LBFGS.h"
 #include "tools/CommonOperations.h"
+#include "tools/CommonTypes.h"
 
-#include <vector>
-#include <string>
 #include <array>
 #include <memory>
+#include <string>
+#include <vector>
 
 struct UwhamNLLInput
 {
     using Real = CommonTypes::Real;
     Matrix<Real>& BUki;
-    std::vector<Real>& N_; 
+    std::vector<Real>& N_;
 };
 
 class UwhamNLL
 {
-    public:
-        using Real = CommonTypes::Real;
+public:
+    using Real = CommonTypes::Real;
 
-        UwhamNLL(UwhamNLLInput& input);
+    UwhamNLL(UwhamNLLInput& input);
 
-        Real operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad);
+    Real operator()(const Eigen::VectorXd& x, Eigen::VectorXd& grad);
 
-        const std::vector<Eigen::VectorXd>& getDerivatives() const { return derives_;}
-        const std::vector<Real>& getNorms() const {return norms_;}
+    const std::vector<Eigen::VectorXd>& getDerivatives() const { return derives_; }
+    const std::vector<Real>& getNorms() const { return norms_; }
 
-    private:
-        Matrix<Real>& BUki_;
-        std::vector<Real>& N_;
-        std::vector<Real> N_fraction_;
+private:
+    Matrix<Real>& BUki_;
+    std::vector<Real>& N_;
+    std::vector<Real> N_fraction_;
 
-        // a vector that stores the derivativses
-        std::vector<Eigen::VectorXd> derives_;
-        std::vector<Real> norms_;
-        Real Ntot_ = 0.0;
-        std::vector<Real> fk_;
+    // a vector that stores the derivativses
+    std::vector<Eigen::VectorXd> derives_;
+    std::vector<Real> norms_;
+    Real Ntot_ = 0.0;
+    std::vector<Real> fk_;
 };
 
 class UwhamLBFGS : public UWhamCalculationStrategy
 {
-    public:
-        using NLLptr = std::unique_ptr<UwhamNLL>;
+public:
+    using NLLptr = std::unique_ptr<UwhamNLL>;
 
-        UwhamLBFGS(UwhamStrategyInput& input);
+    UwhamLBFGS(UwhamStrategyInput& input);
 
-        virtual UwhamStrategyResult calculate(const std::vector<Real>& fk);
-    
-    private:
-        NLLptr NLLeq_;
+    virtual UwhamStrategyResult calculate(const std::vector<Real>& fk);
 
-        Real epsilon_ = 1e-6;
+private:
+    NLLptr NLLeq_;
 
-        Real epsilon_rel_ = 0;
+    Real epsilon_ = 1e-6;
 
-        int max_iterations_ = 100;
+    Real epsilon_rel_ = 0;
+
+    int max_iterations_ = 100;
 };

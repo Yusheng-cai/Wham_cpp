@@ -1,14 +1,14 @@
 #pragma once
 
-#include "tools/CommonTypes.h"
 #include "Array.h"
-#include "Wham.h"
-#include "Eigen/Dense"
 #include "Eigen/Core"
+#include "Eigen/Dense"
+#include "Wham.h"
+#include "tools/CommonTypes.h"
 
-#include <vector>
-#include <string>
 #include <array>
+#include <string>
+#include <vector>
 
 struct UwhamStrategyInput
 {
@@ -30,20 +30,20 @@ struct UwhamStrategyResult
 
 class UWhamCalculationStrategy
 {
-    public:
-        using Real = CommonTypes::Real;
+public:
+    using Real = CommonTypes::Real;
 
-        UWhamCalculationStrategy(UwhamStrategyInput& input);
-        virtual ~UWhamCalculationStrategy(){};
+    UWhamCalculationStrategy(UwhamStrategyInput& input);
+    virtual ~UWhamCalculationStrategy() {};
 
-        virtual UwhamStrategyResult calculate(const std::vector<Real>& fk) = 0;
-        std::string getName() {return name_;}
+    virtual UwhamStrategyResult calculate(const std::vector<Real>& fk) = 0;
+    std::string getName() { return name_; }
 
-    protected:
-        Matrix<Real>& BUki_;
-        std::vector<Real>& N_;
+protected:
+    Matrix<Real>& BUki_;
+    std::vector<Real>& N_;
 
-        // print frequency
-        int print_every_=-1;
-        std::string name_;
+    // print frequency
+    int print_every_ = -1;
+    std::string name_;
 };

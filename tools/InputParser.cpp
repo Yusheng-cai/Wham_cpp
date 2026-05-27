@@ -2,7 +2,7 @@
 
 void StringTools::to_lower(std::string& str)
 {
-    std::for_each(str.begin(), str.end(), [](char& c){c = std::tolower(c);});
+    std::for_each(str.begin(), str.end(), [](char& c) { c = std::tolower(c); });
 }
 
 bool StringTools::isNumber(std::string str)
@@ -12,7 +12,7 @@ bool StringTools::isNumber(std::string str)
     float a;
     ss >> a;
 
-    return (! ss.fail());
+    return (!ss.fail());
 }
 
 void StringTools::RemoveBlankInString(std::string& str)
@@ -20,33 +20,38 @@ void StringTools::RemoveBlankInString(std::string& str)
     str.erase(std::remove(str.begin(), str.end(), ' '), str.end());
 }
 
-std::string StringTools::ReadFileExtension(std::string name){
+std::string StringTools::ReadFileExtension(std::string name)
+{
     std::size_t it = name.find_first_of(".");
-    std::string extension = name.substr(it+1);
-    ASSERT((extension.find_first_of(".") == std::string::npos), "The file name " << name << " is not valid.");
+    std::string extension = name.substr(it + 1);
+    ASSERT((extension.find_first_of(".") == std::string::npos),
+           "The file name " << name << " is not valid.");
 
     return extension;
 }
 
-std::string StringTools::ReadFileName(std::string name, std::string delimiter){
+std::string StringTools::ReadFileName(std::string name, std::string delimiter)
+{
     std::size_t it = name.find_last_of(delimiter);
-    std::string n = name.substr(0,it);
-    //ASSERT((n.find_last_of(delimiter) == std::string::npos), "The file name " << name << " is not valid.");
+    std::string n = name.substr(0, it);
+    // ASSERT((n.find_last_of(delimiter) == std::string::npos), "The file name " << name << " is not
+    // valid.");
 
     return n;
 }
 
-                            ////// Parameter packs ///////// 
+////// Parameter packs /////////
 std::string& ParameterPack::insert(const std::string& key, const std::string& value)
 {
-    auto new_it = value_.insert(std::make_pair(key,value));
+    auto new_it = value_.insert(std::make_pair(key, value));
 
     return new_it->second;
 }
 
-std::vector<std::string>& ParameterPack::insert(const std::string& key, const std::vector<std::string>& value)
+std::vector<std::string>& ParameterPack::insert(const std::string& key,
+                                                const std::vector<std::string>& value)
 {
-    auto new_it = vectors_.insert(std::make_pair(key,value));
+    auto new_it = vectors_.insert(std::make_pair(key, value));
 
     return new_it->second;
 }
@@ -61,135 +66,121 @@ ParameterPack& ParameterPack::insert(const std::string& key, const ParameterPack
 const std::string* ParameterPack::findValue(const std::string& key, KeyType keytype) const
 {
     std::vector<const std::string*> vec_str = findValues(key, keytype);
-    
-    if(keytype == ParameterPack::KeyType::Required)
-    {
+
+    if (keytype == ParameterPack::KeyType::Required) {
         // If the size is equal to 0, it would have been caught in findValues
         ASSERT((vec_str.size() == 1), "There's multiple definition for key: " << key << " ");
     }
 
-    if (vec_str.size() == 0)
-    {
+    if (vec_str.size() == 0) {
         return nullptr;
-    }
-    else
-    {
+    } else {
         return vec_str[0];
     }
-
 }
 
-
-std::vector<const std::string*> ParameterPack::findValues(const std::string& key, KeyType keytype) const
+std::vector<const std::string*> ParameterPack::findValues(const std::string& key,
+                                                          KeyType keytype) const
 {
     auto mapit = value_.equal_range(key);
 
     int num_matches = std::distance(mapit.first, mapit.second);
 
-    if (keytype == ParameterPack::KeyType::Required)
-    {
+    if (keytype == ParameterPack::KeyType::Required) {
         ASSERT((num_matches), "The required value for key: '" << key << "' is not provided.");
     }
 
     std::vector<const std::string*> ret;
-    for(auto it = mapit.first;it != mapit.second;it++)
-    {
+    for (auto it = mapit.first; it != mapit.second; it++) {
         ret.push_back(&(it->second));
     }
 
     return ret;
 }
 
-std::vector<const std::vector<std::string>*> ParameterPack::findVectors(const std::string& key, KeyType keytype) const
+std::vector<const std::vector<std::string>*> ParameterPack::findVectors(const std::string& key,
+                                                                        KeyType keytype) const
 {
     auto mapit = this->vectors_.equal_range(key);
 
     int num_matches = std::distance(mapit.first, mapit.second);
 
-    if (num_matches == 0)
-    {
-        ASSERT((keytype != ParameterPack::KeyType::Required), "The required key " << key << " for vector is not provided.");
+    if (num_matches == 0) {
+        ASSERT((keytype != ParameterPack::KeyType::Required),
+               "The required key " << key << " for vector is not provided.");
     }
 
     std::vector<const std::vector<std::string>*> vector_ptrs;
 
-    for ( auto it = mapit.first; it != mapit.second; ++it ) {
+    for (auto it = mapit.first; it != mapit.second; ++it) {
         vector_ptrs.push_back(&(it->second));
     }
 
     return vector_ptrs;
 }
 
-const std::vector<std::string>* ParameterPack::findVector(const std::string& key, const KeyType keytype) const
+const std::vector<std::string>* ParameterPack::findVector(const std::string& key,
+                                                          const KeyType keytype) const
 {
     std::vector<const std::vector<std::string>*> vecptrs = findVectors(key, keytype);
 
-     if(keytype == ParameterPack::KeyType::Required)
-    {
+    if (keytype == ParameterPack::KeyType::Required) {
         // If the size is equal to 0, it would have been caught in findValues
         ASSERT((vecptrs.size() == 1), "There's multiple definition for key: " << key << " ");
     }
 
-    if (vecptrs.size() == 0)
-    {
+    if (vecptrs.size() == 0) {
         return nullptr;
-    }
-    else
-    {
+    } else {
         return vecptrs[0];
     }
-
 }
 
-std::vector<const ParameterPack*> ParameterPack::findParamPacks(const std::string& key, const KeyType keytype) const
+std::vector<const ParameterPack*> ParameterPack::findParamPacks(const std::string& key,
+                                                                const KeyType keytype) const
 {
     auto mapit = this->parampacks_.equal_range(key);
 
     int num_matches = std::distance(mapit.first, mapit.second);
 
-    if (num_matches == 0)
-    {
-        ASSERT((keytype != ParameterPack::KeyType::Required), "The required key " << key << " for ParamPack is not provided.");
+    if (num_matches == 0) {
+        ASSERT((keytype != ParameterPack::KeyType::Required),
+               "The required key " << key << " for ParamPack is not provided.");
     }
 
     std::vector<const ParameterPack*> vec_param;
 
-    for (auto it = mapit.first; it != mapit.second; ++it)
-    {
-        vec_param.push_back(&(it -> second));
+    for (auto it = mapit.first; it != mapit.second; ++it) {
+        vec_param.push_back(&(it->second));
     }
 
     return vec_param;
 }
 
-const ParameterPack* ParameterPack::findParamPack(const std::string& key, const KeyType keytype) const
+const ParameterPack* ParameterPack::findParamPack(const std::string& key,
+                                                  const KeyType keytype) const
 {
     auto packs = findParamPacks(key, keytype);
 
-    if (keytype == ParameterPack::KeyType::Required)
-    {
-        ASSERT((packs.size() == 1), "Multiple instance found for parameter pack with name '"\
-        << key << "'");
+    if (keytype == ParameterPack::KeyType::Required) {
+        ASSERT((packs.size() == 1),
+               "Multiple instance found for parameter pack with name '" << key << "'");
     }
 
-    if (packs.size() == 0)
-    {
+    if (packs.size() == 0) {
         return nullptr;
-    }
-    else
-    {
+    } else {
         return packs[0];
     }
 }
 
-
-bool ParameterPack::ReadString(const std::string& key, const KeyType keytype, std::string& str) const
+bool ParameterPack::ReadString(const std::string& key, const KeyType keytype,
+                               std::string& str) const
 {
     const std::string* strPtr = findValue(key, keytype);
 
-    // This should only evaluate if it's an optional keytype & not found 
-    if(strPtr != nullptr)
-    {
+    // This should only evaluate if it's an optional keytype & not found
+    if (strPtr != nullptr) {
         str = *strPtr;
         return true;
     }
@@ -204,19 +195,16 @@ bool ParameterPack::Readbool(const std::string& key, const KeyType keytype, bool
     bool read = ReadString(key, keytype, temp_str);
     // StringTools::to_lower(temp_str);
 
-    if (read == true)
-    {
-        ASSERT((temp_str.compare("true") == 0 || temp_str.compare("false") == 0), \
-        "Failed to read a boolean as the input value is " << temp_str << " for key " << key);
+    if (read == true) {
+        ASSERT((temp_str.compare("true") == 0 || temp_str.compare("false") == 0),
+               "Failed to read a boolean as the input value is " << temp_str << " for key " << key);
 
-        if (temp_str.compare("true") == 0)
-        {
-            boolean  = true;
+        if (temp_str.compare("true") == 0) {
+            boolean = true;
             return true;
         }
 
-        if (temp_str.compare("false") == 0)
-        {
+        if (temp_str.compare("false") == 0) {
             boolean = false;
             return true;
         }
@@ -225,15 +213,14 @@ bool ParameterPack::Readbool(const std::string& key, const KeyType keytype, bool
     return false;
 }
 
-bool ParameterPack::ReadVectorString(const std::string& key, const KeyType keytype,std::vector<std::string>& vecstr) const
+bool ParameterPack::ReadVectorString(const std::string& key, const KeyType keytype,
+                                     std::vector<std::string>& vecstr) const
 {
     vecstr.clear();
     auto strvec = findVector(key, keytype);
 
-    if (strvec != nullptr)
-    {
-        for (int i=0;i< strvec->size();i++)
-        {
+    if (strvec != nullptr) {
+        for (int i = 0; i < strvec->size(); i++) {
             std::string str = strvec->at(i);
             // StringTools::to_lower(str);
             vecstr.push_back(str);
@@ -246,73 +233,64 @@ bool ParameterPack::ReadVectorString(const std::string& key, const KeyType keyty
 
 void ParameterPack::print()
 {
-    for (auto it = value_.begin(); it !=value_.end();it++)
-    {
-        std::cout << "Key for value is " << it -> first << std::endl;
+    for (auto it = value_.begin(); it != value_.end(); it++) {
+        std::cout << "Key for value is " << it->first << std::endl;
     }
 
-    for (auto it = vectors_.begin(); it != vectors_.end();it++)
-    {
-        std::cout << "Key for vector is " << it -> first << std::endl;
+    for (auto it = vectors_.begin(); it != vectors_.end(); it++) {
+        std::cout << "Key for vector is " << it->first << std::endl;
     }
 
-    for (auto it = parampacks_.begin();it != parampacks_.end(); it++)
-    {
-        std::cout << "Key for param pack is " << it ->first << std::endl;
-        for (auto it2 = it->second.parampacks_.begin(); it2 != it->second.parampacks_.end();it2++)
-        {
-            std::cout << "Key in param pack " << it -> first << " is " << it2 -> first << std::endl;
+    for (auto it = parampacks_.begin(); it != parampacks_.end(); it++) {
+        std::cout << "Key for param pack is " << it->first << std::endl;
+        for (auto it2 = it->second.parampacks_.begin(); it2 != it->second.parampacks_.end();
+             it2++) {
+            std::cout << "Key in param pack " << it->first << " is " << it2->first << std::endl;
         }
     }
 }
 
-                                        //// TokenStream ////
+//// TokenStream ////
 TokenStream::Status TokenStream::ReadNextToken(std::string& token)
 {
-    // clear the string for safety 
+    // clear the string for safety
     token.clear();
     std::string line;
 
     // try if we can read in a token from the line_stream_
-    if (line_stream_ >> token)
-    {
+    if (line_stream_ >> token) {
         // If the first token of the line_stream_ does not contain "#", it is a valid token
-        if (token.find_first_of(comment_str_) == std::string::npos)
-        {
+        if (token.find_first_of(comment_str_) == std::string::npos) {
             return TokenStream::Status::Success;
         }
         // else we read another line
-        else
-        {
+        else {
             line_stream_.str("");
             line_stream_.clear();
 
-            return this ->ReadNextToken(token);
+            return this->ReadNextToken(token);
         }
     }
     // elseif we can read a line
-    else if(std::getline(ifstream_,line))
-    {
+    else if (std::getline(ifstream_, line)) {
         line_stream_.clear(); // reset the ss state
         line_stream_.str(line);
-        return this -> ReadNextToken(token);
+        return this->ReadNextToken(token);
     }
     // See if EOF
-    else if(ifstream_.eof())
-    {
+    else if (ifstream_.eof()) {
         return Status::EndOfFile;
     }
     // Hopefully it doesn't get here
-    else
-    {
+    else {
         return Status::Failure;
     }
 }
 
-                    ///////// Input Parser ///////////
+///////// Input Parser ///////////
 void InputParser::ParseFile(const std::string& filename, ParameterPack& parampack)
 {
-    // instantiate the ifstream as well as the tokenstream 
+    // instantiate the ifstream as well as the tokenstream
     std::ifstream ifs(filename);
 
     // First Assert that the file has to be opened
@@ -322,11 +300,9 @@ void InputParser::ParseFile(const std::string& filename, ParameterPack& parampac
     TokenStream toks(ifs);
     TokenStream::Status status;
 
-    while(1)
-    {
-        status = ParseNextToken(toks, parampack); 
-        if(status == TokenStream::Status::EndOfFile)
-        {
+    while (1) {
+        status = ParseNextToken(toks, parampack);
+        if (status == TokenStream::Status::EndOfFile) {
             break;
         }
     }
@@ -338,21 +314,16 @@ TokenStream::Status InputParser::ParseNextToken(TokenStream& toks, ParameterPack
 
     std::string key, delimiter, value;
 
-    // Read in the key 
+    // Read in the key
     status = toks.ReadNextToken(key);
     ASSERT((status != TokenStream::Status::Failure), "Reading token failed.");
-    if (key == "}")
-    {
+    if (key == "}") {
         status = TokenStream::Status::Close_Brace;
         return status;
-    }
-    else if (status == TokenStream::Status::EndOfFile)
-    {
+    } else if (status == TokenStream::Status::EndOfFile) {
         status = TokenStream::Status::EndOfFile;
         return status;
-    }
-    else if (status == TokenStream::Status::Close_bracket)
-    {
+    } else if (status == TokenStream::Status::Close_bracket) {
         status = TokenStream::Status::Close_bracket;
         return status;
     }
@@ -365,16 +336,13 @@ TokenStream::Status InputParser::ParseNextToken(TokenStream& toks, ParameterPack
     // Read in the value
     status = toks.ReadNextToken(value);
     ASSERT((status != TokenStream::Status::Failure), "Reading value failed.");
-    if (value == "{")
-    {
+    if (value == "{") {
         // StringTools::to_lower(key);
         auto& new_param = parampack.insert(key, ParameterPack(key));
         status = ParseParamPack(toks, new_param);
 
         ASSERT((status == TokenStream::Status::Close_Brace), "Missing Ending Brace.");
-    }
-    else if (value == "[")
-    {
+    } else if (value == "[") {
         std::vector<std::string> vecvals;
         status = ParseVector(toks, vecvals);
 
@@ -383,12 +351,10 @@ TokenStream::Status InputParser::ParseNextToken(TokenStream& toks, ParameterPack
         // make the key lower case too allow for flexibility
         // StringTools::to_lower(key);
         parampack.insert(key, vecvals);
-    }
-    else
-    {
-        //StringTools::to_lower(key);
-        //StringTools::to_lower(value);
-        parampack.insert(key,value);
+    } else {
+        // StringTools::to_lower(key);
+        // StringTools::to_lower(value);
+        parampack.insert(key, value);
     }
 
     return TokenStream::Status::Success;
@@ -399,13 +365,11 @@ TokenStream::Status InputParser::ParseParamPack(TokenStream& toks, ParameterPack
     std::string token;
     TokenStream::Status status;
 
-    while(1)
-    { 
-        // Read the next Token 
+    while (1) {
+        // Read the next Token
         status = ParseNextToken(toks, parampack);
 
-        if (status == TokenStream::Status::Close_Brace || status == TokenStream::EndOfFile)
-        {
+        if (status == TokenStream::Status::Close_Brace || status == TokenStream::EndOfFile) {
             break;
         }
     }
@@ -419,20 +383,16 @@ TokenStream::Status InputParser::ParseVector(TokenStream& toks, std::vector<std:
 
     TokenStream::Status status;
 
-    while(1)
-    { 
+    while (1) {
         std::string token;
 
-        // Read the next Token 
+        // Read the next Token
         status = toks.ReadNextToken(token);
-        
-        if (token == "]")
-        {
+
+        if (token == "]") {
             status = TokenStream::Close_bracket;
             break;
-        }
-        else if (status == TokenStream::EndOfFile)
-        {
+        } else if (status == TokenStream::EndOfFile) {
             break;
         }
 

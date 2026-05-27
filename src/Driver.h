@@ -1,40 +1,40 @@
 #pragma once
+#include "Reweight.h"
+#include "TSoperation.h"
+#include "TimeSeries.h"
 #include "Wham.h"
-#include "tools/InputParser.h"
 #include "tools/CommandLineArguments.h"
 #include "tools/CommonTypes.h"
-#include "TimeSeries.h"
-#include "TSoperation.h"
-#include "Reweight.h"
+#include "tools/InputParser.h"
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <vector>
 
 class Driver
 {
-    public:
-        using Whamptr = std::unique_ptr<Wham>;
-        using tsptr   = std::shared_ptr<TimeSeries>;
-        using TSopptr = std::unique_ptr<TSoperation>;
-        using reweightptr = std::unique_ptr<Reweight>;
+public:
+    using WhamPtr = std::unique_ptr<Wham>;
+    using TimeSeriesPtr = std::shared_ptr<TimeSeries>;
+    using TimeSeriesOperationPtr = std::unique_ptr<TSoperation>;
+    using ReweightPtr = std::unique_ptr<Reweight>;
 
-        Driver(const ParameterPack& pack, const CommandLineArguments& cmd);
+    Driver(const ParameterPack& pack, const CommandLineArguments& cmd);
 
-        void InitializeWham();
-        void InitializeTSoperation();
-        void InitializeReweight();
-        void calculate();
-        void finishCalculate();
-        void printOutput();
+    void calculate();
+    void finishCalculate();
+    void printOutput();
 
-    private:
-        std::vector<Whamptr> VectorWhamCalc_;
-        std::vector<tsptr> VectorTimeSeries_;
-        std::vector<TSopptr> VectorTimeSeriesOP_;
-        std::vector<reweightptr> ReweightPtr_;
-        ParameterPack& pack_;
+private:
+    void initializeWham();
+    void initializeTimeSeriesOperations();
+    void initializeReweight();
 
-        // map the name of the wham calculation to the location of it in the vector
-        std::map<std::string, int> MapNameOfWhamToLoc_;
+    std::vector<WhamPtr> whamCalculations_;
+    std::vector<TimeSeriesPtr> timeSeries_;
+    std::vector<TimeSeriesOperationPtr> timeSeriesOperations_;
+    std::vector<ReweightPtr> reweights_;
+    ParameterPack& pack_;
+
+    std::map<std::string, int> whamNameToIndex_;
 };

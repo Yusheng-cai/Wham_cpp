@@ -1,15 +1,15 @@
-#pragma once 
+#pragma once
 
-#include "tools/OutputFunction.h"
 #include "TimeSeries.h"
 #include "tools/CommonTypes.h"
-#include "tools/InputParser.h"
 #include "tools/GenericFactory.h"
+#include "tools/InputParser.h"
+#include "tools/OutputFunction.h"
 
-#include <vector>
 #include <array>
-#include <string>
 #include <memory>
+#include <string>
+#include <vector>
 
 struct TSInput
 {
@@ -20,51 +20,49 @@ struct TSInput
 
 class TSoperation
 {
-    public:
-        using Real  = CommonTypes::Real;
-        using tsptr = std::shared_ptr<TimeSeries>;
-        using OutputFuncPtr = std::unique_ptr<Output>;
+public:
+    using Real = CommonTypes::Real;
+    using tsptr = std::shared_ptr<TimeSeries>;
+    using OutputFuncPtr = std::unique_ptr<Output>;
 
-        TSoperation(const TSInput& input);
+    TSoperation(const TSInput& input);
 
-        void combineData();
+    void combineData();
 
-        virtual void calculate() = 0;
-        virtual void print();
-        void printTotalData(std::string name);
-        void printTotalDataLength(std::string name);
-        void printMean(std::string name);
-        void printStd(std::string name);
-        void printLagTime(std::string name);
-    
-    protected:
-        std::vector<tsptr>& VectorTS_;
+    virtual void calculate() = 0;
+    virtual void print();
+    void printTotalData(std::string name);
+    void printTotalDataLength(std::string name);
+    void printMean(std::string name);
+    void printStd(std::string name);
+    void printLagTime(std::string name);
 
-        OutputFuncPtr outputs_;
+protected:
+    std::vector<tsptr>& VectorTS_;
 
-        ParameterPack& pack_;
+    OutputFuncPtr outputs_;
 
-        std::vector<std::string> VectorOutputNames_;
-        std::vector<std::string> VectorOutputFileNames_;
+    ParameterPack& pack_;
 
-        std::vector<std::vector<Real>> xi_;
+    std::vector<std::string> VectorOutputNames_;
+    std::vector<std::string> VectorOutputFileNames_;
 
-        std::vector<int> TotalDataLength_;
+    std::vector<std::vector<Real>> xi_;
 
-        std::vector<std::vector<Real>> averages_;
-        std::vector<std::vector<Real>> std_;
+    std::vector<int> TotalDataLength_;
 
-        // lag times
-        std::vector<Real> LongestLagTimes_;
+    std::vector<std::vector<Real>> averages_;
+    std::vector<std::vector<Real>> std_;
+
+    // lag times
+    std::vector<Real> LongestLagTimes_;
 };
 
-namespace timeseriesOP
-{
-    using Base = TSoperation;
-    using Key  = std::string;
+namespace timeseriesOP {
+using Base = TSoperation;
+using Key = std::string;
 
-    using Factory = GenericFactory<Base,Key,const TSInput&>;
+using Factory = GenericFactory<Base, Key, const TSInput&>;
 
-    template<typename D>
-    using registry = RegisterInFactory<Base, D, Key, const TSInput&>;
-}
+template <typename D> using registry = RegisterInFactory<Base, D, Key, const TSInput&>;
+} // namespace timeseriesOP

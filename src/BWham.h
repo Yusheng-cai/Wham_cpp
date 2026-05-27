@@ -1,52 +1,47 @@
 #pragma once
+#include "Array.h"
+#include "Bin.h"
+#include "BwhamCalculationStrategy.h"
 #include "Wham.h"
 #include "tools/Assert.h"
 #include "tools/CommonTypes.h"
-#include "Bin.h"
-#include "Array.h"
-#include "BwhamCalculationStrategy.h"
 
-#include <vector>
+#include <iomanip>
 #include <map>
 #include <memory>
-#include <iomanip>
+#include <vector>
 
 class Bwham : public Wham
 {
-    public:
-        using Binptr = std::unique_ptr<Bin>; 
-        using stratptr = std::unique_ptr<BWhamCalculationStrategy>;
+public:
+    using BinPtr = std::unique_ptr<Bin>;
+    using StrategyPtr = std::unique_ptr<BWhamCalculationStrategy>;
 
-        Bwham(const WhamInput& input);
+    Bwham(const WhamInput& input);
 
-        virtual void calculate() override;
-        virtual std::string type() override {return "Bwham";}
+    virtual void calculate() override;
+    virtual std::string type() override { return "Bwham"; }
 
-        void printlnpl(std::string name);
-    
-    private:
-        void initializeBinnedGrid();
-        void countDataPerBin();
-        void initializeWil();
-        void initializeStrategy();
+    void printlnpl(std::string name);
 
-        std::vector<Binptr> Bins_;
-        std::vector<std::vector<Real>> centerBins_;
+private:
+    void initializeBinnedGrid();
+    void countDataPerBin();
+    void initializeWil();
+    void initializeStrategy();
 
-        // total number of bins
-        int TotalBins_ = 0;
+    std::vector<BinPtr> bins_;
+    std::vector<std::vector<Real>> centerBins_;
 
-        Matrix<Real> BWil_;
+    int totalBins_ = 0;
 
-        // map from index of bins to index in centerBins_
-        std::map<std::vector<int>, int> MapBinIndexToIndex_;
+    Matrix<Real> reducedBias_;
 
-        // Number of data per bin 
-        std::vector<Real> Ml_;
+    std::map<std::vector<int>, int> binIndexToFlat_;
 
-        // pointer to the strategy
-        stratptr strat_;
+    std::vector<Real> countsPerBin_;
 
-        // store the outputs of the normalization as well as lnpl
-        std::vector<Real> lnpl_;
+    StrategyPtr strategy_;
+
+    std::vector<Real> lnpl_;
 };

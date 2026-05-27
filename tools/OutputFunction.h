@@ -1,24 +1,24 @@
 #pragma once
-#include "CommonTypes.h"
 #include "Assert.h"
+#include "CommonTypes.h"
 
-#include <functional>
-#include <vector>
-#include <map>
 #include <array>
+#include <functional>
+#include <map>
+#include <vector>
 
 class Output
 {
-    public:
-        using outputFunc = std::function<void(std::string name)>;
+public:
+    using outputFunc = std::function<void(std::string name)>;
 
-        Output() = default;
+    Output() = default;
 
-        void registerOutputFunc(std::string name, outputFunc func);
-        outputFunc& getOutputFuncByName(std::string name);
+    void registerOutputFunc(std::string name, outputFunc func);
+    outputFunc& getOutputFuncByName(std::string name);
 
-        bool isregistered(std::string name);
+    bool isregistered(std::string name);
 
-    private:
-        std::map<std::string, outputFunc> MapNameToOutputFunc_;
+private:
+    std::map<std::string, outputFunc> MapNameToOutputFunc_;
 };
