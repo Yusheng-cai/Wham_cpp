@@ -5,6 +5,9 @@
 hand is repetitive. The repository includes a small generator that converts a
 compact JSON specification into the native input format.
 
+For the meaning of WHAM methods, strategies, bias models, and outputs, see
+[wham-methods.md](wham-methods.md).
+
 ## Quick Start
 
 Generate a native input file from the bundled 1D UWHAM example:
@@ -130,6 +133,35 @@ block per dimension.
 ```
 
 The generator emits matching native `outputs` and `outputFile` vectors.
+
+## Native Input Blocks
+
+The generated file uses the same block structure that `build/bin/Wham` reads
+directly:
+
+```text
+timeseries = {
+    path = US_0.000.dat
+    columns = [ 2 ]
+    skipfrombeginning = -1000
+}
+
+bias = {
+    dimension = 1
+    xstar = [ 0.0 ]
+    kappa = [ 1000 ]
+    temperature = 300
+}
+
+wham = {
+    name = w
+    type = Uwham
+    outputs = [ pji normalization ]
+    outputFile = [ pji.out norm.out ]
+}
+```
+
+Multiple `timeseries` and `bias` blocks are matched in input order.
 
 ## Template
 

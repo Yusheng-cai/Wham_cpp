@@ -105,6 +105,12 @@ python3 tools/generate_wham_input.py examples/input_specs/uwham_1d.json -o input
 See [docs/input-format.md](docs/input-format.md) for the JSON schema, native
 template, and examples.
 
+## Documentation
+
+- [Input format and generator](docs/input-format.md)
+- [WHAM methods and options](docs/wham-methods.md)
+- [Build and test guide](docs/build-and-test.md)
+
 ## Example Inputs
 
 - `examples/input_specs/uwham_1d.json`: compact 1D UWHAM generator input.
