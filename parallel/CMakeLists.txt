@@ -5,7 +5,6 @@ target_sources(WHAMparallel PRIVATE
 )
 
 set(WHAMPARALLEL_HEADER
-    "MPI_environment.h"
     "OpenMP_buffer.h"
     "OpenMP.h")
 
@@ -25,4 +24,3 @@ include(InstallLibraryWithStandardSetup)
 InstallLibraryWithStandardSetup(WHAMparallel 
     INCLUDE_SUBDIR WHAMparallel 
     INCLUDES ${WHAMPARALLEL_HEADER})
-    

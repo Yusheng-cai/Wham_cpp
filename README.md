@@ -107,10 +107,9 @@ template, and examples.
 
 ## Example Inputs
 
-- `scripts/input.dat`: 1D UWHAM example using an adaptive strategy.
+- `examples/input_specs/uwham_1d.json`: compact 1D UWHAM generator input.
+- `examples/templates/uwham_1d.dat`: native 1D UWHAM copy/edit template.
 - `scripts/inputBwham.dat`: BWHAM example using L-BFGS.
-- `scripts/input2d.dat`: 2D UWHAM example.
-- `scripts/inputpp.dat`: Example with additional time-series processing.
 
 ## Validation
 
