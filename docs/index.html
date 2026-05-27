@@ -4,6 +4,18 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Wham_cpp Documentation</title>
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['\\(', '\\)']],
+        displayMath: [['\\[', '\\]']]
+      },
+      svg: {
+        fontCache: 'global'
+      }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
   <style>
     :root {
       color-scheme: light;
@@ -141,7 +153,16 @@
     }
 
     .equation {
+      overflow-x: auto;
+      margin: 12px 0 18px;
+      padding: 14px 16px;
       border-left: 4px solid var(--accent);
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .equation mjx-container {
+      margin: 0 !important;
     }
 
     footer {
@@ -248,23 +269,60 @@ write requested outputs</code></pre>
     <section id="equations">
       <h2>Core Equations</h2>
       <p>
-        Let <code>N_k</code> be the number of samples in window <code>k</code>,
-        <code>B_{k,i} = beta U_k(x_i)</code> be the reduced bias energy, and
-        <code>f_k</code> be the reduced free-energy normalization constant.
+        Let \(N_k\) be the number of samples in window \(k\),
+        \(B_{k,i} = \beta U_k(x_i)\) be the reduced bias energy, and
+        \(f_k\) be the reduced free-energy normalization constant.
       </p>
 
       <h3>UWHAM Objective</h3>
-      <pre class="equation"><code>A(f) = - sum_k N_k f_k
-       + sum_i log[ sum_k (N_k / N_tot) exp(f_k - B_{k,i}) ]</code></pre>
+      <div class="equation">
+        \[
+        A(f) =
+        -\sum_k N_k f_k
+        + \sum_i \log\left[
+          \sum_k \frac{N_k}{N_{\mathrm{tot}}}
+          \exp\left(f_k - B_{k,i}\right)
+        \right]
+        \]
+      </div>
 
       <h3>Sample Log Weight</h3>
-      <pre class="equation"><code>ln w_i = -log[ sum_k N_k exp(f_k - B_{k,i}) ]</code></pre>
+      <div class="equation">
+        \[
+        \ln w_i =
+        -\log\left[
+          \sum_k N_k \exp\left(f_k - B_{k,i}\right)
+        \right]
+        \]
+      </div>
 
       <h3>Adaptive Candidates</h3>
-      <pre class="equation"><code>f_k^SC = -log[ sum_i exp(ln w_i - B_{k,i}) ]
+      <div class="equation">
+        \[
+        f_k^{\mathrm{SC}} =
+        -\log\left[
+          \sum_i \exp\left(\ln w_i - B_{k,i}\right)
+        \right]
+        \]
+      </div>
+      <div class="equation">
+        \[
+        \left(H^T H\right)\Delta = H^T \nabla A,
+        \qquad
+        f^{\mathrm{NR}} = f - \Delta
+        \]
+      </div>
 
-(H^T H) delta = H^T grad
-f^NR = f - delta</code></pre>
+      <h3>BWHAM Probability</h3>
+      <div class="equation">
+        \[
+        \ln p_l =
+        \log M_l -
+        \log\left[
+          \sum_k N_k \exp\left(f_k - B_{k,l}\right)
+        \right]
+        \]
+      </div>
 
       <p>
         The adaptive solver evaluates both the self-consistent and Newton-Raphson
