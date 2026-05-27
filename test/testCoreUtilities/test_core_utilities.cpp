@@ -1,4 +1,5 @@
 #include "src/Bin.h"
+#include "src/BwhamBinning.h"
 #include "src/SimpleBias.h"
 #include "src/SquaredBias.h"
 #include "tools/CommandLineArguments.h"
@@ -88,6 +89,18 @@ ParameterPack make_squared_bias_pack()
     ParameterPack pack("bias");
     pack.insert("dimension", "2");
     pack.insert("phi", std::vector<std::string>{"2.0", "0.5"});
+    return pack;
+}
+
+ParameterPack make_bin_pack_with_dimension(
+    const std::vector<std::string>& range,
+    const std::string& numbins,
+    const std::string& dimension)
+{
+    ParameterPack pack("bins");
+    pack.insert("range", range);
+    pack.insert("numbins", numbins);
+    pack.insert("dimension", dimension);
     return pack;
 }
 
@@ -236,6 +249,50 @@ int test_bin()
     return failures;
 }
 
+int test_bwham_binning_helpers()
+{
+    ParameterPack dim1_pack = make_bin_pack_with_dimension({"0.0", "2.0"}, "2", "1");
+    ParameterPack dim2_pack = make_bin_pack_with_dimension({"-1.0", "1.0"}, "4", "2");
+    Bin dim1(dim1_pack);
+    Bin dim2(dim2_pack);
+    std::vector<const Bin*> bins{&dim1, &dim2};
+
+    BwhamBinning::BinGrid grid = BwhamBinning::buildBinGrid(bins, 2);
+
+    int failures = 0;
+    failures += require_equal("BwhamBinning total bins", grid.totalBins, 8);
+    failures += require_equal("BwhamBinning center count", static_cast<int>(grid.centers.size()), 8);
+
+    std::vector<int> lower_index{0, 0};
+    std::vector<int> upper_index{1, 3};
+    failures += require_equal("BwhamBinning lower flat index", grid.indexToFlat.at(lower_index), 0);
+    failures += require_equal("BwhamBinning upper flat index", grid.indexToFlat.at(upper_index), 7);
+    failures += require_near("BwhamBinning lower center dim1", grid.centers[0][0], 0.5, 1e-12);
+    failures += require_near("BwhamBinning lower center dim2", grid.centers[0][1], -0.75, 1e-12);
+    failures += require_near("BwhamBinning upper center dim1", grid.centers[7][0], 1.5, 1e-12);
+    failures += require_near("BwhamBinning upper center dim2", grid.centers[7][1], 0.75, 1e-12);
+
+    std::vector<int> sample_index;
+    failures += require_true(
+        "BwhamBinning maps sample by declared dimensions",
+        BwhamBinning::findBinIndexForSample(bins, {1.2, 0.6}, sample_index));
+    failures += require_equal("BwhamBinning sample dim1 index", sample_index[0], 1);
+    failures += require_equal("BwhamBinning sample dim2 index", sample_index[1], 3);
+
+    std::vector<const Bin*> reversed_bins{&dim2, &dim1};
+    failures += require_true(
+        "BwhamBinning maps sample independent of bin order",
+        BwhamBinning::findBinIndexForSample(reversed_bins, {1.2, 0.6}, sample_index));
+    failures += require_equal("BwhamBinning reversed sample dim1 index", sample_index[0], 1);
+    failures += require_equal("BwhamBinning reversed sample dim2 index", sample_index[1], 3);
+
+    failures += require_false(
+        "BwhamBinning rejects upper bound",
+        BwhamBinning::findBinIndexForSample(bins, {1.2, 1.0}, sample_index));
+
+    return failures;
+}
+
 int test_biases()
 {
     SimpleBias simple(make_simple_bias_pack());
@@ -269,6 +326,7 @@ int main()
     failures += test_input_parser();
     failures += test_command_line_arguments();
     failures += test_bin();
+    failures += test_bwham_binning_helpers();
     failures += test_biases();
 
     return failures == 0 ? 0 : 1;

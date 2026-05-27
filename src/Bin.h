@@ -15,8 +15,8 @@ class Bin
 
         Bin(const ParameterPack& pack);
 
-        int findBin(Real data);
-        bool isInRange(Real data);
+        int findBin(Real data) const;
+        bool isInRange(Real data) const;
 
         Range getRange() const {return range_;}
         int getNumbins() const {return numbins_;}

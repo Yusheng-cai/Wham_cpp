@@ -1,4 +1,21 @@
 #include "BWham.h"
+#include "BwhamBinning.h"
+
+namespace
+{
+std::vector<const Bin*> collectBins(const std::vector<Bwham::Binptr>& bins)
+{
+    std::vector<const Bin*> refs;
+    refs.reserve(bins.size());
+
+    for (const auto& bin : bins)
+    {
+        refs.push_back(bin.get());
+    }
+
+    return refs;
+}
+}
 
 namespace WhamRegistry
 {
@@ -8,10 +25,9 @@ namespace WhamRegistry
 Bwham::Bwham(const WhamInput& input)
 :Wham(input)
 {
-    // initialize Wil
+    initializeBinnedGrid();
+    countDataPerBin();
     initializeWil();
-
-    // initialize the strategy
     initializeStrategy();
 
     registerOutput("lnpl", [this](std::string name)->void { this -> printlnpl(name);});
@@ -47,79 +63,25 @@ void Bwham::calculate()
     lnpl_ = strat_ -> getlnpl();
 }
 
-void Bwham::initializeBins()
+void Bwham::initializeBinnedGrid()
 {
-    auto WhamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
+    auto whamPack = pack_.findParamPack("wham", ParameterPack::KeyType::Required);
 
-    // bins are required for Binned wham 
-    auto BinPacks = WhamPack->findParamPacks("bins", ParameterPack::KeyType::Required);
+    auto binPacks = whamPack->findParamPacks("bins", ParameterPack::KeyType::Required);
 
-    TotalBins_ = 1;
-    for (int i=0;i<BinPacks.size();i++)
+    Bins_.clear();
+    centerBins_.clear();
+    MapBinIndexToIndex_.clear();
+
+    for (const auto& binPack : binPacks)
     {
-        Bins_.push_back(Binptr(new Bin(*BinPacks[i])));
-        TotalBins_ = TotalBins_ * Bins_[i]->getNumbins();
+        Bins_.push_back(Binptr(new Bin(*binPack)));
     }
 
-    ASSERT((Bins_.size() == dimension_), "The dimension of bin is " << Bins_.size() << " while dimension for data is " << dimension_);
-
-    // number of Bins is the dimension
-    dimension_ = Bins_.size();
-
-    ASSERT((dimension_ <= 2), "Currently not performing any larger dimensions than 2 while user have supplied " << dimension_);
-
-    if (dimension_ == 2)
-    {
-        int index = 0;
-        for(int i=0;i<Bins_[0]->getNumbins();i++)
-        {
-            for (int j=0;j<Bins_[1]->getNumbins();j++)
-            {
-                Real outerData = Bins_[0] -> getLocationOfBin(i);
-                Real innerData = Bins_[1] -> getLocationOfBin(j);
-                int dim1 = Bins_[0] -> getDimension() - 1;
-                int dim2 = Bins_[0] -> getDimension() - 1;
-
-                std::vector<Real> data(2);
-                std::vector<int> BinIndex_(2);
-
-                data[dim1] = outerData;
-                data[dim2] = innerData;
-                BinIndex_[dim1] = i;
-                BinIndex_[dim2] = j;
-
-                centerBins_.push_back(data);
-                auto it = MapBinIndexToIndex_.find(BinIndex_);
-
-                ASSERT((it == MapBinIndexToIndex_.end()), "There is duplicate in the bin index.");
-                MapBinIndexToIndex_.insert(std::make_pair(BinIndex_,index));
-                index ++;
-            }
-        }
-    }
-    else
-    {
-        for(int i=0;i<Bins_[0] -> getNumbins();i++)
-        {
-            std::vector<Real> data(1,Bins_[0] -> getLocationOfBin(i));
-            std::vector<int> BinIndex_(1, i);
-
-            centerBins_.push_back(data);
-            auto it = MapBinIndexToIndex_.find(BinIndex_);
-            ASSERT((it == MapBinIndexToIndex_.end()), "There is duplicate bin index.");
-
-            MapBinIndexToIndex_.insert(std::make_pair(BinIndex_,i));
-        }
-    }
-
-    // for (int i=0;i<centerBins_.size();i++)
-    // {
-    //     for (int j=0;j<dimension_;j++)
-    //     {
-    //         std::cout << centerBins_[i][j] << "\t";
-    //     }
-    //     std::cout << "\n";
-    // }
+    BwhamBinning::BinGrid grid = BwhamBinning::buildBinGrid(collectBins(Bins_), dimension_);
+    TotalBins_ = grid.totalBins;
+    centerBins_ = std::move(grid.centers);
+    MapBinIndexToIndex_ = std::move(grid.indexToFlat);
 }
 
 void Bwham::initializeWil()
@@ -145,45 +107,20 @@ void Bwham::initializeStrategy()
     strat_ = stratptr(BwhamCalculationStrategyRegistry::Factory::instance().create(strategyType, input));
 }
 
-void Bwham::bindata()
+void Bwham::countDataPerBin()
 {
-    // Resize Ml to be size of total number of bins
-    Ml_.resize(TotalBins_,0);
+    Ml_.assign(TotalBins_, 0);
+    const auto bins = collectBins(Bins_);
 
-    for (int i=0;i<xi_.size();i++)
+    for (const auto& sample : xi_)
     {
-        std::vector<int> BinsIndex(Bins_.size());
-        bool inRange = true;
-        for(int j=0;j<Bins_.size();j++)
+        std::vector<int> binIndex;
+        if (BwhamBinning::findBinIndexForSample(bins, sample, binIndex))
         {
-            int dim = Bins_[j] -> getDimension() - 1;
-            if (Bins_[j]->isInRange(xi_[i][j]))
-            {
-                BinsIndex[j] = Bins_[j] -> findBin(xi_[i][j]);
-            }
-            else
-            {
-                inRange = false;
-                break;
-            }
+            auto it = MapBinIndexToIndex_.find(binIndex);
+            ASSERT((it != MapBinIndexToIndex_.end()), "The BWHAM bin index is not found.");
+            Ml_[it->second] += 1;
         }
-
-        if (inRange)
-        {
-            auto it = MapBinIndexToIndex_.find(BinsIndex);
-
-            ASSERT((it != MapBinIndexToIndex_.end()), "The bins index is not found");
-            int index = it -> second;
-
-            Ml_[index] += 1;
-        }
-    }
-
-    // check if there is any Ml that are zero
-
-    for (int i=0;i<Ml_.size();i++)
-    {
-        ASSERT((Ml_[i] >= 0), "The number of data at bin " << i << " is 0.");
     }
 
     #ifdef MY_DEBUG

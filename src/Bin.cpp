@@ -10,13 +10,13 @@ Bin::Bin(const ParameterPack& pack){
     step_ = (range_[1] - range_[0])/numbins_;
 }
 
-int Bin::findBin(Real x){
+int Bin::findBin(Real x) const{
     int index = std::floor((x - range_[0])/step_);
 
     return index;
 }
 
-bool Bin::isInRange(Real data){
+bool Bin::isInRange(Real data) const{
     if (data >= range_[0] && data < range_[1]){return true;}
     else{return false;}
 }

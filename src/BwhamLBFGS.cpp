@@ -37,12 +37,6 @@ void BwhamLBFGS::calculate()
 
     // obtain the lnpl
     lnpl_ = WhamTools::calculatelnpl(BWil_, Ml_, N_, fk_);
-
-    // #pragma omp parallel for 
-    // for (int i=0;i<lnwji_.size();i++)
-    // {
-    //     lnwji_[i] = f + lnwji_[i];
-    // }
 }
 
 BwhamNLL::BwhamNLL(BwhamNLLInput& input)

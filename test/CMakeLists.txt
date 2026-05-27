@@ -64,5 +64,12 @@ add_test(NAME testCoreUtilities COMMAND testCoreUtilities)
 add_test(NAME testGenerateWhamInput
          COMMAND ${PYTHON3_PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/testInputGenerator/test_generate_wham_input.py)
 
+add_test(NAME testBwhamSmoke
+         COMMAND ${PYTHON3_PROGRAM}
+                 ${CMAKE_CURRENT_SOURCE_DIR}/testBwhamSmoke/test_bwham_smoke.py
+                 ${PROGRAM_PATH}
+                 ${CMAKE_SOURCE_DIR}/scripts/inputBwham.dat
+                 ${CMAKE_CURRENT_SOURCE_DIR}/testdata/VaporPocket)
+
 add_custom_target(build_test COMMAND ${CMAKE_CTEST_COMMAND} 
                              DEPENDS ${TESTS_NAMES})

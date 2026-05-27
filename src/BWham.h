@@ -19,23 +19,22 @@ class Bwham : public Wham
 
         Bwham(const WhamInput& input);
 
-        void initializeBins();
-        void initializeWil();
-        void initializeStrategy();
-        void bindata();
-
         virtual void calculate() override;
         virtual std::string type() override {return "Bwham";}
 
         void printlnpl(std::string name);
     
     private:
+        void initializeBinnedGrid();
+        void countDataPerBin();
+        void initializeWil();
+        void initializeStrategy();
+
         std::vector<Binptr> Bins_;
         std::vector<std::vector<Real>> centerBins_;
-        std::vector<Real> dataPerBin_;
 
         // total number of bins
-        int TotalBins_;
+        int TotalBins_ = 0;
 
         Matrix<Real> BWil_;
 
