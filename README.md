@@ -107,6 +107,7 @@ template, and examples.
 
 ## Documentation
 
+- [Browser-friendly HTML overview](docs/index.html)
 - [Input format and generator](docs/input-format.md)
 - [WHAM methods and options](docs/wham-methods.md)
 - [Build and test guide](docs/build-and-test.md)

@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wham_cpp Documentation</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --text: #1f2933;
+      --muted: #52606d;
+      --border: #d9e2ec;
+      --surface: #f5f7fa;
+      --accent: #1d4ed8;
+      --accent-soft: #dbeafe;
+      --code: #102a43;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--text);
+      background: #ffffff;
+      font: 16px/1.58 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    header {
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+    }
+
+    main,
+    .header-inner {
+      width: min(1080px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .header-inner {
+      padding: 42px 0 34px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(2rem, 4vw, 3rem);
+      line-height: 1.08;
+    }
+
+    h2 {
+      margin: 40px 0 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      font-size: 1.55rem;
+    }
+
+    h3 {
+      margin: 24px 0 8px;
+      font-size: 1.1rem;
+    }
+
+    p {
+      margin: 0 0 14px;
+    }
+
+    a {
+      color: var(--accent);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 3px;
+    }
+
+    code,
+    pre {
+      color: var(--code);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size: 0.93em;
+    }
+
+    pre {
+      overflow-x: auto;
+      margin: 12px 0 18px;
+      padding: 14px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #f8fafc;
+    }
+
+    .lead {
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 1.08rem;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .nav a {
+      display: inline-flex;
+      align-items: center;
+      min-height: 36px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--text);
+      text-decoration: none;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 14px;
+      margin: 18px 0 28px;
+    }
+
+    .card {
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #ffffff;
+    }
+
+    .card h3 {
+      margin-top: 0;
+    }
+
+    .tag {
+      display: inline-block;
+      margin-bottom: 8px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: #174ea6;
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .equation {
+      border-left: 4px solid var(--accent);
+    }
+
+    footer {
+      margin-top: 48px;
+      padding: 24px 0 36px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="header-inner">
+      <h1>Wham_cpp Documentation</h1>
+      <p class="lead">
+        C++ weighted histogram analysis tools for reconstructing free-energy
+        surfaces from biased molecular simulation data.
+      </p>
+      <nav class="nav" aria-label="Documentation links">
+        <a href="../README.md">README</a>
+        <a href="input-format.md">Input format</a>
+        <a href="wham-methods.md">WHAM methods</a>
+        <a href="build-and-test.md">Build and test</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="quick-start">
+      <h2>Quick Start</h2>
+      <div class="grid">
+        <article class="card">
+          <span class="tag">Build</span>
+          <h3>Compile the executable</h3>
+          <pre><code>cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --parallel</code></pre>
+          <p>The main executable is written to <code>build/bin/Wham</code>.</p>
+        </article>
+
+        <article class="card">
+          <span class="tag">Test</span>
+          <h3>Run validation</h3>
+          <pre><code>ctest --test-dir build --output-on-failure</code></pre>
+          <p>The registered suite covers UWHAM validation, utility tests, and input generation.</p>
+        </article>
+
+        <article class="card">
+          <span class="tag">Input</span>
+          <h3>Generate an input file</h3>
+          <pre><code>python3 tools/generate_wham_input.py \
+  examples/input_specs/uwham_1d.json -o input.dat</code></pre>
+          <p>The generator writes the native <code>timeseries</code>, <code>bias</code>, and <code>wham</code> blocks.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <h2>WHAM Workflow</h2>
+      <pre><code>time-series samples + bias definitions
+        |
+        v
+evaluate samples or bins under every bias potential
+        |
+        v
+solve WHAM normalization constants f_k
+        |
+        v
+compute unbiased probabilities and free energies
+        |
+        v
+write requested outputs</code></pre>
+    </section>
+
+    <section id="methods">
+      <h2>Methods</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>UWHAM</h3>
+          <p>
+            Unbinned WHAM uses raw time-series samples directly. The current
+            implementation solves for window normalization constants with
+            L-BFGS, adaptive updates, or both in sequence.
+          </p>
+        </article>
+        <article class="card">
+          <h3>BWHAM</h3>
+          <p>
+            Binned WHAM first maps samples onto configured bins, then solves
+            the binned WHAM equations from bin counts and reduced bias energies.
+          </p>
+        </article>
+        <article class="card">
+          <h3>Reweighting</h3>
+          <p>
+            Reweighting applies an additional target potential after WHAM
+            weights are known, allowing observables to be estimated in a
+            modified ensemble.
+          </p>
+        </article>
+      </div>
+    </section>
+
+    <section id="equations">
+      <h2>Core Equations</h2>
+      <p>
+        Let <code>N_k</code> be the number of samples in window <code>k</code>,
+        <code>B_{k,i} = beta U_k(x_i)</code> be the reduced bias energy, and
+        <code>f_k</code> be the reduced free-energy normalization constant.
+      </p>
+
+      <h3>UWHAM Objective</h3>
+      <pre class="equation"><code>A(f) = - sum_k N_k f_k
+       + sum_i log[ sum_k (N_k / N_tot) exp(f_k - B_{k,i}) ]</code></pre>
+
+      <h3>Sample Log Weight</h3>
+      <pre class="equation"><code>ln w_i = -log[ sum_k N_k exp(f_k - B_{k,i}) ]</code></pre>
+
+      <h3>Adaptive Candidates</h3>
+      <pre class="equation"><code>f_k^SC = -log[ sum_i exp(ln w_i - B_{k,i}) ]
+
+(H^T H) delta = H^T grad
+f^NR = f - delta</code></pre>
+
+      <p>
+        The adaptive solver evaluates both the self-consistent and Newton-Raphson
+        candidates and keeps the one with the smaller gradient norm.
+      </p>
+    </section>
+
+    <section id="inputs">
+      <h2>Native Input Shape</h2>
+      <pre><code>timeseries = {
+    path = US_0.000.dat
+    columns = [ 2 ]
+    skipfrombeginning = -1000
+}
+
+bias = {
+    dimension = 1
+    xstar = [ 0.0 ]
+    kappa = [ 1000 ]
+    temperature = 300
+}
+
+wham = {
+    name = w
+    type = Uwham
+    outputs = [ pji normalization ]
+    outputFile = [ pji.out norm.out ]
+}</code></pre>
+      <p>
+        See <a href="input-format.md">input-format.md</a> for the structured
+        JSON generator and the full native block syntax.
+      </p>
+    </section>
+
+    <footer>
+      <p>
+        This HTML page is a lightweight browser-friendly overview. The Markdown
+        files remain the source of detailed project documentation.
+      </p>
+    </footer>
+  </main>
+</body>
+</html>

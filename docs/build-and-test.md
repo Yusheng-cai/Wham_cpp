@@ -3,6 +3,8 @@
 This project uses CMake to build the `Wham` executable and CTest to run the
 registered validation suite.
 
+For a browser-friendly overview of the documentation, open [index.html](index.html).
+
 ## Requirements
 
 - CMake 3.18 or newer

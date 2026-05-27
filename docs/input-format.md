@@ -5,6 +5,7 @@
 hand is repetitive. The repository includes a small generator that converts a
 compact JSON specification into the native input format.
 
+For a browser-friendly overview of the documentation, open [index.html](index.html).
 For the meaning of WHAM methods, strategies, bias models, and outputs, see
 [wham-methods.md](wham-methods.md).
 

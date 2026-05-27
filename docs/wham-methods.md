@@ -5,6 +5,8 @@ energies from biased simulation data. The executable is configured through
 native `.dat` input files; see [input-format.md](input-format.md) for input
 syntax and generation.
 
+For a browser-friendly overview of the documentation, open [index.html](index.html).
+
 ## Core Concepts
 
 Each simulation window contributes:
