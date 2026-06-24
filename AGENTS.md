@@ -45,6 +45,9 @@ Other test-like fixture directories are present under `test/`, including `testAC
 - Keep reference-output updates separate from source changes unless the task explicitly updates tests.
 - Avoid broad formatting churn.
 - Prefer narrow edits that can be verified with the build and CTest commands above.
+- Commit cleanup work in small logical chunks instead of one large mixed commit. Good chunk
+  boundaries include independent behavior changes, mechanical migrations, documentation updates,
+  tests, and generated/reference-output changes. Verify each chunk before committing when feasible.
 
 ## Test Data Notes
 
